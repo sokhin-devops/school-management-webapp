@@ -1,0 +1,21 @@
+
+.k-shadow-sm{
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+// Submenu popovers for the collapsed sidebar rail. These live here rather than in
+// k-sidebar.component.scss because PrimeNG appends overlay content to <body>,
+// where the component's scoped selectors no longer match.
+.k-rail-popover {
+  .p-popover-content {
+    padding: 0.25rem;
+  }
+
+  // The popover already provides the surface; the menu inside should not draw a
+  // second border and background on top of it.
+  .p-menu {
+    border: 0;
+    background: transparent;
+    min-width: 12rem;
+  }
+}

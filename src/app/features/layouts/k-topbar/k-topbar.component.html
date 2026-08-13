@@ -1,22 +1,13 @@
 <header class="k-topbar flex align-items-center justify-content-between gap-1 sm:gap-3 px-2 sm:px-3">
   <div class="flex align-items-center gap-1">
+    <!-- One button, two jobs: drawer on mobile, collapse/expand the rail above it. -->
     <button
       pButton
       [text]="true"
       [rounded]="true"
-      class="inline-flex md:hidden"
-      aria-label="Open menu"
-      (click)="layoutUi.toggleMobileDrawer()"
-    >
-      <i class="pi pi-bars"></i>
-    </button>
-    <button
-      pButton
-      [text]="true"
-      [rounded]="true"
-      class="hidden md:inline-flex xl:hidden"
-      aria-label="Collapse menu"
-      (click)="layoutUi.toggleSidebarCollapsed()"
+      aria-label="Toggle navigation"
+      [attr.aria-expanded]="!layoutUi.sidebarCollapsed()"
+      (click)="layoutUi.toggleSidebar()"
     >
       <i class="pi pi-bars"></i>
     </button>

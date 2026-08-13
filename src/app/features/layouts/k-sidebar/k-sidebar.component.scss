@@ -1,64 +1,167 @@
-:host {
-  display: contents;
-}
-
 .k-sidebar {
+  // Only the sidebar's own width animates. Everything inside keeps a fixed
+  // width and is clipped by `overflow: hidden`, so expanding reveals the menu
+  // instead of reflowing it — laying out a 260px menu inside a 72px box would
+  // wrap every label and shuffle it back into place over the 200ms, which is
+  // what reads as shaking.
+  --k-sidebar-width: 16.25rem;
+  --k-sidebar-rail-width: 4.5rem;
+
+  // The gutter shared by the rail and the panelmenu. Keeping both on the same
+  // padding chain is what puts the icons at the same x in either state, so
+  // swapping one for the other moves nothing.
+  --k-nav-pad: 0.5rem;
+  --k-nav-inset: 1rem;
+
+  // Same idea vertically, and it has to be an explicit height rather than
+  // padding: primeicons sets `.pi { line-height: 1 }`, which outranks the global
+  // `line-height: 1.5`, so an icon-only rail row derives a 16px content box
+  // while a labelled menu row derives 24px. Left to padding the two lists drift
+  // 8px further apart with every row, which is the downward shake.
+  --k-nav-row-height: 3rem;
+
   display: flex;
   flex-direction: column;
-  width: 260px;
+  width: var(--k-sidebar-width);
   flex-shrink: 0;
   height: 100vh;
-  background: var(--p-content-background);
-  border-right: 1px solid var(--p-content-border-color);
   overflow: hidden;
   transition: width 0.2s ease;
+
+  // Shares the topbar's surface so the two form one shell. No right-edge drop
+  // shadow: the shadow at the join is an inset on the content panel, which
+  // curves with the fillet instead of crossing it as a straight line.
+  background: var(--k-shell-bg, var(--p-surface-100));
+}
+
+.k-sidebar-collapsed {
+  width: var(--k-sidebar-rail-width);
 }
 
 .k-sidebar-brand {
-  height: 64px;
+  // Fixed width and a constant inset in both states: the avatar never moves, it
+  // just stops being clipped. Aligns with the icon column below it.
+  width: var(--k-sidebar-width);
   flex-shrink: 0;
-  border-bottom: 1px solid var(--p-content-border-color);
+  height: 64px;
+  padding-left: calc(var(--k-nav-pad) + var(--k-nav-inset));
 }
 
-.k-sidebar-nav {
+.k-sidebar-brand-label {
+  // Fades rather than popping in at frame 0, while the clip does the reveal.
+  transition: opacity 0.2s ease;
+}
+
+.k-sidebar-collapsed .k-sidebar-brand-label {
+  opacity: 0;
+}
+
+// Collapsed rail: one icon button per top-level item.
+.k-sidebar-rail {
+  width: var(--k-sidebar-rail-width);
+  flex: 1;
   overflow-y: auto;
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+  // Zero, because the panelmenu's own root gap is zero. Any gap here and the two
+  // lists advance at different pitches.
+  gap: 0;
+  padding: var(--k-nav-pad);
 }
 
-.k-nav-link {
+.k-rail-item {
+  height: var(--k-nav-row-height);
+  display: flex;
+  align-items: center;
+  // Left-aligned on the shared inset, not centred: this is what lands the icon
+  // on the same x as its panelmenu counterpart.
+  justify-content: flex-start;
+  padding: 0 var(--k-nav-inset);
+  border: 0;
+  border-radius: var(--p-content-border-radius, 5px);
+  background: transparent;
   color: var(--p-text-color);
-  text-decoration: none;
   cursor: pointer;
-  border: none;
-  background: none;
-  font: inherit;
-  white-space: nowrap;
+  transition: background-color 0.15s ease, color 0.15s ease;
+
+  &:hover {
+    background: var(--p-content-hover-background);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: -2px;
+  }
 }
 
-.k-nav-link:hover {
-  background: var(--p-content-hover-background);
-}
-
-.k-nav-active {
+.k-rail-item-active {
   background: var(--p-highlight-background);
   color: var(--p-primary-color);
-  font-weight: 600;
 }
 
-.k-nav-child {
-  padding-left: 2.75rem;
-  padding-right: 0.75rem;
+// PanelMenu applies `styleClass` to an inner div rather than its host element, so
+// the host needs sizing of its own. Without it `flex: 1` on .k-sidebar-menu has no
+// flex parent to resolve against, and a menu taller than the sidebar is clipped by
+// `overflow: hidden` instead of scrolling.
+.k-sidebar > p-panelmenu {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  // Held at the expanded width so labels never reflow while the sidebar animates;
+  // the sidebar clips it instead.
+  width: var(--k-sidebar-width);
 }
 
-@media (min-width: 768px) and (max-width: 1199.98px) {
-  .k-sidebar-collapsed {
-    width: 64px;
+.k-sidebar ::ng-deep .k-sidebar-menu {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--k-nav-pad);
+
+  // Let the shell surface show through the menu instead of the panelmenu's own
+  // content-coloured background.
+  background: transparent;
+
+  .p-panelmenu-panel {
+    background: transparent;
+    border: 0;
+    box-shadow: none;
+  }
+
+  // Pinned rather than left to the preset, so the rail's icons stay aligned with
+  // these even if the preset's navigation padding changes. The vertical padding
+  // is replaced by an explicit height for the same reason — see
+  // --k-nav-row-height. The link is already `align-items: center`, so the label
+  // stays centred.
+  .p-panelmenu-header-link {
+    height: var(--k-nav-row-height);
+    padding: 0 var(--k-nav-inset);
   }
 }
 
-@media (min-width: 1200px) {
-  .k-sidebar-collapsed {
-    width: 260px;
+.k-sidebar ::ng-deep {
+  .p-panelmenu-header-link.p-panelmenu-item-link-active,
+  .p-panelmenu-item-link.p-panelmenu-item-link-active {
+    background: var(--p-highlight-background);
+    color: var(--p-primary-color);
+    border-radius: 5px;
   }
+
+  .p-panelmenu-panel:has(.p-panelmenu-header-active) {
+    margin: 0px !important;
+  }
+}
+
+
+// Move the expand/collapse chevron to the right edge of the row instead of
+// its default position before the item icon/label.
+.k-sidebar ::ng-deep .p-panelmenu-header-link>chevrondownicon,
+.k-sidebar ::ng-deep .p-panelmenu-header-link>chevronrighticon,
+.k-sidebar ::ng-deep .p-panelmenu-item-link>angledownicon,
+.k-sidebar ::ng-deep .p-panelmenu-item-link>anglerighticon {
+  order: 1;
+  margin-left: auto;
 }
 
 @media (max-width: 767.98px) {
@@ -68,6 +171,8 @@
     z-index: 1101;
     transform: translateX(-100%);
     transition: transform 0.2s ease;
+    // Lifted off the page as a drawer, so it gets a real drop shadow.
+    box-shadow: 8px 0 24px -8px var(--k-shell-shadow-color, rgba(0, 0, 0, 0.18));
   }
 
   .k-sidebar-open {

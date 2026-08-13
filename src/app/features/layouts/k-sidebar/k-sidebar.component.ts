@@ -1,114 +1,145 @@
-import { Component, inject } from '@angular/core';
-import { RouterLink, RouterLinkActive } from '@angular/router';
-import { TooltipModule } from 'primeng/tooltip';
+import { Component, OnInit, inject } from '@angular/core';
+import { toSignal } from '@angular/core/rxjs-interop';
+import { NavigationEnd, Router } from '@angular/router';
+import { filter, map } from 'rxjs';
+import type { MenuItem } from 'primeng/api';
+import type { Popover } from 'primeng/popover';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
-
-interface NavChild {
-  label: string;
-  icon: string;
-  route: string;
-}
-
-interface NavItem {
-  label: string;
-  icon: string;
-  route?: string;
-  children?: NavChild[];
-}
+import { KShareModule } from '../../../share/k-share.module';
 
 /** 05-sidebar-navigation.md: main navigation tree. */
-const NAV_ITEMS: NavItem[] = [
-  { label: 'Dashboard', icon: 'pi pi-home', route: '/dashboard' },
+const NAV_ITEMS: MenuItem[] = [
+  { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
   {
     label: 'Academic',
     icon: 'pi pi-book',
-    children: [
-      { label: 'Programs', icon: 'pi pi-sitemap', route: '/academic/programs' },
-      { label: 'Levels', icon: 'pi pi-list', route: '/academic/levels' },
-      { label: 'Classes', icon: 'pi pi-th-large', route: '/academic/classes' },
-      { label: 'Subjects', icon: 'pi pi-book', route: '/academic/subjects' },
-      { label: 'Academic Years', icon: 'pi pi-calendar', route: '/academic/academic-years' },
-      { label: 'Rooms', icon: 'pi pi-building', route: '/academic/rooms' },
+    items: [
+      { label: 'Programs', icon: 'pi pi-sitemap', routerLink: '/academic/programs' },
+      { label: 'Levels', icon: 'pi pi-list', routerLink: '/academic/levels' },
+      { label: 'Classes', icon: 'pi pi-th-large', routerLink: '/academic/classes' },
+      { label: 'Subjects', icon: 'pi pi-book', routerLink: '/academic/subjects' },
+      { label: 'Academic Years', icon: 'pi pi-calendar', routerLink: '/academic/academic-years' },
+      { label: 'Rooms', icon: 'pi pi-building', routerLink: '/academic/rooms' },
     ],
   },
   {
     label: 'People',
     icon: 'pi pi-users',
-    children: [
-      { label: 'Students', icon: 'pi pi-graduation-cap', route: '/people/students' },
-      { label: 'Teachers', icon: 'pi pi-id-card', route: '/people/teachers' },
-      { label: 'Parents', icon: 'pi pi-users', route: '/people/parents' },
+    items: [
+      { label: 'Students', icon: 'pi pi-graduation-cap', routerLink: '/people/students' },
+      { label: 'Teachers', icon: 'pi pi-id-card', routerLink: '/people/teachers' },
+      { label: 'Parents', icon: 'pi pi-users', routerLink: '/people/parents' },
     ],
   },
-  { label: 'Attendance', icon: 'pi pi-calendar-clock', route: '/attendance' },
-  { label: 'Exams / Assessments', icon: 'pi pi-clipboard', route: '/exams' },
+  { label: 'Attendance', icon: 'pi pi-calendar-clock', routerLink: '/attendance' },
+  { label: 'Exams / Assessments', icon: 'pi pi-clipboard', routerLink: '/exams' },
   {
     label: 'Finance',
     icon: 'pi pi-wallet',
-    children: [
-      { label: 'Fees', icon: 'pi pi-money-bill', route: '/finance/fees' },
-      { label: 'Payments', icon: 'pi pi-credit-card', route: '/finance/payments' },
-      { label: 'Expenses', icon: 'pi pi-receipt', route: '/finance/expenses' },
-      { label: 'Financial Reports', icon: 'pi pi-chart-line', route: '/finance/reports' },
+    items: [
+      { label: 'Fees', icon: 'pi pi-money-bill', routerLink: '/finance/fees' },
+      { label: 'Payments', icon: 'pi pi-credit-card', routerLink: '/finance/payments' },
+      { label: 'Expenses', icon: 'pi pi-receipt', routerLink: '/finance/expenses' },
+      { label: 'Financial Reports', icon: 'pi pi-chart-line', routerLink: '/finance/reports' },
     ],
   },
   {
     label: 'Reports',
     icon: 'pi pi-chart-bar',
-    children: [
-      { label: 'Student Reports', icon: 'pi pi-file', route: '/reports/students' },
-      { label: 'Attendance Reports', icon: 'pi pi-calendar', route: '/reports/attendance' },
-      { label: 'Academic Reports', icon: 'pi pi-book', route: '/reports/academic' },
-      { label: 'Financial Reports', icon: 'pi pi-chart-line', route: '/reports/financial' },
+    items: [
+      { label: 'Student Reports', icon: 'pi pi-file', routerLink: '/reports/students' },
+      { label: 'Attendance Reports', icon: 'pi pi-calendar', routerLink: '/reports/attendance' },
+      { label: 'Academic Reports', icon: 'pi pi-book', routerLink: '/reports/academic' },
+      { label: 'Financial Reports', icon: 'pi pi-chart-line', routerLink: '/reports/financial' },
     ],
   },
   {
     label: 'Settings',
     icon: 'pi pi-cog',
-    children: [
-      { label: 'School', icon: 'pi pi-building', route: '/settings/school' },
-      { label: 'Branches', icon: 'pi pi-map-marker', route: '/settings/branches' },
-      { label: 'Academic', icon: 'pi pi-book', route: '/settings/academic' },
-      { label: 'Users & Roles', icon: 'pi pi-users', route: '/settings/users-roles' },
-      { label: 'Notifications', icon: 'pi pi-bell', route: '/settings/notifications' },
-      { label: 'Appearance', icon: 'pi pi-palette', route: '/settings/appearance' },
-      { label: 'Security', icon: 'pi pi-shield', route: '/settings/security' },
-      { label: 'Subscription', icon: 'pi pi-star', route: '/settings/subscription' },
-      { label: 'System', icon: 'pi pi-server', route: '/settings/system' },
+    items: [
+      { label: 'School', icon: 'pi pi-building', routerLink: '/settings/school' },
+      { label: 'Branches', icon: 'pi pi-map-marker', routerLink: '/settings/branches' },
+      { label: 'Academic', icon: 'pi pi-book', routerLink: '/settings/academic' },
+      { label: 'Users & Roles', icon: 'pi pi-users', routerLink: '/settings/users-roles' },
+      { label: 'Notifications', icon: 'pi pi-bell', routerLink: '/settings/notifications' },
+      { label: 'Appearance', icon: 'pi pi-palette', routerLink: '/settings/appearance' },
+      { label: 'Security', icon: 'pi pi-shield', routerLink: '/settings/security' },
+      { label: 'Subscription', icon: 'pi pi-star', routerLink: '/settings/subscription' },
+      { label: 'System', icon: 'pi pi-server', routerLink: '/settings/system' },
     ],
   },
 ];
 
 @Component({
   selector: 'app-k-sidebar',
-  imports: [RouterLink, RouterLinkActive, TooltipModule],
+  imports: [KShareModule],
   templateUrl: './k-sidebar.component.html',
   styleUrl: './k-sidebar.component.scss',
 })
-export class KSidebarComponent {
+export class KSidebarComponent implements OnInit {
   protected readonly layoutUi = inject(LayoutUiService);
+  private readonly router = inject(Router);
+
   protected readonly navItems = NAV_ITEMS;
 
-  private readonly openGroups = new Set<string>();
+  /**
+   * The rail's open submenu popover. Tracked so selecting a child can close it —
+   * the popover only dismisses itself on outside clicks, and a click on its own
+   * menu item is an inside click.
+   */
+  private openRailPopover: Popover | null = null;
 
-  isGroupOpen(label: string): boolean {
-    return this.openGroups.has(label);
+  private readonly currentUrl = toSignal(
+    this.router.events.pipe(
+      filter((event): event is NavigationEnd => event instanceof NavigationEnd),
+      map((event) => event.urlAfterRedirects),
+    ),
+    { initialValue: this.router.url },
+  );
+
+  ngOnInit(): void {
+    const onNavigate = () => {
+      this.layoutUi.closeMobileDrawer();
+      this.openRailPopover?.hide();
+      this.openRailPopover = null;
+    };
+
+    for (const item of this.navItems) {
+      if (item.items) {
+        item.expanded = this.isItemActive(item);
+        item.items.forEach((child) => (child.command = onNavigate));
+      } else {
+        item.command = onNavigate;
+      }
+    }
   }
 
-  toggleGroup(label: string): void {
-    if (this.layoutUi.sidebarCollapsed()) {
-      this.layoutUi.expandSidebar();
-      this.openGroups.add(label);
+  /**
+   * Collapsed rail: a group opens its children in a popover, a leaf navigates
+   * straight away since there is nothing to disclose.
+   */
+  protected onRailClick(item: MenuItem, event: Event, popover: Popover): void {
+    if (item.items?.length) {
+      this.openRailPopover = popover;
+      popover.toggle(event);
       return;
     }
-    if (this.openGroups.has(label)) {
-      this.openGroups.delete(label);
-    } else {
-      this.openGroups.add(label);
+
+    this.openRailPopover?.hide();
+    this.openRailPopover = null;
+
+    if (typeof item.routerLink === 'string') {
+      void this.router.navigateByUrl(item.routerLink);
     }
   }
 
-  onLeafClick(): void {
-    this.layoutUi.closeMobileDrawer();
+  /** True when the item, or any of its children, is the current route. */
+  protected isItemActive(item: MenuItem): boolean {
+    const url = this.currentUrl();
+    const links = item.items?.length
+      ? item.items.map((child) => child.routerLink)
+      : [item.routerLink];
+
+    return links.some((link) => typeof link === 'string' && url.startsWith(link));
   }
 }
