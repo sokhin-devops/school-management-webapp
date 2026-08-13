@@ -1,0 +1,48 @@
+<app-auth-card title="Create your account" subtitle="Set up your account, then configure your school.">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-column gap-3">
+    <div class="flex flex-column gap-2">
+      <label for="name">Name</label>
+      <input pInputText id="name" formControlName="name" placeholder="Your full name" class="w-full" />
+      @if (submitted && form.controls.name.invalid) {
+      <small class="text-red-500">Name is required.</small>
+      }
+    </div>
+
+    <div class="flex flex-column gap-2">
+      <label for="email">Email</label>
+      <input pInputText id="email" type="email" formControlName="email" placeholder="you@school.com" class="w-full" />
+      @if (submitted && form.controls.email.invalid) {
+      <small class="text-red-500">Enter a valid email address.</small>
+      }
+    </div>
+
+    <div class="flex flex-column gap-2">
+      <label for="password">Password</label>
+      <p-fluid>
+      <p-password id="password" fluid formControlName="password" [toggleMask]="true" placeholder="Password"
+        class="w-full" inputStyleClass="w-full" />
+      @if (submitted && form.controls.password.invalid) {
+      <small class="text-red-500">Password must be at least 8 characters.</small>
+      }
+      </p-fluid>
+    </div>
+
+    <div class="flex flex-column gap-2">
+      <label for="confirmPassword">Confirm Password</label>
+      <p-fluid>
+        <p-password id="confirmPassword" formControlName="confirmPassword" [toggleMask]="true" [feedback]="false"
+          placeholder="Confirm Password" class="w-full" inputStyleClass="w-full" />
+        @if (submitted && form.errors?.['passwordsMismatch']) {
+        <small class="text-red-500">Passwords do not match.</small>
+        }
+      </p-fluid>
+
+    </div>
+
+    <p-button type="submit" label="Sign Up" styleClass="w-full mt-2" />
+  </form>
+
+  <p class="text-center text-sm text-color-secondary mt-4 mb-0">
+    Already have an account? <a routerLink="/login" class="text-primary font-medium cursor-pointer">Log In</a>
+  </p>
+</app-auth-card>

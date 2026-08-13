@@ -1,0 +1,32 @@
+<app-auth-card title="Welcome back" subtitle="Log in to manage your school.">
+  <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-column gap-3">
+    <div class="flex flex-column gap-2">
+      <label for="email">Email</label>
+      <input pInputText id="email" type="email" formControlName="email" placeholder="you@school.com" class="w-full" />
+      @if (submitted && form.controls.email.invalid) {
+      <small class="text-red-500">Enter a valid email address.</small>
+      }
+    </div>
+
+    <div class="flex flex-column gap-2">
+      <div class="flex justify-content-between align-items-center">
+        <label for="password">Password</label>
+        <a routerLink="/forgot-password" class="text-sm text-primary cursor-pointer">Forgot Password?</a>
+      </div>
+      <p-fluid>
+        <p-password id="password" formControlName="password" [feedback]="false" [toggleMask]="true"
+          placeholder="Password" class="w-full" inputStyleClass="w-full" />
+        @if (submitted && form.controls.password.invalid) {
+        <small class="text-red-500">Password is required.</small>
+        }
+      </p-fluid>
+
+    </div>
+
+    <p-button type="submit" label="Login" styleClass="w-full mt-2" />
+  </form>
+
+  <p class="text-center text-sm text-color-secondary mt-4 mb-0">
+    Don't have an account? <a routerLink="/signup" class="text-primary font-medium cursor-pointer">Sign Up</a>
+  </p>
+</app-auth-card>

@@ -1,1 +1,53 @@
-<p>dashboard works!</p>
+<h1 class="text-2xl font-semibold mt-0 mb-4">Dashboard</h1>
+
+<div class="grid">
+  @for (tile of statTiles; track tile.label) {
+    <div class="col-12 sm:col-6 lg:col-4">
+      <p-card>
+        <div class="flex align-items-center gap-3">
+          <div class="k-stat-icon flex align-items-center justify-content-center border-circle bg-primary-50 flex-shrink-0">
+            <i [class]="'pi ' + tile.icon + ' text-primary text-xl'"></i>
+          </div>
+          <div>
+            <div class="text-sm text-color-secondary mb-1">{{ tile.label }}</div>
+            <div class="text-2xl font-semibold">{{ tile.value }}</div>
+          </div>
+        </div>
+      </p-card>
+    </div>
+  }
+</div>
+
+<div class="grid mt-2">
+  <div class="col-12 lg:col-6">
+    <p-card header="Notifications">
+      <div class="flex flex-column gap-3">
+        @for (item of notifications; track item.message) {
+          <div class="flex align-items-start gap-2">
+            <i [class]="'pi ' + item.icon + ' text-primary mt-1'"></i>
+            <div>
+              <div class="text-sm">{{ item.message }}</div>
+              <div class="text-xs text-color-secondary">{{ item.time }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </p-card>
+  </div>
+
+  <div class="col-12 lg:col-6">
+    <p-card header="Recent Activity">
+      <div class="flex flex-column gap-3">
+        @for (item of recentActivity; track item.message) {
+          <div class="flex align-items-start gap-2">
+            <i [class]="'pi ' + item.icon + ' text-primary mt-1'"></i>
+            <div>
+              <div class="text-sm">{{ item.message }}</div>
+              <div class="text-xs text-color-secondary">{{ item.time }}</div>
+            </div>
+          </div>
+        }
+      </div>
+    </p-card>
+  </div>
+</div>

@@ -38,6 +38,9 @@ import { FieldsetModule } from 'primeng/fieldset';
 import { CheckboxModule } from 'primeng/checkbox';
 import { AccordionModule } from 'primeng/accordion';
 import { TagModule } from 'primeng/tag';
+import { StepperModule } from 'primeng/stepper';
+import { FluidModule } from 'primeng/fluid';
+
 
 
 const ANGULAR_MODULES = [
@@ -47,6 +50,7 @@ const ANGULAR_MODULES = [
 ];
 
 const PRIMENG_MODULES = [
+  FluidModule,
   FieldsetModule,
   SkeletonModule,
   SelectButtonModule,
@@ -81,7 +85,8 @@ const PRIMENG_MODULES = [
   ConfirmDialogModule,
   CheckboxModule,
   AccordionModule,
-  TagModule
+  TagModule,
+  StepperModule
 ];
 
 @NgModule({

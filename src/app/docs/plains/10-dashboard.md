@@ -2,10 +2,6 @@
 
 Use a simple professional dashboard.
 
-Do not include:
-- “Good Morning, Sokhin...”
-- Quick Actions section unless explicitly requested.
-
 Possible configurable widgets:
 - Students
 - Teachers / Staff

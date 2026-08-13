@@ -1,0 +1,90 @@
+<header class="k-topbar flex align-items-center justify-content-between gap-1 sm:gap-3 px-2 sm:px-3">
+  <div class="flex align-items-center gap-1">
+    <button
+      pButton
+      [text]="true"
+      [rounded]="true"
+      class="inline-flex md:hidden"
+      aria-label="Open menu"
+      (click)="layoutUi.toggleMobileDrawer()"
+    >
+      <i class="pi pi-bars"></i>
+    </button>
+    <button
+      pButton
+      [text]="true"
+      [rounded]="true"
+      class="hidden md:inline-flex xl:hidden"
+      aria-label="Collapse menu"
+      (click)="layoutUi.toggleSidebarCollapsed()"
+    >
+      <i class="pi pi-bars"></i>
+    </button>
+  </div>
+
+  <div class="flex align-items-center gap-1 sm:gap-2 ml-auto">
+    <p-select
+      class="k-branch-select"
+      [options]="branches()"
+      optionLabel="name"
+      optionValue="id"
+      [ngModel]="selectedBranchId()"
+      (onChange)="onBranchChange($event.value)"
+    />
+
+    <button pButton [text]="true" [rounded]="true" aria-label="Help" (click)="helpPopover.toggle($event)">
+      <i class="pi pi-question-circle text-xl"></i>
+    </button>
+    <p-popover #helpPopover>
+      <div class="text-sm" style="max-width: 260px;">
+        Need help? Email <a href="mailto:support@schoolsuite.com" class="text-primary">support&#64;schoolsuite.com</a>.
+      </div>
+    </p-popover>
+
+    <button pButton [text]="true" [rounded]="true" aria-label="Notifications" (click)="notifPopover.toggle($event)">
+      <p-overlaybadge [value]="notifications.length.toString()" severity="danger">
+        <i class="pi pi-bell text-xl"></i>
+      </p-overlaybadge>
+    </button>
+    <p-popover #notifPopover>
+      <div style="min-width: 280px; max-width: 320px;">
+        <div class="font-medium mb-2">Notifications</div>
+        <div class="flex flex-column gap-3">
+          @for (n of notifications; track n.id) {
+            <div class="flex gap-2 align-items-start">
+              <i [class]="'pi ' + n.icon + ' text-primary mt-1'"></i>
+              <div>
+                <div class="text-sm">{{ n.message }}</div>
+                <div class="text-xs text-color-secondary">{{ n.time }}</div>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </p-popover>
+
+    <button
+      type="button"
+      class="k-user-trigger"
+      aria-label="Account menu"
+      (click)="userPopover.toggle($event)"
+    >
+      <p-avatar [label]="userInitials" shape="circle" styleClass="bg-primary" />
+    </button>
+    <p-popover #userPopover>
+      <div class="flex flex-column gap-3" style="min-width: 220px;">
+        <div class="flex align-items-center gap-2">
+          <p-avatar [label]="userInitials" shape="circle" styleClass="bg-primary" />
+          <div>
+            <div class="font-medium">{{ userName }}</div>
+            <div class="text-sm text-color-secondary">{{ userEmail }}</div>
+          </div>
+        </div>
+        <p-divider styleClass="my-0" />
+        <button pButton [text]="true" class="justify-content-start w-full" (click)="logout(); userPopover.hide()">
+          <i class="pi pi-sign-out mr-2"></i> Logout
+        </button>
+      </div>
+    </p-popover>
+  </div>
+</header>

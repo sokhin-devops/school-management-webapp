@@ -1,0 +1,34 @@
+<app-auth-card
+  title="Choose your plan"
+  subtitle="Pick the plan that fits your school — you can change this anytime."
+  maxWidth="960px"
+>
+  <div class="grid">
+    @for (plan of plans; track plan.type) {
+      <div class="col-12 md:col-4">
+        <p-card [class]="plan.highlighted ? 'h-full border-2 border-primary' : 'h-full border-2 border-transparent'">
+          @if (plan.highlighted) {
+            <p-tag value="Most Popular" severity="info" class="mb-2" />
+          }
+          <h3 class="mt-0 mb-1">{{ plan.name }}</h3>
+          <div class="mb-3">
+            <span class="text-3xl font-bold">{{ plan.price }}</span>
+            @if (plan.period) {
+              <span class="text-color-secondary"> {{ plan.period }}</span>
+            }
+          </div>
+          <p class="text-color-secondary mb-3">{{ plan.description }}</p>
+          <ul class="list-none p-0 m-0 mb-4 flex flex-column gap-2">
+            @for (feature of plan.features; track feature) {
+              <li class="flex align-items-center gap-2">
+                <i class="pi pi-check text-primary"></i>
+                <span>{{ feature }}</span>
+              </li>
+            }
+          </ul>
+          <p-button styleClass="w-full" [label]="'Choose ' + plan.name" (onClick)="choosePlan(plan.type)" />
+        </p-card>
+      </div>
+    }
+  </div>
+</app-auth-card>

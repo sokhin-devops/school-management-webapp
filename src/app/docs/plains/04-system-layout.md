@@ -1,8 +1,8 @@
 # System Web App Layout
 
 Authenticated application layout:
-- Left Sidebar
-- Topbar
+- Left Sidebar (full hight of left)
+- Topbar 
 - Content
 
 Do not replace the left sidebar with top navigation.

@@ -1,1 +1,71 @@
-<p>k-sidebar works!</p>
+<aside class="k-sidebar" [class.k-sidebar-collapsed]="layoutUi.sidebarCollapsed()" [class.k-sidebar-open]="layoutUi.mobileDrawerOpen()">
+  <div class="k-sidebar-brand flex align-items-center gap-2 px-3">
+    @if (!layoutUi.sidebarCollapsed()) {
+      <span class="text-xl font-bold text-primary">SchoolSuite</span>
+    } @else {
+      <i class="pi pi-building text-xl text-primary"></i>
+    }
+  </div>
+
+  <nav class="k-sidebar-nav flex-1">
+    <ul class="list-none p-0 m-0">
+      @for (item of navItems; track item.label) {
+        <li>
+          @if (item.route) {
+            <a
+              [routerLink]="item.route"
+              routerLinkActive="k-nav-active"
+              class="k-nav-link flex align-items-center gap-2 px-3 py-2"
+              [pTooltip]="layoutUi.sidebarCollapsed() ? item.label : ''"
+              tooltipPosition="right"
+              (click)="onLeafClick()"
+            >
+              <i [class]="item.icon"></i>
+              @if (!layoutUi.sidebarCollapsed()) {
+                <span>{{ item.label }}</span>
+              }
+            </a>
+          } @else {
+            <button
+              type="button"
+              class="k-nav-link flex align-items-center gap-2 px-3 py-2 w-full"
+              [pTooltip]="layoutUi.sidebarCollapsed() ? item.label : ''"
+              tooltipPosition="right"
+              (click)="toggleGroup(item.label)"
+            >
+              <i [class]="item.icon"></i>
+              @if (!layoutUi.sidebarCollapsed()) {
+                <span class="flex-1 text-left">{{ item.label }}</span>
+                <i
+                  class="pi pi-chevron-down text-xs transition-transform transition-duration-200"
+                  [style.transform]="isGroupOpen(item.label) ? 'rotate(180deg)' : 'rotate(0)'"
+                ></i>
+              }
+            </button>
+            @if (!layoutUi.sidebarCollapsed() && isGroupOpen(item.label)) {
+              <ul class="list-none p-0 m-0">
+                @for (child of item.children; track child.label) {
+                  <li>
+                    <a
+                      [routerLink]="child.route"
+                      routerLinkActive="k-nav-active"
+                      class="k-nav-link k-nav-child flex align-items-center gap-2 py-2"
+                      (click)="onLeafClick()"
+                    >
+                      <i [class]="child.icon"></i>
+                      <span>{{ child.label }}</span>
+                    </a>
+                  </li>
+                }
+              </ul>
+            }
+          }
+        </li>
+      }
+    </ul>
+  </nav>
+</aside>
+
+@if (layoutUi.mobileDrawerOpen()) {
+  <div class="k-sidebar-backdrop" (click)="layoutUi.closeMobileDrawer()"></div>
+}

@@ -1,0 +1,124 @@
+<app-auth-card title="Set up your school" subtitle="Just a few steps to get your school ready." maxWidth="760px">
+  <p-stepper [value]="1" [linear]="true">
+    <p-step-list>
+      <p-step [value]="1">School</p-step>
+      <p-step [value]="2">Branch</p-step>
+      <p-step [value]="3">Academic</p-step>
+    </p-step-list>
+
+    <p-step-panels>
+      <p-step-panel [value]="1">
+        <ng-template #content let-activateCallback="activateCallback">
+          <form [formGroup]="schoolForm" class="flex flex-column gap-3 mt-4">
+            <div class="flex flex-column gap-2">
+              <label for="schoolName">School Name</label>
+              <input pInputText id="schoolName" formControlName="name" placeholder="e.g. Greenfield Academy" class="w-full" />
+              @if (schoolSubmitted && schoolForm.controls.name.invalid) {
+                <small class="text-red-500">School name is required.</small>
+              }
+            </div>
+
+            <div class="flex flex-column gap-2">
+              <label for="schoolType">School Type</label>
+              <p-select
+                id="schoolType"
+                formControlName="type"
+                [options]="schoolTypeOptions"
+                optionLabel="label"
+              >
+              </p-select>
+            </div>
+          </form>
+
+          <div class="flex justify-content-end mt-4">
+            <p-button label="Next" (onClick)="goToBranch(activateCallback)" />
+          </div>
+        </ng-template>
+      </p-step-panel>
+
+      <p-step-panel [value]="2">
+        <ng-template #content let-activateCallback="activateCallback">
+          <form [formGroup]="branchForm" class="flex flex-column gap-3 mt-4">
+            <div class="flex flex-column gap-2">
+              <label for="branchName">Branch Name</label>
+              <input pInputText id="branchName" formControlName="name" placeholder="e.g. Main Campus" class="w-full" />
+              @if (branchSubmitted && branchForm.controls.name.invalid) {
+                <small class="text-red-500">Branch name is required.</small>
+              }
+            </div>
+
+            <div class="flex flex-column gap-2">
+              <label for="branchAddress">Address</label>
+              <input pInputText id="branchAddress" formControlName="address" placeholder="Address" class="w-full" />
+            </div>
+
+            <div class="flex flex-column gap-2">
+              <label for="branchPhone">Phone</label>
+              <input pInputText id="branchPhone" formControlName="phone" placeholder="Phone number" class="w-full" />
+            </div>
+          </form>
+
+          <div class="flex justify-content-between mt-4">
+            <p-button label="Back" [outlined]="true" severity="secondary" (onClick)="activateCallback(1)" />
+            <p-button label="Next" (onClick)="goToAcademic(activateCallback)" />
+          </div>
+        </ng-template>
+      </p-step-panel>
+
+      <p-step-panel [value]="3">
+        <ng-template #content let-activateCallback="activateCallback">
+          <form [formGroup]="academicForm" class="flex flex-column gap-3 mt-4">
+            <div class="flex flex-column gap-2">
+              <label for="academicYearName">Academic Year Name</label>
+              <input
+                pInputText
+                id="academicYearName"
+                formControlName="name"
+                placeholder="e.g. 2026 - 2027"
+                class="w-full"
+              />
+              @if (academicSubmitted && academicForm.controls.name.invalid) {
+                <small class="text-red-500">Academic year name is required.</small>
+              }
+            </div>
+
+            <div class="flex flex-column md:flex-row gap-3">
+              <div class="flex flex-column gap-2 flex-1">
+                <label for="academicStartDate">Start Date</label>
+                <p-datepicker
+                  id="academicStartDate"
+                  formControlName="startDate"
+                  dateFormat="yy-mm-dd"
+                  [showIcon]="true"
+                  appendTo="body"
+                  class="w-full"
+                  inputStyleClass="w-full"
+                />
+              </div>
+              <div class="flex flex-column gap-2 flex-1">
+                <label for="academicEndDate">End Date</label>
+                <p-datepicker
+                  id="academicEndDate"
+                  formControlName="endDate"
+                  dateFormat="yy-mm-dd"
+                  [showIcon]="true"
+                  appendTo="body"
+                  class="w-full"
+                  inputStyleClass="w-full"
+                />
+              </div>
+            </div>
+            @if (academicSubmitted && (academicForm.controls.startDate.invalid || academicForm.controls.endDate.invalid)) {
+              <small class="text-red-500">Start and end dates are required.</small>
+            }
+          </form>
+
+          <div class="flex justify-content-between mt-4">
+            <p-button label="Back" [outlined]="true" severity="secondary" (onClick)="activateCallback(2)" />
+            <p-button label="Done" (onClick)="finish()" />
+          </div>
+        </ng-template>
+      </p-step-panel>
+    </p-step-panels>
+  </p-stepper>
+</app-auth-card>

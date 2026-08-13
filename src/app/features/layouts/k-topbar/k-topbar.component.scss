@@ -1,0 +1,28 @@
+:host {
+  display: contents;
+}
+
+.k-topbar {
+  height: 64px;
+  flex-shrink: 0;
+  background: var(--p-content-background);
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.k-branch-select {
+  min-width: 160px;
+}
+
+@media (max-width: 575.98px) {
+  .k-branch-select {
+    min-width: 96px;
+  }
+}
+
+.k-user-trigger {
+  border: none;
+  background: none;
+  padding: 0;
+  cursor: pointer;
+  line-height: 0;
+}
