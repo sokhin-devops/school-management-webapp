@@ -81,7 +81,10 @@ export const routes: Routes = [
       { path: 'settings/academic', ...comingSoon('Academic Settings') },
       { path: 'settings/users-roles', ...comingSoon('Users & Roles') },
       { path: 'settings/notifications', ...comingSoon('Notifications') },
-      { path: 'settings/appearance', ...comingSoon('Appearance') },
+      {
+        path: 'settings/appearance',
+        loadComponent: () => import('./features/settings/appearance/appearance.component').then((m) => m.AppearanceComponent),
+      },
       { path: 'settings/security', ...comingSoon('Security') },
       { path: 'settings/subscription', ...comingSoon('Subscription') },
       { path: 'settings/system', ...comingSoon('System') },

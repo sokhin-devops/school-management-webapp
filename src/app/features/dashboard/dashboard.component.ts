@@ -1,5 +1,5 @@
 import { Component } from '@angular/core';
-import { CardModule } from 'primeng/card';
+import { KShareModule } from '../../share/k-share.module';
 
 interface StatTile {
   label: string;
@@ -13,10 +13,9 @@ interface ActivityItem {
   time: string;
 }
 
-/** 10-dashboard.md: configurable widgets. Values are placeholder demo data — no backend exists yet. */
 @Component({
   selector: 'app-dashboard',
-  imports: [CardModule],
+  imports: [KShareModule],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })

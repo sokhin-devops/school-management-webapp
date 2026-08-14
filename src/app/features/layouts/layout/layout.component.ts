@@ -13,4 +13,8 @@ import { KShareModule } from '../../../share/k-share.module';
 })
 export class LayoutComponent {
   protected readonly breadcrumb = inject(BreadcrumbService);
+   layout: string = 'grid';
+
+
+    options = ['list', 'grid'];
 }

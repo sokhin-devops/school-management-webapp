@@ -1,0 +1,56 @@
+<div class="flex gap-2 align-items-center">
+
+    <!-- Dark Mode Toggle -->
+    <p-button [icon]="themeService.getConfig().darkMode ? 'pi pi-sun' : 'pi pi-moon'" [rounded]="true" size="small"
+        severity="contrast" (click)="themeService.toggleDarkMode()" pTooltip="Dark Mode" tooltipPosition="left">
+    </p-button>
+
+    <!-- Theme Platter Button -->
+    <p-button icon="pi pi-palette" [rounded]="true" size="small" severity="contrast" (click)="togglePopover($event)"
+        pTooltip="Theme" tooltipPosition="left">
+    </p-button>
+
+    <!-- Popover -->
+    <p-popover #themePopover>
+        <div class="flex flex-column gap-4 w-30 p-1">
+
+            <!-- Preset -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Preset</label>
+                <p-select [options]="presets" [(ngModel)]="selectedPreset" (onChange)="onPresetChange()"
+                    placeholder="Select Preset" class="w-full">
+                </p-select>
+            </div>
+            <!-- Primary Color -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Primary Color</label>
+                <div class="flex flex-wrap gap-2 align-items-center">
+                    @for (c of primaryColors; track c.value) {
+                    <p-button size="small" [rounded]="true" class="text-white"
+                        [icon]="isPrimarySelected(c.value) ? 'pi pi-check' : 'pi pi-pletter'" [style]="{
+      'background-color': c.color,
+      'border-color': c.color
+    }" (onClick)="selectPrimary(c.value)" [pTooltip]="c.name" tooltipPosition="top">
+                    </p-button>
+                    } <!-- Custom color -->
+                    <input type="color" [(ngModel)]="customColor" pTooltip="Custom Color" tooltipPosition="left"
+                        (change)="applyCustomColor()" />
+                </div>
+            </div>
+
+            <!-- Surface -->
+            <div>
+                <label class="block text-sm font-medium mb-2">Surface</label>
+                <div class="flex flex-wrap gap-2">
+                    @for (s of surfaceColors; track s.value) {
+                    <p-button [label]="s.name" size="small" [outlined]="!isSurfaceSelected(s.value)"
+                        [severity]="isSurfaceSelected(s.value) ? 'primary' : 'secondary'"
+                        (click)="selectSurface(s.value)">
+                    </p-button>
+                    }
+                </div>
+            </div>
+
+        </div>
+    </p-popover>
+</div>

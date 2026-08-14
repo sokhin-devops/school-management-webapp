@@ -3,8 +3,13 @@
   <div class="k-layout-main">
     <app-k-topbar />
     <div class="k-layout-content">
-      <div class="k-breadcrumb border-bottom-1 surface-border">
+      <div class="k-breadcrumb flex justify-content-between align-items-center border-bottom-1 surface-border">
         <p-breadcrumb [home]="breadcrumb.home()" [model]="breadcrumb.items()" />
+        <p-selectbutton [(ngModel)]="layout" [options]="options" [allowEmpty]="false" size="small">
+          <ng-template  #item let-item>
+            <i class="pi " [ngClass]="{ 'pi-bars': item === 'list', 'pi-table': item === 'grid' }"></i>
+          </ng-template>
+        </p-selectbutton>
       </div>
       <main class="k-layout-body">
         <router-outlet />
