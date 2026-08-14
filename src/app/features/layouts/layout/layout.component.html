@@ -3,9 +3,7 @@
   <div class="k-layout-main">
     <app-k-topbar />
     <div class="k-layout-content">
-      <!-- Sits outside the scroll area rather than sticking inside it, so it can
-           stay transparent and let the corner shadow show through. -->
-      <div class="k-breadcrumb">
+      <div class="k-breadcrumb border-bottom-1 surface-border">
         <p-breadcrumb [home]="breadcrumb.home()" [model]="breadcrumb.items()" />
       </div>
       <main class="k-layout-body">
