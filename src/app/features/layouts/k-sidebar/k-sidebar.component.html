@@ -5,27 +5,34 @@
     <span class="k-sidebar-brand-label text-md font-bold white-space-nowrap">School SM</span>
   </div>
 
-  @if (layoutUi.sidebarCollapsed()) {
-  <!-- Icons only (05-sidebar-navigation.md). Labels move to tooltips, children to popovers. -->
-  <nav class="k-sidebar-rail">
-    @for (item of navItems; track item.label) {
-    <div class="k-rail-slot">
-      <button type="button" class="k-rail-item" [class.k-rail-item-active]="isItemActive(item)" [pTooltip]="item.label"
-        tooltipPosition="right" [attr.aria-label]="item.label" (click)="onRailClick(item, $event, childPopover)">
-        <i [class]="item.icon"></i>
-      </button>
+  <!-- The brand stays put; only the nav scrolls, with an overlay bar so a long
+       menu never steals width from the rows. -->
+  <p-scrollpanel styleClass="k-sidebar-scroll">
+    <div #navContent class="k-sidebar-nav">
+      @if (layoutUi.sidebarCollapsed()) {
+      <!-- Icons only (05-sidebar-navigation.md). Labels move to tooltips, children to popovers. -->
+      <nav class="k-sidebar-rail">
+        @for (item of navItems; track item.label) {
+        <div class="k-rail-slot">
+          <button type="button" class="k-rail-item" [class.k-rail-item-active]="isItemActive(item)"
+            [pTooltip]="item.label" tooltipPosition="right" [attr.aria-label]="item.label"
+            (click)="onRailClick(item, $event, childPopover)">
+            <i [class]="item.icon"></i>
+          </button>
 
-      <!-- Declared for every item, opened only for the ones with children, so
+          <!-- Declared for every item, opened only for the ones with children, so
                the button (outside any @if) can still reference it. -->
-      <p-popover #childPopover styleClass="k-rail-popover">
-        <p-menu [model]="item.items ?? []" />
-      </p-popover>
+          <p-popover #childPopover styleClass="k-rail-popover">
+            <p-menu [model]="item.items ?? []" />
+          </p-popover>
+        </div>
+        }
+      </nav>
+      } @else {
+      <p-panelmenu [model]="navItems" [multiple]="true" styleClass="k-sidebar-menu" />
+      }
     </div>
-    }
-  </nav>
-  } @else {
-    <p-panelmenu [model]="navItems" [multiple]="true" styleClass="k-sidebar-menu" />
-  }
+  </p-scrollpanel>
 </aside>
 
 @if (layoutUi.mobileDrawerOpen()) {

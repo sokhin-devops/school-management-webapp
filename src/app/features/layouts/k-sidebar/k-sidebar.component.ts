@@ -1,9 +1,10 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, ElementRef, OnInit, effect, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
 import type { MenuItem } from 'primeng/api';
 import type { Popover } from 'primeng/popover';
+import { ScrollPanel } from 'primeng/scrollpanel';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
 import { KShareModule } from '../../../share/k-share.module';
 
@@ -89,6 +90,9 @@ export class KSidebarComponent implements OnInit {
    */
   private openRailPopover: Popover | null = null;
 
+  private readonly navScroll = viewChild(ScrollPanel);
+  private readonly navContent = viewChild<ElementRef<HTMLElement>>('navContent');
+
   private readonly currentUrl = toSignal(
     this.router.events.pipe(
       filter((event): event is NavigationEnd => event instanceof NavigationEnd),
@@ -96,6 +100,22 @@ export class KSidebarComponent implements OnInit {
     ),
     { initialValue: this.router.url },
   );
+
+  constructor() {
+    // ScrollPanel only re-measures its bar on scroll, hover and *window* resize,
+    // never when its own content changes height — which this nav does on every
+    // group expand and on every switch between the rail and the full menu. Watch
+    // the content so the bar keeps matching what is actually in the panel.
+    effect((onCleanup) => {
+      const panel = this.navScroll();
+      const content = this.navContent()?.nativeElement;
+      if (!panel || !content) return;
+
+      const observer = new ResizeObserver(() => panel.moveBar());
+      observer.observe(content);
+      onCleanup(() => observer.disconnect());
+    });
+  }
 
   ngOnInit(): void {
     const onNavigate = () => {

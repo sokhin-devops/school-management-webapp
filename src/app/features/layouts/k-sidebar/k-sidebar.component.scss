@@ -1,6 +1,6 @@
 .k-sidebar {
   --k-sidebar-width: 16.25rem;
-  --k-rail-width: 4.5rem;
+  --k-rail-width: 4rem;
   --k-nav-pad: 0.5rem;
   --k-nav-inset: 1rem;
   --k-nav-row-height: 3rem;
@@ -12,13 +12,16 @@
   height: 100vh;
   overflow: hidden;
   transition: width 0.2s ease;
-  background: var(--k-shell-bg, var(--p-surface-100));
 
   &.k-sidebar-collapsed {
     width: var(--k-rail-width);
 
     .k-sidebar-brand-label {
       opacity: 0;
+    }
+
+    > p-scrollpanel {
+      width: var(--k-rail-width);
     }
   }
 
@@ -36,10 +39,8 @@
   .k-sidebar-rail {
     display: flex;
     flex-direction: column;
-    flex: 1;
     width: var(--k-rail-width);
     padding: var(--k-nav-pad);
-    overflow: hidden auto;
   }
 
   .k-rail-item {
@@ -75,22 +76,31 @@
     color: var(--p-primary-color);
   }
 
-  // PanelMenu puts `styleClass` on an inner div, not on its host, so the host
-  // carries the sizing — otherwise the inner `flex: 1` has no flex parent and a
-  // menu taller than the sidebar is clipped rather than scrolled.
-  > p-panelmenu {
-    display: flex;
+  // ScrollPanel puts `styleClass` on an inner div, not on its host, and leaves
+  // the host itself unstyled — so the host takes the leftover column height and
+  // the inner root stretches to fill it. Without a resolved height the panel
+  // measures as zero and nothing scrolls at all.
+  //
+  // The width is pinned rather than fluid so the menu keeps its shape while the
+  // sidebar animates between the two widths, instead of reflowing every row.
+  > p-scrollpanel {
+    display: block;
     flex: 1;
     min-height: 0;
     width: var(--k-sidebar-width);
   }
 
+  p-panelmenu {
+    display: block;
+  }
+
   ::ng-deep {
+    .k-sidebar-scroll {
+      height: 100%;
+    }
+
     .k-sidebar-menu {
-      flex: 1;
-      min-height: 0;
       padding: var(--k-nav-pad);
-      overflow-y: auto;
     }
 
     .p-panelmenu-panel {

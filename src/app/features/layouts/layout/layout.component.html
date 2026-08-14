@@ -3,6 +3,9 @@
   <div class="k-layout-main">
     <app-k-topbar />
     <main class="k-layout-content">
+      <div class="k-breadcrumb">
+        <p-breadcrumb [home]="home" [model]="items" />
+      </div>
       <router-outlet />
     </main>
   </div>

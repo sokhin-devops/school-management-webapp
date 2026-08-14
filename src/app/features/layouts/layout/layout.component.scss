@@ -1,7 +1,5 @@
 
 :host {
-  --k-shell-bg: var(--p-surface-100);
-  --k-shell-border: var(--p-surface-300);
   --k-shell-shadow-color: rgba(0, 0, 0, 0.16);
   --k-topbar-height: 4rem;
   --k-content-radius: 16px;
@@ -11,7 +9,6 @@
   display: flex;
   height: 100vh;
   overflow: hidden;
-  background: var(--k-shell-bg);
 }
 
 .k-layout-main {
@@ -29,8 +26,6 @@
   padding: 1.25rem;
   overflow-y: auto;
   background: var(--p-content-background);
-  border-top: 1px solid var(--k-shell-border);
-  border-left: 1px solid var(--k-shell-border);
   border-top-left-radius: var(--k-content-radius);
   box-shadow:
     inset 2px 2px 3px -2px var(--k-shell-shadow-color),
