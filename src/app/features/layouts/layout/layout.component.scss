@@ -30,8 +30,8 @@
   background: var(--p-content-background);
   border-top-left-radius: var(--k-content-radius);
   box-shadow:
-    inset 2px 2px 3px -2px var(--k-shell-shadow-color),
-    inset 10px 10px 18px -14px var(--k-shell-shadow-color);
+    inset 1px 1px 2px -1px var(--k-shell-shadow-color),
+    inset 5px 5px 9px -8px var(--k-shell-shadow-color);
 }
 
 .k-breadcrumb {
