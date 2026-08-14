@@ -17,7 +17,7 @@ export class BreadcrumbService {
     { initialValue: this.router.url },
   );
 
-  private readonly path = computed(() => routePath(this.url()));
+  readonly path = computed(() => routePath(this.url()));
 
   // On the dashboard the trail is empty, so the home crumb carries the page name
   // itself — otherwise the bar reads as a lone icon with no text at all.

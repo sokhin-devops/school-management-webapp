@@ -4,6 +4,8 @@
   --k-nav-pad: 0.5rem;
   --k-nav-inset: 1rem;
   --k-nav-row-height: 3rem;
+  --p-panelmenu-submenu-icon-focus-color: var(--p-primary-color);
+  --p-panelmenu-item-focus-color: var(--p-primary-color);
 
   display: flex;
   flex-direction: column;
@@ -77,13 +79,13 @@
     color: var(--p-primary-color);
   }
 
-  // ScrollPanel puts `styleClass` on an inner div, not on its host, and leaves
-  // the host itself unstyled — so the host takes the leftover column height and
-  // the inner root stretches to fill it. Without a resolved height the panel
-  // measures as zero and nothing scrolls at all.
-  //
-  // The width is pinned rather than fluid so the menu keeps its shape while the
-  // sidebar animates between the two widths, instead of reflowing every row.
+  // The icon has its own explicit color rule in PrimeNG's stylesheet, so it
+  // won't inherit the active color set above - it needs its own override.
+  ::ng-deep .p-panelmenu-item-link-active .p-panelmenu-submenu-icon {
+    color: var(--p-primary-color);
+  }
+
+
   > p-scrollpanel {
     display: block;
     flex: 1;

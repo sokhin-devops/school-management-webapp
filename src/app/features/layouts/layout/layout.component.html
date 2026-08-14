@@ -3,13 +3,22 @@
   <div class="k-layout-main">
     <app-k-topbar />
     <div class="k-layout-content">
-      <div class="k-breadcrumb flex justify-content-between align-items-center border-bottom-1 surface-border">
+      <div
+        class="k-breadcrumb px-3 py-2 flex justify-content-between align-items-center border-bottom-1 surface-border">
         <p-breadcrumb [home]="breadcrumb.home()" [model]="breadcrumb.items()" />
-        <p-selectbutton [(ngModel)]="layout" [options]="options" [allowEmpty]="false" size="small">
-          <ng-template  #item let-item>
-            <i class="pi " [ngClass]="{ 'pi-bars': item === 'list', 'pi-table': item === 'grid' }"></i>
-          </ng-template>
-        </p-selectbutton>
+        <div class="flex gap-2">
+          <p-button icon="pi pi-plus-circle" rounded="true" size="small" pTooltip="Quick Add"></p-button>
+          @if (showLayoutToggle()) {
+          <p-selectbutton [ngModel]="layoutUi.layout()" (ngModelChange)="layoutUi.setLayout($event)"
+            [options]="layoutUi.options" [allowEmpty]="false" size="small">
+            <ng-template #item let-item>
+              <i class="pi" [ngClass]="{ 'pi-bars': item === 'list', 'pi-table': item === 'grid' }"></i>
+            </ng-template>
+          </p-selectbutton>
+          }
+        </div>
+
+
       </div>
       <main class="k-layout-body">
         <router-outlet />

@@ -1,6 +1,5 @@
-import { Injectable, computed, signal } from '@angular/core';
+import { Injectable, Signal, computed, signal } from '@angular/core';
 
-/** Matches the `max-width` breakpoint the layout stylesheets use for mobile. */
 const MOBILE_QUERY = '(max-width: 767.98px)';
 const COLLAPSED_KEY = 'k-sidebar-collapsed';
 
@@ -16,13 +15,19 @@ function writeCollapsed(collapsed: boolean): void {
   try {
     localStorage.setItem(COLLAPSED_KEY, String(collapsed));
   } catch {
-    // Private browsing / storage disabled — collapse still works for this session.
   }
 }
 
-/** Shared UI state between KTopbarComponent and KSidebarComponent (04-system-layout.md responsive behavior). */
+export type DataViewLayout = 'list' | 'grid';
+
 @Injectable({ providedIn: 'root' })
 export class LayoutUiService {
+    private readonly storageKey = 'app-layout';
+
+  readonly options: DataViewLayout[] = ['list', 'grid'];
+
+  private readonly _layout = signal<DataViewLayout>(this.loadLayout());
+  readonly layout: Signal<DataViewLayout> = this._layout.asReadonly();
   private readonly _mobileDrawerOpen = signal(false);
   private readonly _desktopCollapsed = signal(readCollapsed());
   private readonly _isMobile = signal(false);
@@ -30,10 +35,6 @@ export class LayoutUiService {
   readonly mobileDrawerOpen = this._mobileDrawerOpen.asReadonly();
   readonly isMobile = this._isMobile.asReadonly();
 
-  /**
-   * Icon-only rail (05-sidebar-navigation.md). Never true on mobile, where the
-   * sidebar is a full-width drawer instead.
-   */
   readonly sidebarCollapsed = computed(() => !this._isMobile() && this._desktopCollapsed());
 
   constructor() {
@@ -42,14 +43,13 @@ export class LayoutUiService {
 
     query.addEventListener('change', (event) => {
       this._isMobile.set(event.matches);
-      // Leaving mobile mid-drawer would otherwise leave the backdrop stuck on.
       if (!event.matches) {
         this._mobileDrawerOpen.set(false);
       }
     });
   }
-
-  /** The single topbar button: opens the drawer on mobile, collapses the rail otherwise. */
+  
+  // SIDEBAR COLLAPSE
   toggleSidebar(): void {
     if (this._isMobile()) {
       this.toggleMobileDrawer();
@@ -67,5 +67,35 @@ export class LayoutUiService {
 
   closeMobileDrawer(): void {
     this._mobileDrawerOpen.set(false);
+  }
+
+
+  // DATA VIEW LAYOUT
+  setLayout(layout: DataViewLayout): void {
+    this._layout.set(layout);
+    this.saveLayout(layout);
+  }
+
+  toggleLayout(): void {
+    this.setLayout(this._layout() === 'grid' ? 'list' : 'grid');
+  }
+
+
+  private loadLayout(): DataViewLayout {
+    try {
+      const saved = localStorage.getItem(this.storageKey);
+      if (saved === 'list' || saved === 'grid') {
+        return saved;
+      }
+    } catch {
+    }
+    return 'grid';
+  }
+
+  private saveLayout(layout: DataViewLayout): void {
+    try {
+      localStorage.setItem(this.storageKey, layout);
+    } catch {
+    }
   }
 }

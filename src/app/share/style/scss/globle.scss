@@ -13,5 +13,15 @@
     min-width: 12rem;
     border: 0;
     background: transparent;
+    // Covers both hover and keyboard-focus - PrimeNG's own stylesheet uses
+    // this same token for both states.
+    --p-menu-item-icon-focus-color: var(--p-primary-color);
+    --p-menu-item-focus-color: var(--p-primary-color);
+  }
+
+  // The icon has its own explicit color rule in PrimeNG's stylesheet, so it
+  // won't inherit the active color set on the link - it needs its own override.
+  .p-menu-item-link-active .p-menu-item-icon {
+    color: var(--p-primary-color);
   }
 }
