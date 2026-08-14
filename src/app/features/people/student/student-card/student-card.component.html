@@ -1,1 +1,39 @@
-<p>student-card works!</p>
+<p-card styleClass="k-student-card h-full">
+  <div class="flex flex-column align-items-center text-center gap-2">
+    <p-avatar [label]="initials" size="xlarge" shape="circle" styleClass="bg-primary k-student-card-avatar" />
+    <div>
+      <div class="font-semibold text-lg">{{ student.firstName }} {{ student.lastName }}</div>
+      <div class="text-sm text-color-secondary">{{ student.studentDetails?.admissionNumber }}</div>
+    </div>
+    <p-tag [value]="student.status" [severity]="statusSeverity(student.status)" />
+  </div>
+
+  <p-divider styleClass="my-3" />
+
+  <div class="flex flex-column gap-2 text-sm">
+    <div class="flex align-items-center gap-2 text-color-secondary">
+      <i class="pi pi-graduation-cap"></i>
+      <span>{{ student.className }}</span>
+    </div>
+    @if (student.email) {
+      <div class="flex align-items-center gap-2 text-color-secondary">
+        <i class="pi pi-envelope"></i>
+        <span class="k-truncate">{{ student.email }}</span>
+      </div>
+    }
+    @if (student.phone) {
+      <div class="flex align-items-center gap-2 text-color-secondary">
+        <i class="pi pi-phone"></i>
+        <span>{{ student.phone }}</span>
+      </div>
+    }
+  </div>
+
+  <p-divider styleClass="my-3" />
+
+  <div class="flex justify-content-center gap-1">
+    <p-button icon="pi pi-eye" [text]="true" [rounded]="true" size="small" severity="secondary" pTooltip="View" />
+    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" severity="info" pTooltip="Edit" />
+    <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small" severity="danger" pTooltip="Delete" />
+  </div>
+</p-card>

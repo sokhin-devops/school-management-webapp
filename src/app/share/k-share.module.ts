@@ -42,6 +42,7 @@ import { TagModule } from 'primeng/tag';
 import { StepperModule } from 'primeng/stepper';
 import { FluidModule } from 'primeng/fluid';
 import { PanelMenuModule } from 'primeng/panelmenu';
+import { SharedModule } from 'primeng/api';
 
 
 
@@ -90,7 +91,8 @@ const PRIMENG_MODULES = [
   AccordionModule,
   TagModule,
   StepperModule,
-  PanelMenuModule
+  PanelMenuModule,
+  SharedModule
 ];
 
 @NgModule({

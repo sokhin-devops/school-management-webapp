@@ -53,7 +53,10 @@ export const routes: Routes = [
       { path: 'academic/academic-years', ...comingSoon('Academic Years') },
       { path: 'academic/rooms', ...comingSoon('Rooms') },
 
-      { path: 'people/students', ...comingSoon('Students') },
+      {
+        path: 'people/students',
+        loadComponent: () => import('./features/people/student/student.component').then((m) => m.StudentComponent),
+      },
       { path: 'people/teachers', ...comingSoon('Teachers') },
       { path: 'people/parents', ...comingSoon('Parents') },
 

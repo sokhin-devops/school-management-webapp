@@ -1,5 +1,73 @@
-<p>student works!</p>
-<p-dataview>
-    <!-- p-table-->
-    <!-- card-->
-</p-dataview>
+<div class="flex flex-column gap-3">
+  <div class="flex flex-column sm:flex-row sm:align-items-center sm:justify-content-between gap-2">
+    <p-iconfield iconPosition="left" class="k-student-search">
+      <p-inputicon class="pi pi-search" />
+      <input pInputText type="text" placeholder="Search students..." [ngModel]="searchTerm()"
+        (ngModelChange)="searchTerm.set($event)" />
+    </p-iconfield>
+
+    <p-button label="Add Student" icon="pi pi-plus" size="small" />
+  </div>
+
+  <p-dataview [value]="students()" [layout]="layoutUi.layout()" [paginator]="true" [rows]="8">
+    <ng-template #empty>
+      <div class="text-center text-color-secondary py-6">No students found.</div>
+    </ng-template>
+
+    <ng-template #list let-items>
+      <div class="overflow-x-auto">
+        <p-table [value]="items" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th>Student</th>
+              <th>Admission No.</th>
+              <th>Class</th>
+              <th>Contact</th>
+              <th>Status</th>
+              <th class="k-actions-col">Actions</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-student>
+            <tr>
+              <td>
+                <div class="flex align-items-center gap-2">
+                  <p-avatar [label]="initials(student)" shape="circle" styleClass="bg-primary" />
+                  <div>
+                    <div class="font-medium">{{ student.firstName }} {{ student.lastName }}</div>
+                    <div class="text-xs text-color-secondary">{{ student.email }}</div>
+                  </div>
+                </div>
+              </td>
+              <td>{{ student.studentDetails?.admissionNumber }}</td>
+              <td>{{ student.className }}</td>
+              <td>{{ student.phone }}</td>
+              <td>
+                <p-tag [value]="student.status" [severity]="statusSeverity(student.status)" />
+              </td>
+              <td>
+                <div class="flex gap-1">
+                  <p-button icon="pi pi-eye" [text]="true" [rounded]="true" size="small" severity="secondary"
+                    pTooltip="View" />
+                  <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" severity="info"
+                    pTooltip="Edit" />
+                  <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small" severity="danger"
+                    pTooltip="Delete" />
+                </div>
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </ng-template>
+
+    <ng-template #grid let-items>
+      <div class="grid">
+        @for (student of items; track student.id) {
+        <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
+          <app-student-card [student]="student" />
+        </div>
+        }
+      </div>
+    </ng-template>
+  </p-dataview>
+</div>
