@@ -1,45 +1,33 @@
-<aside
-  class="k-sidebar"
-  [class.k-sidebar-open]="layoutUi.mobileDrawerOpen()"
-  [class.k-sidebar-collapsed]="layoutUi.sidebarCollapsed()"
->
-  <!-- The label stays in the DOM and fades; removing it with @if would pop it in
-       at frame 0, before the sidebar has finished widening. -->
-  <div class="k-sidebar-brand flex align-items-center gap-2">
-    <p-avatar icon="pi pi-building" />
-    <span class="k-sidebar-brand-label text-lg font-bold white-space-nowrap">School SM</span>
+<aside class="k-sidebar" [class.k-sidebar-open]="layoutUi.mobileDrawerOpen()"
+  [class.k-sidebar-collapsed]="layoutUi.sidebarCollapsed()">
+  <div class="k-sidebar-brand flex align-items-center gap-3">
+    <p-avatar icon="pi pi-building" shape="circle" />
+    <span class="k-sidebar-brand-label text-md font-bold white-space-nowrap">School SM</span>
   </div>
 
   @if (layoutUi.sidebarCollapsed()) {
-    <!-- Icons only (05-sidebar-navigation.md). Labels move to tooltips, children to popovers. -->
-    <nav class="k-sidebar-rail">
-      @for (item of navItems; track item.label) {
-        <div class="k-rail-slot">
-          <button
-            type="button"
-            class="k-rail-item"
-            [class.k-rail-item-active]="isItemActive(item)"
-            [pTooltip]="item.label"
-            tooltipPosition="right"
-            [attr.aria-label]="item.label"
-            (click)="onRailClick(item, $event, childPopover)"
-          >
-            <i [class]="item.icon"></i>
-          </button>
+  <!-- Icons only (05-sidebar-navigation.md). Labels move to tooltips, children to popovers. -->
+  <nav class="k-sidebar-rail">
+    @for (item of navItems; track item.label) {
+    <div class="k-rail-slot">
+      <button type="button" class="k-rail-item" [class.k-rail-item-active]="isItemActive(item)" [pTooltip]="item.label"
+        tooltipPosition="right" [attr.aria-label]="item.label" (click)="onRailClick(item, $event, childPopover)">
+        <i [class]="item.icon"></i>
+      </button>
 
-          <!-- Declared for every item, opened only for the ones with children, so
+      <!-- Declared for every item, opened only for the ones with children, so
                the button (outside any @if) can still reference it. -->
-          <p-popover #childPopover styleClass="k-rail-popover">
-            <p-menu [model]="item.items ?? []" />
-          </p-popover>
-        </div>
-      }
-    </nav>
+      <p-popover #childPopover styleClass="k-rail-popover">
+        <p-menu [model]="item.items ?? []" />
+      </p-popover>
+    </div>
+    }
+  </nav>
   } @else {
     <p-panelmenu [model]="navItems" [multiple]="true" styleClass="k-sidebar-menu" />
   }
 </aside>
 
 @if (layoutUi.mobileDrawerOpen()) {
-  <div class="k-sidebar-backdrop" (click)="layoutUi.closeMobileDrawer()"></div>
+<div class="k-sidebar-backdrop" (click)="layoutUi.closeMobileDrawer()"></div>
 }

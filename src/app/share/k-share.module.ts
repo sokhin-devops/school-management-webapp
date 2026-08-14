@@ -2,6 +2,7 @@
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
+import { ScrollPanelModule } from 'primeng/scrollpanel';
 
 import { AutoCompleteModule } from 'primeng/autocomplete';
 import { ButtonModule } from 'primeng/button';
@@ -51,6 +52,7 @@ const ANGULAR_MODULES = [
 ];
 
 const PRIMENG_MODULES = [
+  ScrollPanelModule,
   FluidModule,
   FieldsetModule,
   SkeletonModule,

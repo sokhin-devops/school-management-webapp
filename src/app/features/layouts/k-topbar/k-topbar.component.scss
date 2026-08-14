@@ -1,10 +1,1 @@
-.k-topbar {
-  height: 64px;
-  flex-shrink: 0;
 
-  // Same surface as the sidebar, with no bottom border and no drop shadow, so
-  // the two read as one continuous shell. The shadow at the join belongs to the
-  // content panel (an inset, so it curves with the corner) — a drop shadow here
-  // would draw a straight line across the fillet and square it off again.
-  background: var(--k-shell-bg, var(--p-surface-100));
-}
