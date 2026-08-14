@@ -1,7 +1,8 @@
 <header class="flex align-items-center justify-content-between gap-1 sm:gap-3 px-1  sm:pr-3">
   <div class="flex align-items-center gap-1">
-    <p-button icon="pi pi-bars" text [rounded]="true" pTooltip="Toggle sidebar"
-      [attr.aria-expanded]="!layoutUi.sidebarCollapsed()" (click)="layoutUi.toggleSidebar()">
+    <p-button [icon]="layoutUi.sidebarCollapsed() ? 'pi pi-angle-double-right' : 'pi pi-angle-double-left'" text
+      [rounded]="true" pTooltip="Toggle sidebar" [attr.aria-expanded]="!layoutUi.sidebarCollapsed()"
+      (click)="layoutUi.toggleSidebar()">
     </p-button>
   </div>
 
@@ -9,11 +10,11 @@
     <p-select class="k-branch-select" [options]="branches()" optionLabel="name" size="small" optionValue="id"
       [ngModel]="selectedBranchId()" (onChange)="onBranchChange($event.value)" />
 
-    <p-button text  [rounded]="true" icon="pi pi-bell">
+    <p-button text [rounded]="true" icon="pi pi-bell">
     </p-button>
 
     <div class="cursor-pointer" (click)="userPopover.toggle($event)">
-      <p-avatar [label]="userInitials" shape="circle"  styleClass="bg-primary" />
+      <p-avatar [label]="userInitials" shape="circle" styleClass="bg-primary" />
     </div>
     <p-popover #userPopover>
       <div class="flex flex-column gap-3" style="min-width: 220px;">

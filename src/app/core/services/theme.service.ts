@@ -33,10 +33,6 @@ export class ThemeService {
     Nora
   };
 
-  constructor() {
-    this.loadConfig();
-  }
-
   toggleDarkMode(): void {
     this.config.darkMode = !this.config.darkMode;
     this.applyDarkMode();
@@ -71,14 +67,13 @@ export class ThemeService {
 
   // ---------- Internal ----------
 
-  private loadConfig(): void {
+  loadConfig(): void {
     try {
       const saved = localStorage.getItem(this.configKey);
       if (saved) {
         this.config = { ...this.config, ...JSON.parse(saved) };
       }
     } catch {
-      // ignore corrupted data
     }
     this.applyTheme();
   }
@@ -106,7 +101,6 @@ export class ThemeService {
   }
 
   private applyPrimaryColor(): void {
-    // palette() works with both '{sky}' tokens and hex colors
     updatePrimaryPalette(palette(this.config.primary));
   }
 
