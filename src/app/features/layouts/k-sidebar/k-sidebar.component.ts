@@ -5,71 +5,9 @@ import { filter, map } from 'rxjs';
 import type { MenuItem } from 'primeng/api';
 import type { Popover } from 'primeng/popover';
 import { ScrollPanel } from 'primeng/scrollpanel';
+import { NAV_ITEMS, isRouteUnder } from '../../../core/navigation/nav-items';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
 import { KShareModule } from '../../../share/k-share.module';
-
-/** 05-sidebar-navigation.md: main navigation tree. */
-const NAV_ITEMS: MenuItem[] = [
-  { label: 'Dashboard', icon: 'pi pi-home', routerLink: '/dashboard' },
-  {
-    label: 'Academic',
-    icon: 'pi pi-book',
-    items: [
-      { label: 'Programs', icon: 'pi pi-sitemap', routerLink: '/academic/programs' },
-      { label: 'Levels', icon: 'pi pi-list', routerLink: '/academic/levels' },
-      { label: 'Classes', icon: 'pi pi-th-large', routerLink: '/academic/classes' },
-      { label: 'Subjects', icon: 'pi pi-book', routerLink: '/academic/subjects' },
-      { label: 'Academic Years', icon: 'pi pi-calendar', routerLink: '/academic/academic-years' },
-      { label: 'Rooms', icon: 'pi pi-building', routerLink: '/academic/rooms' },
-    ],
-  },
-  {
-    label: 'People',
-    icon: 'pi pi-users',
-    items: [
-      { label: 'Students', icon: 'pi pi-graduation-cap', routerLink: '/people/students' },
-      { label: 'Teachers', icon: 'pi pi-id-card', routerLink: '/people/teachers' },
-      { label: 'Parents', icon: 'pi pi-users', routerLink: '/people/parents' },
-    ],
-  },
-  { label: 'Attendance', icon: 'pi pi-calendar-clock', routerLink: '/attendance' },
-  { label: 'Exams / Assessments', icon: 'pi pi-clipboard', routerLink: '/exams' },
-  {
-    label: 'Finance',
-    icon: 'pi pi-wallet',
-    items: [
-      { label: 'Fees', icon: 'pi pi-money-bill', routerLink: '/finance/fees' },
-      { label: 'Payments', icon: 'pi pi-credit-card', routerLink: '/finance/payments' },
-      { label: 'Expenses', icon: 'pi pi-receipt', routerLink: '/finance/expenses' },
-      { label: 'Financial Reports', icon: 'pi pi-chart-line', routerLink: '/finance/reports' },
-    ],
-  },
-  {
-    label: 'Reports',
-    icon: 'pi pi-chart-bar',
-    items: [
-      { label: 'Student Reports', icon: 'pi pi-file', routerLink: '/reports/students' },
-      { label: 'Attendance Reports', icon: 'pi pi-calendar', routerLink: '/reports/attendance' },
-      { label: 'Academic Reports', icon: 'pi pi-book', routerLink: '/reports/academic' },
-      { label: 'Financial Reports', icon: 'pi pi-chart-line', routerLink: '/reports/financial' },
-    ],
-  },
-  {
-    label: 'Settings',
-    icon: 'pi pi-cog',
-    items: [
-      { label: 'School', icon: 'pi pi-building', routerLink: '/settings/school' },
-      { label: 'Branches', icon: 'pi pi-map-marker', routerLink: '/settings/branches' },
-      { label: 'Academic', icon: 'pi pi-book', routerLink: '/settings/academic' },
-      { label: 'Users & Roles', icon: 'pi pi-users', routerLink: '/settings/users-roles' },
-      { label: 'Notifications', icon: 'pi pi-bell', routerLink: '/settings/notifications' },
-      { label: 'Appearance', icon: 'pi pi-palette', routerLink: '/settings/appearance' },
-      { label: 'Security', icon: 'pi pi-shield', routerLink: '/settings/security' },
-      { label: 'Subscription', icon: 'pi pi-star', routerLink: '/settings/subscription' },
-      { label: 'System', icon: 'pi pi-server', routerLink: '/settings/system' },
-    ],
-  },
-];
 
 @Component({
   selector: 'app-k-sidebar',
@@ -160,6 +98,6 @@ export class KSidebarComponent implements OnInit {
       ? item.items.map((child) => child.routerLink)
       : [item.routerLink];
 
-    return links.some((link) => typeof link === 'string' && url.startsWith(link));
+    return links.some((link) => isRouteUnder(url, link));
   }
 }

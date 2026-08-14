@@ -3,6 +3,7 @@
   --k-shell-shadow-color: rgba(0, 0, 0, 0.16);
   --k-topbar-height: 4rem;
   --k-content-radius: 16px;
+  --k-content-pad: 1.25rem;
 }
 
 .k-layout {
@@ -20,11 +21,16 @@
   overflow: hidden;
 }
 
+// Holds the corner treatment and stays put: the breadcrumb is pinned above the
+// scroll area rather than scrolling with it, so this box no longer scrolls
+// itself. `overflow: hidden` keeps the body clipped to the rounded corner, and
+// keeps the inset shadow painted here instead of riding along with the content.
 .k-layout-content {
+  display: flex;
+  flex-direction: column;
   flex: 1;
   min-height: 0;
-  padding: 1.25rem;
-  overflow-y: auto;
+  overflow: hidden;
   background: var(--p-content-background);
   border-top-left-radius: var(--k-content-radius);
   box-shadow:
@@ -32,10 +38,43 @@
     inset 10px 10px 18px -14px var(--k-shell-shadow-color);
 }
 
+// Deliberately no background of its own — an opaque bar here would paint over
+// the inset shadow it sits directly on top of.
+.k-breadcrumb {
+  flex-shrink: 0;
+  padding: var(--k-content-pad) var(--k-content-pad) 0.75rem;
+
+  ::ng-deep .p-breadcrumb {
+    padding: 0;
+    background: transparent;
+  }
+
+  // The crumbs are labels, not links: a group has no page of its own and the
+  // last one is the page you are already on. `disabled` is what keeps them out
+  // of the tab order, so undo the dimming that rides along with it.
+  ::ng-deep .p-breadcrumb-item.p-disabled {
+    opacity: 1;
+  }
+}
+
+.k-layout-body {
+  flex: 1;
+  min-height: 0;
+  padding: 0 var(--k-content-pad) var(--k-content-pad);
+  overflow-y: auto;
+}
+
 @media (max-width: 767.98px) {
+  :host {
+    --k-content-pad: 1rem;
+  }
+
   .k-layout-content {
-    padding: 1rem;
     border-left: 0;
     border-top-left-radius: 0;
+  }
+
+  .k-breadcrumb {
+    padding-bottom: 0.5rem;
   }
 }
