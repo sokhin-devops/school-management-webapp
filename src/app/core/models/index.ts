@@ -1,4 +1,5 @@
 export * from './enums';
+export * from './auth.model';
 export * from './base.model';
 export * from './school.model';
 export * from './branch.model';

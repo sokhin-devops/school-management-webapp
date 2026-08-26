@@ -1,4 +1,5 @@
 import { Routes } from '@angular/router';
+import { authGuard } from './core/guards/auth.guard';
 
 const comingSoon = (title: string) => ({
   loadComponent: () =>
@@ -39,6 +40,7 @@ export const routes: Routes = [
   {
     path: '',
     loadComponent: () => import('./features/layouts/layout/layout.component').then((m) => m.LayoutComponent),
+    canActivate: [authGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {
