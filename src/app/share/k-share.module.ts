@@ -42,6 +42,7 @@ import { TagModule } from 'primeng/tag';
 import { StepperModule } from 'primeng/stepper';
 import { FluidModule } from 'primeng/fluid';
 import { PanelMenuModule } from 'primeng/panelmenu';
+import { PaginatorModule } from 'primeng/paginator';
 import { SharedModule } from 'primeng/api';
 
 
@@ -92,6 +93,7 @@ const PRIMENG_MODULES = [
   TagModule,
   StepperModule,
   PanelMenuModule,
+  PaginatorModule,
   SharedModule
 ];
 

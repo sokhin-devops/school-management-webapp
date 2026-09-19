@@ -1,4 +1,441 @@
-.k-stat-icon {
-  width: 48px;
-  height: 48px;
+:host {
+  --k-good: #006300;
+  --k-good-wash: rgba(12, 163, 12, 0.1);
+  --k-bad: #c2312f;
+  --k-bad-wash: rgba(208, 59, 59, 0.1);
+  --k-warning: #b46a05;
+  --k-warning-wash: rgba(250, 178, 25, 0.16);
+  --k-critical: #d03b3b;
+  --k-info: #2a78d6;
+  --k-info-wash: rgba(42, 120, 214, 0.12);
+  --k-accent-wash: color-mix(in srgb, var(--p-primary-color) 14%, transparent);
+
+  display: block;
+}
+
+// The status hues are re-stepped for the dark surface rather than reused from
+// light: the same ink that clears contrast on white disappears on near-black.
+:host-context(.app-dark) {
+  --k-good: #0ca30c;
+  --k-good-wash: rgba(12, 163, 12, 0.18);
+  --k-bad: #e66767;
+  --k-bad-wash: rgba(230, 103, 103, 0.18);
+  --k-warning: #fab219;
+  --k-info: #3987e5;
+  --k-accent-wash: color-mix(in srgb, var(--p-primary-color) 22%, transparent);
+}
+
+:host ::ng-deep {
+  p-card {
+    display: flex;
+    width: 100%;
+  }
+
+  .k-feed-avatar.p-avatar {
+    width: 2rem;
+    height: 2rem;
+    flex-shrink: 0;
+    font-size: 0.75rem;
+    font-weight: 600;
+    background: var(--k-accent-wash);
+    color: var(--p-primary-color);
+  }
+}
+
+// PrimeFlex pulls each .grid up by its own gutter, so this lands on a clean
+// 1rem between sections — the same gap the columns use inside a row.
+.k-row {
+  margin-top: 0.5rem;
+}
+
+// --- Card headers ----------------------------------------------------------
+
+.k-card-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.75rem;
+}
+
+.k-card-title {
+  font-size: 0.9375rem;
+  line-height: 1.3;
+}
+
+.k-card-lead {
+  font-size: 1.625rem;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.k-card-title,
+.k-card-lead,
+.k-tile-value,
+.k-donut-total {
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.k-card-sub,
+.k-tile-label,
+.k-tile-note,
+.k-donut-caption,
+.k-feed-time,
+.k-feed-empty,
+.k-legend-share,
+.k-meter-value,
+.k-summary-note,
+.k-summary dt {
+  color: var(--p-text-muted-color);
+}
+
+.k-card-sub {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+}
+
+.k-card-lead-note {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.6875rem;
+  font-weight: 400;
+  text-align: right;
+  color: var(--p-text-muted-color);
+}
+
+// --- Stat tiles ------------------------------------------------------------
+
+.k-tile-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
+  background: var(--k-accent-wash);
+  color: var(--p-primary-color);
+}
+
+.k-tile-label {
+  font-size: 0.75rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k-tile-value {
+  font-size: 1.5rem;
+  line-height: 1.15;
+}
+
+.k-tile-foot {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.375rem;
+  min-height: 1.25rem;
+}
+
+.k-tile-note,
+.k-donut-caption,
+.k-feed-time {
+  font-size: 0.6875rem;
+}
+
+.k-delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.1875rem;
+  padding: 0.0625rem 0.375rem;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  white-space: nowrap;
+
+  .pi {
+    font-size: 0.625rem;
+  }
+}
+
+// The arrow says which way it moved, the colour says whether that is good news —
+// so direction never rides on colour alone.
+.k-delta-good {
+  background: var(--k-good-wash);
+  color: var(--k-good);
+}
+
+.k-delta-bad {
+  background: var(--k-bad-wash);
+  color: var(--k-bad);
+}
+
+.k-spark {
+  margin-top: auto;
+  padding-top: 0.25rem;
+}
+
+// --- Charts ----------------------------------------------------------------
+
+// Grows into whatever height the row's tallest card sets, so a chart never
+// leaves a band of empty card beneath it. The donut opposite is a fixed height,
+// which is what anchors the row.
+.k-chart {
+  flex: 1;
+  min-height: 16rem;
+  min-width: 0;
+
+  p-chart {
+    display: block;
+    height: 100%;
+  }
+}
+
+.k-donut {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.k-donut-centre {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  text-align: center;
+}
+
+.k-donut-total {
+  font-size: 1.5rem;
+  line-height: 1.1;
+}
+
+// --- Lists -----------------------------------------------------------------
+
+.k-legend,
+.k-meters,
+.k-feed {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+}
+
+// Legend and table view in one: the swatch carries identity, the columns carry
+// every value the ring only shows on hover.
+.k-legend {
+  margin-top: auto;
+  gap: 0.125rem;
+}
+
+.k-legend-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.3125rem 0.25rem;
+  font-size: 0.8125rem;
+}
+
+.k-legend-row + .k-legend-row,
+.k-feed-row + .k-feed-row {
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.k-legend-swatch {
+  flex-shrink: 0;
+  width: 0.625rem;
+  height: 0.625rem;
+  border-radius: 3px;
+}
+
+.k-legend-name {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--p-text-color);
+}
+
+.k-legend-value {
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.k-legend-share {
+  width: 2.5rem;
+  text-align: right;
+}
+
+.k-legend-value,
+.k-legend-share,
+.k-meter-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.k-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem 2rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--p-content-border-color);
+
+  dt {
+    font-size: 0.6875rem;
+  }
+
+  dd {
+    margin-top: 0.125rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--p-text-color);
+  }
+}
+
+.k-summary-note {
+  font-size: 0.75rem;
+  font-weight: 400;
+}
+
+// --- Capacity meters -------------------------------------------------------
+
+.k-meters {
+  flex: 1;
+  justify-content: space-between;
+  gap: 0.875rem;
+}
+
+.k-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.k-meter-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--p-text-color);
+
+  .pi {
+    font-size: 0.75rem;
+  }
+
+  .pi-exclamation-triangle {
+    color: var(--k-warning);
+  }
+
+  .pi-exclamation-circle {
+    color: var(--k-critical);
+  }
+}
+
+// The unfilled track is a lighter step of the fill's own ramp, so the state
+// reads across the whole bar rather than only its filled part.
+.k-meter-track {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--k-accent-wash);
+}
+
+.k-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--p-primary-color);
+
+  &.is-warning {
+    background: var(--k-warning);
+  }
+
+  &.is-critical {
+    background: var(--k-critical);
+  }
+}
+
+// --- Feeds -----------------------------------------------------------------
+
+.k-feed-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+}
+
+.k-feed-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+
+  &.is-info {
+    background: var(--k-info-wash);
+    color: var(--k-info);
+  }
+
+  &.is-success {
+    background: var(--k-good-wash);
+    color: var(--k-good);
+  }
+
+  &.is-warning {
+    background: var(--k-warning-wash);
+    color: var(--k-warning);
+  }
+}
+
+.k-feed-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.k-feed-message {
+  font-size: 0.8125rem;
+  color: var(--p-text-color);
+}
+
+.k-feed-empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+@media (max-width: 575.98px) {
+  .k-card-lead {
+    font-size: 1.375rem;
+  }
+
+  .k-summary {
+    gap: 0.75rem 1.5rem;
+  }
+
+  // Two tiles to a row on a phone. At that width the label gets to wrap rather
+  // than be truncated, and the delta's period caption drops — the chip's arrow
+  // and figure still say which way it moved and by how much.
+  .k-tile-label {
+    white-space: normal;
+    line-height: 1.25;
+  }
+
+  .k-tile-value {
+    font-size: 1.25rem;
+  }
+
+  .k-delta-caption {
+    display: none;
+  }
 }

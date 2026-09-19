@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal } from '@angular/core';
 import { usePreset, updatePrimaryPalette, updateSurfacePalette, palette } from '@primeng/themes';
 
 import Material from '@primeng/themes/material';
@@ -26,6 +26,15 @@ export class ThemeService {
     surface: '{slate}'
   };
 
+  private readonly _revision = signal(0);
+
+  /**
+   * Bumps every time the applied theme changes. Anything that paints outside the
+   * CSS cascade — canvas charts, for one — can watch this to re-read the design
+   * tokens, since a palette swap only rewrites PrimeNG's stylesheet.
+   */
+  readonly revision = this._revision.asReadonly();
+
   private readonly presetsMap: Record<string, any> = {
     Aura,
     Material,
@@ -37,6 +46,7 @@ export class ThemeService {
     this.config.darkMode = !this.config.darkMode;
     this.applyDarkMode();
     this.saveConfig();
+    this.bump();
   }
 
   setPreset(presetName: string): void {
@@ -46,6 +56,7 @@ export class ThemeService {
       this.applyPrimaryColor();
       this.applySurfaceColor();
       this.saveConfig();
+      this.bump();
     }
   }
 
@@ -53,12 +64,14 @@ export class ThemeService {
     this.config.primary = colorToken;
     this.applyPrimaryColor();
     this.saveConfig();
+    this.bump();
   }
 
   setSurfaceColor(surfaceToken: string): void {
     this.config.surface = surfaceToken;
     this.applySurfaceColor();
     this.saveConfig();
+    this.bump();
   }
 
   getConfig(): ThemeConfig {
@@ -76,6 +89,11 @@ export class ThemeService {
     } catch {
     }
     this.applyTheme();
+    this.bump();
+  }
+
+  private bump(): void {
+    this._revision.update((value) => value + 1);
   }
 
   private saveConfig(): void {

@@ -1,30 +1,43 @@
-<div class="flex flex-column gap-3">
-  <div class="flex flex-column sm:flex-row sm:align-items-center sm:justify-content-between gap-2">
-    <p-iconfield iconPosition="left" class="k-student-search">
-      <p-inputicon class="pi pi-search" />
-      <input pInputText type="text" placeholder="Search students..." [ngModel]="searchTerm()"
-        (ngModelChange)="searchTerm.set($event)" />
-    </p-iconfield>
+<div class="k-student-page">
+  <div class="k-student-toolbar flex flex-column sm:flex-row sm:align-items-center sm:justify-content-between gap-2">
+    <div class="flex flex-column sm:flex-row sm:align-items-center gap-2">
+      <p-iconfield iconPosition="left" class="k-student-search">
+        <p-inputicon class="pi pi-search" />
+        <input pInputText pSize="small" type="text" placeholder="Search students..." [ngModel]="searchTerm()"
+          (ngModelChange)="onSearchChange($event)" />
+      </p-iconfield>
+
+      <p-select [options]="classOptions()" [ngModel]="selectedClass()" (ngModelChange)="selectedClass.set($event)"
+        optionLabel="label" optionValue="value" placeholder="All classes" size="small" [showClear]="true"
+        [filter]="true" filterBy="label" styleClass="k-student-filter" />
+
+      <p-select [options]="statusOptions" [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)"
+        optionLabel="label" optionValue="value" placeholder="All statuses" size="small" [showClear]="true"
+        styleClass="k-student-filter" />
+
+      <p-button label="Clear" icon="pi pi-filter-slash" size="small" severity="secondary" [text]="true"
+        [disabled]="!hasFilters()" (onClick)="clearFilters()" />
+    </div>
 
     <p-button label="Add Student" icon="pi pi-plus" size="small" />
   </div>
 
-  <p-dataview [value]="students()" [layout]="layoutUi.layout()" [paginator]="true" [rows]="8">
+  <p-dataview class="k-student-dataview" [value]="pagedStudents()" [layout]="layoutUi.layout()">
     <ng-template #empty>
       <div class="text-center text-color-secondary py-6">No students found.</div>
     </ng-template>
 
     <ng-template #list let-items>
-      <div class="overflow-x-auto">
-        <p-table [value]="items" styleClass="p-datatable-sm">
+      <div class="k-student-table-wrap">
+        <p-table class="k-student-table" [value]="items" styleClass="p-datatable-sm">
           <ng-template pTemplate="header">
             <tr>
-              <th>Student</th>
-              <th>Admission No.</th>
-              <th>Class</th>
-              <th>Contact</th>
-              <th>Status</th>
-              <th class="k-actions-col">Actions</th>
+              <th style="width: 28%">Student</th>
+              <th style="width: 16%">Admission No.</th>
+              <th style="width: 14%">Class</th>
+              <th style="width: 18%">Contact</th>
+              <th style="width: 12%">Status</th>
+              <th style="width: 12%">Actions</th>
             </tr>
           </ng-template>
           <ng-template pTemplate="body" let-student>
@@ -61,13 +74,20 @@
     </ng-template>
 
     <ng-template #grid let-items>
-      <div class="grid">
-        @for (student of items; track student.id) {
-        <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
-          <app-student-card [student]="student" />
+      <div class="k-student-scroll">
+        <div class="grid">
+          @for (student of items; track student.id) {
+          <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
+            <app-student-card [student]="student" />
+          </div>
+          }
         </div>
-        }
       </div>
     </ng-template>
   </p-dataview>
+
+  <p-paginator class="k-student-paginator" [first]="first()" [rows]="rows()" [totalRecords]="students().length"
+    [rowsPerPageOptions]="rowsPerPageOptions" [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} students"
+    (onPageChange)="onPageChange($event)" />
 </div>

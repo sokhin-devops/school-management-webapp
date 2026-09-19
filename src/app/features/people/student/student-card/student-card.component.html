@@ -1,39 +1,37 @@
-<p-card styleClass="k-student-card h-full">
-  <div class="flex flex-column align-items-center text-center gap-2">
-    <p-avatar [label]="initials" size="xlarge" shape="circle" styleClass="bg-primary k-student-card-avatar" />
-    <div>
-      <div class="font-semibold text-lg">{{ student.firstName }} {{ student.lastName }}</div>
-      <div class="text-sm text-color-secondary">{{ student.studentDetails?.admissionNumber }}</div>
+<article class="k-student-card">
+  <header class="k-student-card-head">
+    <p-avatar [label]="initials" shape="circle" styleClass="k-student-card-avatar" />
+
+    <div class="k-student-card-identity">
+      <h3 class="k-student-card-name">{{ student.firstName }} {{ student.lastName }}</h3>
+      <span class="k-student-card-id">{{ student.studentDetails?.admissionNumber }}</span>
     </div>
-    <p-tag [value]="student.status" [severity]="statusSeverity(student.status)" />
-  </div>
 
-  <p-divider styleClass="my-3" />
+    <p-tag [value]="student.status" [severity]="statusSeverity(student.status)" styleClass="k-student-card-status" />
+  </header>
 
-  <div class="flex flex-column gap-2 text-sm">
-    <div class="flex align-items-center gap-2 text-color-secondary">
+  <div class="k-student-card-meta">
+    <div class="k-student-card-row">
       <i class="pi pi-graduation-cap"></i>
       <span>{{ student.className }}</span>
     </div>
     @if (student.email) {
-      <div class="flex align-items-center gap-2 text-color-secondary">
-        <i class="pi pi-envelope"></i>
-        <span class="k-truncate">{{ student.email }}</span>
-      </div>
+    <div class="k-student-card-row">
+      <i class="pi pi-envelope"></i>
+      <span>{{ student.email }}</span>
+    </div>
     }
     @if (student.phone) {
-      <div class="flex align-items-center gap-2 text-color-secondary">
-        <i class="pi pi-phone"></i>
-        <span>{{ student.phone }}</span>
-      </div>
+    <div class="k-student-card-row">
+      <i class="pi pi-phone"></i>
+      <span>{{ student.phone }}</span>
+    </div>
     }
   </div>
 
-  <p-divider styleClass="my-3" />
-
-  <div class="flex justify-content-center gap-1">
+  <footer class="k-student-card-actions">
     <p-button icon="pi pi-eye" [text]="true" [rounded]="true" size="small" severity="secondary" pTooltip="View" />
-    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" severity="info" pTooltip="Edit" />
+    <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" severity="secondary" pTooltip="Edit" />
     <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small" severity="danger" pTooltip="Delete" />
-  </div>
-</p-card>
+  </footer>
+</article>
