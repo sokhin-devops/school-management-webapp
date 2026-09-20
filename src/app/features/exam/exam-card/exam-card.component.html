@@ -1,0 +1,36 @@
+<p-card styleClass="k-card">
+  <header class="k-exam-head">
+    <div class="k-exam-identity">
+      <h3 class="k-exam-name" [title]="assessment().name">{{ assessment().name }}</h3>
+      <span class="k-exam-subtitle">{{ assessment().subject }} · {{ assessment().className }}</span>
+    </div>
+
+    <k-status-tag [status]="assessment().status" />
+  </header>
+
+  <div class="k-facts">
+    <div>
+      <div class="k-fact-label">Type</div>
+      <div class="k-fact-value">{{ assessment().type }}</div>
+    </div>
+    <div>
+      <div class="k-fact-label">Date</div>
+      <div class="k-fact-value">{{ assessment().date | date: 'd MMM y' }}</div>
+    </div>
+    <div>
+      <div class="k-fact-label">Average</div>
+      <div class="k-fact-value k-numeric">
+        @if (assessment().graded) {
+          {{ averageLabel() }}
+        } @else {
+          <p-tag value="Not graded" severity="warn" [rounded]="true" />
+        }
+      </div>
+    </div>
+  </div>
+
+  <footer class="k-exam-actions">
+    <k-row-actions [label]="assessment().name" (view)="view.emit(assessment())" (edit)="edit.emit(assessment())"
+      (remove)="remove.emit(assessment())" />
+  </footer>
+</p-card>

@@ -1,8 +1,13 @@
 <aside class="k-sidebar" [class.k-sidebar-open]="layoutUi.mobileDrawerOpen()"
   [class.k-sidebar-collapsed]="layoutUi.sidebarCollapsed()">
-  <div class="k-sidebar-brand flex align-items-center gap-3">
-    <p-avatar icon="pi pi-building" shape="circle" />
-    <span class="k-sidebar-brand-label text-md font-bold white-space-nowrap">School SM</span>
+  <div class="k-sidebar-brand">
+    <span class="k-brand-mark" aria-hidden="true">
+      <i class="pi pi-building"></i>
+    </span>
+    <span class="k-brand-text">
+      <span class="k-brand-name">Norton University</span>
+      <span class="k-brand-meta">School management</span>
+    </span>
   </div>
 
   <!-- The brand stays put; only the nav scrolls, with an overlay bar so a long

@@ -1,0 +1,19 @@
+<article class="k-ref-card">
+  <header class="k-ref-head">
+    <div class="k-ref-identity">
+      <h3 class="k-ref-name" [title]="program().name">{{ program().name }}</h3>
+      @if (program().code; as code) {
+        <span class="k-ref-code">{{ code }}</span>
+      }
+    </div>
+
+    <k-status-tag [status]="program().status" />
+  </header>
+
+  <p class="k-ref-text">{{ program().description || 'No description yet.' }}</p>
+
+  <footer class="k-ref-actions">
+    <k-row-actions [label]="program().name" (view)="view.emit(program())" (edit)="edit.emit(program())"
+      (remove)="remove.emit(program())" />
+  </footer>
+</article>

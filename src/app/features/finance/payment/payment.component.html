@@ -1,0 +1,75 @@
+<k-list-shell>
+  <k-list-toolbar k-toolbar searchPlaceholder="Search reference, student or fee" searchLabel="Search payments"
+    [search]="records.search()" (searchChange)="records.onSearch($event)">
+    <ng-container k-filters>
+      <p-select styleClass="k-list-filter" [options]="methodOptions" [ngModel]="methodFilter.value()"
+        (ngModelChange)="methodFilter.value.set($event); records.onFilterChange()" optionLabel="label"
+        optionValue="value" placeholder="All methods" size="small" [showClear]="true" ariaLabel="Filter by method" />
+
+      <p-select styleClass="k-list-filter" [options]="statusOptions" [ngModel]="statusFilter.value()"
+        (ngModelChange)="statusFilter.value.set($event); records.onFilterChange()" optionLabel="label"
+        optionValue="value" placeholder="All statuses" size="small" [showClear]="true" ariaLabel="Filter by status" />
+
+      @if (records.hasFilters()) {
+        <p-button label="Clear" icon="pi pi-filter-slash" size="small" severity="secondary" [text]="true"
+          (onClick)="records.clear()" />
+      }
+    </ng-container>
+
+    <ng-container k-actions>
+      <span class="k-list-count">{{ records.countLabel() }}</span>
+      <p-button label="Record Payment" icon="pi pi-plus" size="small" />
+    </ng-container>
+  </k-list-toolbar>
+
+  @if (records.page().length) {
+    <div class="k-table-wrap">
+      <p-table class="k-table" [value]="records.page()" [customSort]="true" [sortField]="records.sortField()"
+        [sortOrder]="records.sortOrder()" (sortFunction)="records.onSort($event)" [scrollable]="true"
+        scrollHeight="flex" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 16%" pSortableColumn="reference">Reference <p-sortIcon field="reference" /></th>
+            <th style="width: 18%" pSortableColumn="studentName">Student <p-sortIcon field="studentName" /></th>
+            <th style="width: 20%">Fee</th>
+            <th style="width: 11%" pSortableColumn="amount">Amount <p-sortIcon field="amount" /></th>
+            <th style="width: 12%" pSortableColumn="date">Date <p-sortIcon field="date" /></th>
+            <th style="width: 11%">Method</th>
+            <th style="width: 12%" pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-payment>
+          <tr>
+            <td class="k-numeric">{{ payment.reference }}</td>
+            <td class="k-cell-strong">{{ payment.studentName }}</td>
+            <td [title]="payment.feeName">{{ payment.feeName }}</td>
+            <td class="k-amount">{{ money(payment.amount) }}</td>
+            <td class="k-numeric">{{ payment.date | date: 'd MMM y' }}</td>
+            <td>{{ humanize(payment.method) }}</td>
+            <td>
+              <p-tag [value]="humanize(payment.status)" [severity]="severity(payment.status)" [rounded]="true" />
+            </td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  } @else {
+    <k-empty-state icon="pi-credit-card" title="No payments found"
+      [message]="records.hasFilters()
+        ? 'No payment matches the current search and filters.'
+        : 'Payments recorded against fees will be listed here.'">
+      @if (records.hasFilters()) {
+        <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
+          (onClick)="records.clear()" />
+      } @else {
+        <p-button label="Record Payment" icon="pi pi-plus" size="small" />
+      }
+    </k-empty-state>
+  }
+
+  <p-paginator k-footer [first]="records.first()" [rows]="records.rows()" [totalRecords]="records.matching().length"
+    [rowsPerPageOptions]="records.pageSizeOptions" [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
+    (onPageChange)="records.onPageChange($event)" />
+</k-list-shell>

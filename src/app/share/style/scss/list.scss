@@ -1,0 +1,247 @@
+// Layout for the record-list pages (People, Academic, Finance …): a fixed
+// toolbar, exactly one scrolling pane, and a fixed paginator — so a list never
+// scrolls the page as a whole and the header stays put while rows move.
+//
+// Global because PrimeNG's DataView and Table render with ViewEncapsulation.None:
+// a component-scoped selector never reaches .p-dataview-content or
+// .p-datatable-tbody. Every rule is keyed on a .k-* class, so only a list that
+// opts in is touched.
+
+// --- DataView --------------------------------------------------------------
+
+.k-dataview {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+
+  .p-dataview {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-width: 0;
+    min-height: 0;
+  }
+
+  .p-dataview-content {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    overflow: hidden;
+    background: transparent;
+  }
+
+  // DataView wraps the empty template in a plain div, so both it and the message
+  // box have to stretch for the empty state to centre in the pane rather than
+  // perch at the top of it. The template ref DataView looks for is
+  // `#emptymessage` — `#empty` silently renders nothing.
+  .p-dataview-content > div:has(> .p-dataview-emptymessage),
+  .p-dataview-emptymessage {
+    display: flex;
+    flex: 1 1 auto;
+    padding: 0;
+  }
+}
+
+// Card view: the only scrolling pane in grid layout. PrimeFlex's negative grid
+// margins get clipped rather than scrolled sideways.
+.k-grid-scroll {
+  flex: 1 1 auto;
+  min-height: 0;
+  padding-right: 0.25rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+// --- Table -----------------------------------------------------------------
+
+// A table is a panel in its own right — overflow:hidden is what keeps the
+// header's tint inside the rounded corners.
+.k-table-wrap {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background: var(--p-content-background);
+  box-shadow: var(--k-panel-shadow);
+}
+
+// The table runs in PrimeNG's own flex-scroll mode (`[scrollable]` +
+// `scrollHeight="flex"`), which keeps the header and the body in ONE table. That
+// is what makes the columns line up: with `table-layout: fixed`, the width set
+// on a <th> governs its whole column, body cells included, so the two halves
+// cannot drift apart. The previous approach split thead and tbody into separate
+// fixed-layout tables, and since only the th's carried widths the body simply
+// divided itself into six equal columns — every column after the first sat up to
+// 171px away from its own header.
+//
+// All that is left to do here is make the header stick: PrimeNG gives it `top`
+// and a z-index but leaves `position` alone.
+.k-table {
+  // The header needs a real background, not least because a transparent sticky
+  // header lets the rows scroll through underneath it.
+  --k-header-background: var(--k-table-header);
+  --p-datatable-header-cell-background: var(--k-header-background);
+
+  display: flex;
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100%;
+
+  .p-datatable {
+    display: flex;
+    flex: 1 1 auto;
+    flex-direction: column;
+    min-height: 0;
+    min-width: 0;
+    width: 100%;
+  }
+
+  // PrimeNG already sets overflow:auto inline here, so the table scrolls both
+  // ways: down past the sticky header, and sideways once it hits its min-width.
+  // The bar itself is styled globally.
+
+  // A column's width is declared once, on its <th>, and the body follows.
+  //
+  // The min-width is the floor those percentages are measured against: without
+  // it a six-column table on a phone keeps dividing the same 400px until every
+  // cell is a four-line sliver. Below this the container scrolls sideways
+  // instead, and the columns stay readable. (The card layout remains the better
+  // answer on a phone — the layout toggle in the breadcrumb bar switches to it.)
+  .p-datatable-table {
+    table-layout: fixed;
+    min-width: 54rem;
+  }
+
+  .p-datatable-thead > tr > th {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+  }
+
+  // Header and body cells share the same box and the same type scale, so the
+  // columns read as one grid. Only weight, case and colour mark the header out.
+  .p-datatable-thead > tr > th,
+  .p-datatable-tbody > tr > td {
+    padding: 0.625rem 1rem;
+    font-size: 0.75rem;
+    vertical-align: middle;
+    border-bottom: 1px solid var(--p-content-border-color);
+  }
+
+  // Full-strength ink, not the muted token: on a header band this tinted, muted
+  // grey measures 4.2:1 and misses the 4.5 small-text threshold.
+  .p-datatable-thead > tr > th {
+    font-weight: 600;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--p-text-color);
+  }
+
+  .p-datatable-tbody > tr > td {
+    font-size: 0.8125rem;
+    color: var(--p-text-color);
+  }
+
+  // The panel's own edge ends the table, so a rule under the last row would read
+  // as a doubled line just inside the rounded corner.
+  .p-datatable-tbody > tr:last-child > td {
+    border-bottom: 0;
+  }
+
+  // A solid block of colour behind the sorted column reads as a selection rather
+  // than as "this is the sort", so the accent moves to the label and the icon.
+  // The background still has to match the rest of the header — it is sticky.
+  .p-datatable-thead > tr > th.p-datatable-column-sorted {
+    background: var(--k-header-background);
+    color: var(--k-table-header-accent);
+  }
+
+  .p-datatable-thead > tr > th.p-datatable-sortable-column:hover {
+    background: color-mix(in srgb, var(--p-primary-color) 10%, var(--k-header-background));
+  }
+
+}
+
+// --- Cell shapes shared by every list --------------------------------------
+
+// The record count that sits beside a list's primary action.
+.k-list-count {
+  font-size: 0.75rem;
+  white-space: nowrap;
+  color: var(--p-text-muted-color);
+}
+
+// A dropdown filter in the toolbar. Wide enough that "All departments" and
+// "All statuses" do not truncate.
+.k-list-filter {
+  min-width: 11rem;
+}
+
+// Avatar + name + secondary line: the identity cell every People table opens with.
+.k-person-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+  min-width: 0;
+}
+
+.k-person-cell-avatar.p-avatar {
+  flex: 0 0 auto;
+  width: 2rem;
+  height: 2rem;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  background: color-mix(in srgb, var(--p-primary-color) 14%, transparent);
+  color: var(--p-primary-color);
+}
+
+.k-person-cell-identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.k-person-cell-name,
+.k-person-cell-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k-person-cell-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.k-person-cell-sub {
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+}
+
+// Reference numbers and money are compared down their column, so the digits line up.
+.k-numeric {
+  font-variant-numeric: tabular-nums;
+}
+
+.k-amount {
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+// The cell that carries a row's identity when there is no avatar beside it.
+.k-cell-strong {
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+// A figure that has gone the wrong way — a net loss, an overspend.
+.k-negative {
+  color: #c2312f;
+}
+
+:host-context(.app-dark) .k-negative,
+.app-dark .k-negative {
+  color: #e66767;
+}

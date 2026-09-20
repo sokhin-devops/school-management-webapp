@@ -1,0 +1,47 @@
+<k-list-shell>
+  <div k-toolbar class="k-report-toolbar">
+    <p-datepicker [(ngModel)]="range" selectionMode="range" [readonlyInput]="true" size="small"
+      placeholder="Reporting period" [showIcon]="true" styleClass="k-report-range" inputId="finance-report-range"
+      ariaLabel="Reporting period" />
+
+    <p-button label="Export" icon="pi pi-download" size="small" severity="secondary" [outlined]="true"
+      styleClass="k-report-export" />
+  </div>
+
+  <div class="k-page-scroll">
+    <p-card styleClass="k-card">
+      <dl class="k-facts">
+        @for (figure of figures(); track figure.label) {
+          <div>
+            <dt class="k-fact-label">{{ figure.label }}</dt>
+            <dd class="k-fact-value">{{ figure.value }}</dd>
+          </div>
+        }
+      </dl>
+    </p-card>
+
+    <div class="k-table-wrap k-report-table">
+      <p-table class="k-table" [value]="rows()" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 24%">Month</th>
+            <th style="width: 19%">Collected</th>
+            <th style="width: 19%">Outstanding</th>
+            <th style="width: 19%">Expenses</th>
+            <th style="width: 19%">Net</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td class="k-cell-strong">{{ row.month }}</td>
+            <td class="k-amount">{{ money(row.collected) }}</td>
+            <td class="k-numeric">{{ money(row.outstanding) }}</td>
+            <td class="k-numeric">{{ money(row.expenses) }}</td>
+            <td class="k-amount" [class.k-negative]="net(row) < 0">{{ money(net(row)) }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</k-list-shell>

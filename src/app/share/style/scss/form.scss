@@ -1,0 +1,123 @@
+// Layout for the pages that are not record lists: settings, detail panes and
+// report views. They share one rule — the page itself never scrolls, the body
+// does — so switching between a list and a settings page does not make the whole
+// shell jump.
+
+// The single scrolling pane on a non-list page.
+.k-page-scroll {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 1rem;
+  min-height: 0;
+  padding-right: 0.25rem;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+// --- Fields ----------------------------------------------------------------
+
+.k-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+.k-field-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.k-field-hint {
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+}
+
+// Controls fill their column; the grid decides how wide that column is.
+.k-field .p-inputtext,
+.k-field .p-select,
+.k-field .p-datepicker,
+.k-field .p-inputnumber,
+.k-field .p-password,
+.k-field .p-textarea {
+  width: 100%;
+}
+
+// --- A labelled row of read-only facts -------------------------------------
+
+.k-facts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+  gap: 1rem 1.5rem;
+}
+
+.k-fact-label {
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+}
+
+.k-fact-value {
+  margin-top: 0.125rem;
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+// --- A toggle/checkbox preference row --------------------------------------
+
+.k-pref-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 0.75rem 0;
+}
+
+.k-pref-row + .k-pref-row {
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.k-pref-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.k-pref-note {
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}
+
+// --- Report pages ----------------------------------------------------------
+
+// Reports have no free-text search, so they put a plain filter row in the
+// shell's toolbar slot instead of k-list-toolbar.
+.k-report-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.k-report-range {
+  min-width: 15rem;
+}
+
+// Pushes the export action to the far end of the row.
+.k-report-export {
+  margin-inline-start: auto;
+}
+
+// Inside the scrolling page body the table sizes to its rows rather than
+// fighting the scroller for height.
+.k-report-table {
+  flex: 0 0 auto;
+  max-height: none;
+  overflow: visible;
+}
+
+.k-report-table .p-datatable-table-container {
+  overflow: visible !important;
+}

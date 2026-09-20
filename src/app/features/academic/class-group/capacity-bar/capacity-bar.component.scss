@@ -1,0 +1,56 @@
+// The hues and the track wash are the dashboard's class-capacity meter, so a
+// full class reads the same on the Classes list as it does on the home page.
+:host {
+  --k-warning: #b46a05;
+  --k-critical: #d03b3b;
+  --k-track: color-mix(in srgb, var(--p-primary-color) 14%, transparent);
+
+  display: block;
+  min-width: 0;
+}
+
+:host-context(.app-dark) {
+  --k-warning: #fab219;
+  --k-critical: #e66767;
+  --k-track: color-mix(in srgb, var(--p-primary-color) 22%, transparent);
+}
+
+.k-capacity {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3125rem;
+}
+
+.k-capacity-label {
+  font-size: 0.75rem;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-text-color);
+}
+
+.k-capacity-track {
+  display: block;
+  overflow: hidden;
+  width: 100%;
+  max-width: 9rem;
+  height: 5px;
+  border-radius: 999px;
+  background: var(--k-track);
+}
+
+.k-capacity-fill {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: var(--p-primary-color);
+  transition: width 0.2s ease;
+
+  // A nearly full class is worth seeing before it becomes a problem; a full one
+  // is the row an admissions officer is looking for.
+  &.is-warning {
+    background: var(--k-warning);
+  }
+
+  &.is-critical {
+    background: var(--k-critical);
+  }
+}

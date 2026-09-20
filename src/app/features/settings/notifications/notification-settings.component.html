@@ -1,0 +1,64 @@
+<div class="k-page-scroll">
+  <k-settings-section title="Delivery channels"
+    description="Each event below can arrive on more than one channel. New channels appear here as they are added.">
+    <div>
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">In-app</div>
+          <p class="k-pref-note">Collected in the bell menu while signed in.</p>
+        </div>
+        <p-tag value="Available" severity="success" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Email</div>
+          <p class="k-pref-note">Sent to the address on the user's account.</p>
+        </div>
+        <p-tag value="Available" severity="success" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Push</div>
+          <p class="k-pref-note">Delivered to a phone or desktop. Not wired up yet, so these boxes stay disabled until
+            it ships.</p>
+        </div>
+        <p-tag value="Coming soon" severity="secondary" />
+      </div>
+    </div>
+  </k-settings-section>
+
+  @for (group of groups; track group.key) {
+    <k-settings-section [title]="group.title" [description]="group.description">
+      <div>
+        <div class="k-channel-head">
+          <span>In-app</span>
+          <span>Email</span>
+          <span>Push</span>
+        </div>
+
+        @for (pref of group.preferences; track pref.key) {
+          <div class="k-pref-row">
+            <div>
+              <div class="k-pref-title">{{ pref.title }}</div>
+              <p class="k-pref-note">{{ pref.note }}</p>
+            </div>
+            <div class="k-channel-cells">
+              <p-checkbox [binary]="true" [inputId]="pref.key + '-in-app'" [(ngModel)]="pref.inApp"
+                [ariaLabel]="pref.title + ' — in-app'" />
+              <p-checkbox [binary]="true" [inputId]="pref.key + '-email'" [(ngModel)]="pref.email"
+                [ariaLabel]="pref.title + ' — email'" />
+              <p-checkbox [binary]="true" [inputId]="pref.key + '-push'" [(ngModel)]="pref.push" [disabled]="true"
+                [ariaLabel]="pref.title + ' — push, not yet available'" />
+            </div>
+          </div>
+        }
+      </div>
+
+      <ng-container k-actions>
+        <p-button label="Save changes" icon="pi pi-check" size="small" />
+      </ng-container>
+    </k-settings-section>
+  }
+</div>

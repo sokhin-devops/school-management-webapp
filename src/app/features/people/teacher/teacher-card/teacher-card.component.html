@@ -1,1 +1,5 @@
-<p>teacher-card works!</p>
+<k-person-card [name]="fullName()" [subtitle]="teacher().teacherDetails?.employeeNumber ?? ''"
+  [status]="teacher().status" [meta]="meta()">
+  <k-row-actions [label]="fullName()" (view)="view.emit(teacher())" (edit)="edit.emit(teacher())"
+    (remove)="remove.emit(teacher())" />
+</k-person-card>

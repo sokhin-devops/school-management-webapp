@@ -3,9 +3,16 @@
   --k-rail-width: 4rem;
   --k-nav-pad: 0.5rem;
   --k-nav-inset: 1rem;
-  --k-nav-row-height: 3rem;
-  --p-panelmenu-submenu-icon-focus-color: var(--p-primary-color);
-  --p-panelmenu-item-focus-color: var(--p-primary-color);
+  --k-nav-row-height: 2.75rem;
+  --k-brand-size: 2.25rem;
+  // PrimeNG paints a hovered row's label, icon and chevron from these tokens, and
+  // its own rules win over ours. Since a hovered row is now solid primary, they
+  // have to be the contrast colour — left as primary they painted the icons the
+  // same green as the background they sat on.
+  --p-panelmenu-item-focus-background: var(--p-primary-color);
+  --p-panelmenu-item-focus-color: var(--p-primary-contrast-color);
+  --p-panelmenu-item-icon-focus-color: var(--p-primary-contrast-color);
+  --p-panelmenu-submenu-icon-focus-color: var(--p-primary-contrast-color);
 
   display: flex;
   flex-direction: column;
@@ -19,8 +26,13 @@
   &.k-sidebar-collapsed {
     width: var(--k-rail-width);
 
-    .k-sidebar-brand-label {
+    .k-brand-text {
       opacity: 0;
+    }
+
+    // Centres the mark in the rail rather than leaving it at the full-width inset.
+    .k-sidebar-brand {
+      padding-left: calc((var(--k-rail-width) - var(--k-brand-size)) / 2);
     }
 
     > p-scrollpanel {
@@ -28,15 +40,54 @@
     }
   }
 
+  // Matches the topbar's height so the brand and the topbar read as one band.
   .k-sidebar-brand {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
     flex-shrink: 0;
     width: var(--k-sidebar-width);
-    padding: 10px 0px;
-    padding-left: 16px;
+    height: var(--k-topbar-height, 4rem);
+    padding-left: 0.875rem;
+    transition: padding-left 0.2s ease;
   }
 
-  .k-sidebar-brand-label {
+  .k-brand-mark {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    width: var(--k-brand-size);
+    height: var(--k-brand-size);
+    border-radius: 10px;
+    font-size: 0.9375rem;
+    background: var(--p-primary-color);
+    color: var(--p-primary-contrast-color);
+  }
+
+  .k-brand-text {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    line-height: 1.25;
     transition: opacity 0.2s ease;
+  }
+
+  .k-brand-name {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--p-text-color);
+  }
+
+  .k-brand-meta {
+    font-size: 0.6875rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    color: var(--p-text-muted-color);
   }
 
   .k-sidebar-rail {
@@ -55,10 +106,13 @@
     background: transparent;
     color: var(--p-text-color);
     cursor: pointer;
-    transition: background-color 0.15s ease, color 0.15s ease;
+    transition:
+      background-color var(--k-nav-ease-duration) var(--k-nav-ease),
+      color var(--k-nav-ease-duration) var(--k-nav-ease);
 
     &:hover {
-      background: var(--p-content-hover-background);
+      background: var(--p-primary-color);
+      color: var(--p-primary-contrast-color);
     }
 
     &:focus-visible {
@@ -73,16 +127,18 @@
     border-radius: var(--p-content-border-radius, 5px);
   }
 
+  // Hover and "this is the page you are on" share one treatment: solid primary
+  // with the palette's own contrast colour on top, so the two never disagree
+  // about what a highlighted row looks like.
   .k-rail-item-active,
   ::ng-deep .p-panelmenu-item-link-active {
-    background: var(--p-highlight-background);
-    color: var(--p-primary-color);
+    background: var(--p-primary-color);
+    color: var(--p-primary-contrast-color);
   }
 
-  // The icon has its own explicit color rule in PrimeNG's stylesheet, so it
-  // won't inherit the active color set above - it needs its own override.
-  ::ng-deep .p-panelmenu-item-link-active .p-panelmenu-submenu-icon {
-    color: var(--p-primary-color);
+  // Same reasoning as the menu rows: the current page paints, it does not animate.
+  .k-rail-item-active {
+    transition: none;
   }
 
 

@@ -1,0 +1,13 @@
+<div class="k-toolbar">
+  <div class="k-toolbar-lead">
+    <p-iconfield iconPosition="left" class="k-toolbar-search">
+      <p-inputicon class="pi pi-search" />
+      <input pInputText pSize="small" type="search" [placeholder]="searchPlaceholder()" [attr.aria-label]="searchLabel()"
+        [ngModel]="search()" (ngModelChange)="search.set($event)" />
+    </p-iconfield>
+
+    <div class="k-toolbar-filters"><ng-content select="[k-filters]" /></div>
+  </div>
+
+  <div class="k-toolbar-actions"><ng-content select="[k-actions]" /></div>
+</div>

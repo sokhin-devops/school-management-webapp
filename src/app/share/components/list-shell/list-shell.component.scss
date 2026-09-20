@@ -1,0 +1,67 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.k-shell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  height: 100%;
+  min-height: 0;
+}
+
+.k-shell-toolbar,
+.k-shell-footer {
+  flex: 0 0 auto;
+}
+
+.k-shell-body {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  min-height: 0;
+}
+
+// Both slots collapse entirely when a page leaves them empty, so a list with no
+// paginator does not leave a gap where one would sit.
+.k-shell-toolbar:empty,
+.k-shell-footer:empty {
+  display: none;
+}
+
+// No rule above the paginator — the last row's own bottom border already ends
+// the table, and a second line directly under it reads as a double rule.
+//
+// Sized down through the design tokens rather than the `size` input: Paginator
+// declares `size` but never binds it to anything in its template, so passing it
+// has no effect.
+:host ::ng-deep .k-shell-footer .p-paginator {
+  --p-paginator-nav-button-width: 2rem;
+  --p-paginator-nav-button-height: 2rem;
+  --p-paginator-gap: 0.125rem;
+
+  padding: 0.25rem 0 0;
+  background: transparent;
+  border: 0;
+  font-size: 0.8125rem;
+}
+
+:host ::ng-deep .k-shell-footer .p-paginator-current {
+  font-size: 0.75rem;
+}
+
+// The rows-per-page select is a full-size p-select the paginator builds itself,
+// so it has to be brought down to match the buttons beside it.
+:host ::ng-deep .k-shell-footer .p-paginator .p-select {
+  min-height: 2rem;
+}
+
+:host ::ng-deep .k-shell-footer .p-paginator .p-select-label {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.8125rem;
+}
+
+:host ::ng-deep .k-shell-footer .p-paginator .p-select-dropdown {
+  width: 1.75rem;
+}

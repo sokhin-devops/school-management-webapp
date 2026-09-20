@@ -1,0 +1,100 @@
+// Deliberately the same box, border, hover lift and meta-row rhythm as the
+// kit's k-person-card, so a Finance card and a People card read as one family.
+:host {
+  display: block;
+  height: 100%;
+}
+
+.k-record-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  height: 100%;
+  padding: 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 12px;
+  background: var(--p-card-background, var(--p-content-background));
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover,
+  &:focus-within {
+    border-color: color-mix(in srgb, var(--p-primary-color) 45%, var(--p-content-border-color));
+    box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.k-record-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.k-record-identity {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.k-record-title {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--p-text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k-record-subtitle {
+  font-size: 0.6875rem;
+  letter-spacing: 0.02em;
+  color: var(--p-text-muted-color);
+}
+
+// The sum is what a reader scans a finance card for, so it gets the weight the
+// avatar carries on a person card.
+.k-record-amount {
+  font-size: 1.375rem;
+  font-weight: 600;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  color: var(--p-text-color);
+}
+
+.k-record-meta {
+  display: flex;
+  flex: 1 1 auto;
+  flex-direction: column;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}
+
+.k-record-meta-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+
+  dt {
+    flex: 0 0 auto;
+    font-size: 0.75rem;
+    line-height: 1;
+    color: color-mix(in srgb, var(--p-primary-color) 70%, var(--p-text-muted-color));
+  }
+
+  dd {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.k-record-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--p-content-border-color);
+}

@@ -1,0 +1,31 @@
+<article class="k-record-card">
+  <header class="k-record-head">
+    <div class="k-record-identity">
+      <h3 class="k-record-name" [title]="classGroup().name">{{ classGroup().name }}</h3>
+      @if (classGroup().code) {
+        <span class="k-record-code">{{ classGroup().code }}</span>
+      }
+    </div>
+
+    <k-status-tag [status]="classGroup().status" />
+  </header>
+
+  <dl class="k-record-facts">
+    @for (fact of facts(); track fact.label) {
+      <div class="k-record-fact">
+        <dt>{{ fact.label }}</dt>
+        <dd [title]="fact.text">{{ fact.text }}</dd>
+      </div>
+    }
+  </dl>
+
+  <div class="k-record-capacity">
+    <span class="k-record-capacity-label">Enrolled</span>
+    <app-capacity-bar [enrolled]="classGroup().enrolled" [capacity]="classGroup().capacity" />
+  </div>
+
+  <footer class="k-record-actions">
+    <k-row-actions [label]="classGroup().name" (view)="view.emit(classGroup())" (edit)="edit.emit(classGroup())"
+      (remove)="remove.emit(classGroup())" />
+  </footer>
+</article>

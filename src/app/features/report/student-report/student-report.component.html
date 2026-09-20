@@ -1,0 +1,53 @@
+<k-list-shell>
+  <div k-toolbar class="k-report-toolbar">
+    <p-datepicker [(ngModel)]="range" selectionMode="range" [readonlyInput]="true" size="small"
+      placeholder="Reporting period" [showIcon]="true" styleClass="k-report-range" inputId="student-report-range"
+      ariaLabel="Reporting period" />
+
+    <p-select styleClass="k-list-filter" [options]="scopeOptions()" [ngModel]="scope()"
+      (ngModelChange)="scope.set($event)" optionLabel="label" optionValue="value" placeholder="All classes"
+      size="small" [showClear]="true" [filter]="true" filterBy="label" ariaLabel="Filter by class" />
+
+    <p-button label="Export" icon="pi pi-download" size="small" severity="secondary" [outlined]="true"
+      styleClass="k-report-export" />
+  </div>
+
+  <div class="k-page-scroll">
+    <p-card styleClass="k-card">
+      <dl class="k-facts">
+        @for (figure of figures(); track figure.label) {
+          <div>
+            <dt class="k-fact-label">{{ figure.label }}</dt>
+            <dd class="k-fact-value">{{ figure.value }}</dd>
+          </div>
+        }
+      </dl>
+    </p-card>
+
+    <div class="k-table-wrap k-report-table">
+      <p-table class="k-table" [value]="visible()" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 30%">Class</th>
+            <th style="width: 14%">Enrolled</th>
+            <th style="width: 14%">Capacity</th>
+            <th style="width: 16%">Utilisation</th>
+            <th style="width: 13%">Active</th>
+            <th style="width: 13%">Inactive</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td class="k-cell-strong">{{ row.className }}</td>
+            <td class="k-numeric">{{ row.enrolled }}</td>
+            <td class="k-numeric">{{ row.capacity }}</td>
+            <td class="k-numeric">{{ utilisation(row.enrolled, row.capacity) }}</td>
+            <td class="k-numeric">{{ row.active }}</td>
+            <td class="k-numeric">{{ row.inactive }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</k-list-shell>

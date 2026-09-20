@@ -1,0 +1,64 @@
+// Sidebar navigation rows.
+//
+// Global for the same reason card.scss and list.scss are: PrimeNG's PanelMenu
+// renders with ViewEncapsulation.None, so a component-scoped selector never
+// reaches .p-panelmenu-item-link. Keyed on .k-sidebar-menu, which only the
+// sidebar applies.
+
+.k-sidebar-menu {
+  // PrimeNG drives its own hover transition from this token, so overriding the
+  // duration here rather than only in `transition` keeps the two in step.
+  --p-panelmenu-transition-duration: var(--k-nav-ease-duration);
+
+  .p-panelmenu-header-link,
+  .p-panelmenu-item-link {
+    border-radius: var(--p-content-border-radius, 5px);
+    transition:
+      background-color var(--k-nav-ease-duration) var(--k-nav-ease),
+      color var(--k-nav-ease-duration) var(--k-nav-ease);
+  }
+
+  // The icon, label and chevron are coloured by their own rules, so without
+  // their own transition they would snap while the row behind them eased.
+  .p-panelmenu-header-icon,
+  .p-panelmenu-item-icon,
+  .p-panelmenu-submenu-icon,
+  .p-panelmenu-header-label,
+  .p-panelmenu-item-label,
+  svg {
+    transition: color var(--k-nav-ease-duration) var(--k-nav-ease);
+  }
+
+  // Hover and "this is the page you are on" share one treatment: solid primary
+  // with the palette's own contrast colour on top, so the two never disagree
+  // about what a highlighted row looks like. The contrast token rather than
+  // plain white, because on the lighter accent dark mode uses, white would not
+  // clear contrast — it resolves to dark ink there.
+  // Selection is a state, not a gesture: it paints at once. Left to the hover
+  // transition it faded in over a quarter-second every time the menu mounted,
+  // because Angular adds the active class after the first paint — so every page
+  // load animated its own highlight in, and every click lagged behind itself.
+  .p-panelmenu-item-link-active,
+  .p-panelmenu-item-link-active * {
+    transition: none;
+  }
+
+  .p-panelmenu-header-link:hover,
+  .p-panelmenu-item-link:hover,
+  .p-panelmenu-item-link-active {
+    background: var(--p-primary-color);
+    color: var(--p-primary-contrast-color);
+
+    // PrimeNG colours the icon, label and chevron from their own rules, so they
+    // do not inherit the colour set on the row.
+    .p-panelmenu-header-icon,
+    .p-panelmenu-item-icon,
+    .p-panelmenu-submenu-icon,
+    .p-panelmenu-header-label,
+    .p-panelmenu-item-label,
+    svg {
+      color: var(--p-primary-contrast-color);
+      fill: currentcolor;
+    }
+  }
+}

@@ -7,8 +7,47 @@
   </div>
 
   <div class="flex align-items-center gap-1 sm:gap-2 ml-auto">
-    <p-select class="k-branch-select" [options]="branches()" optionLabel="name" size="small" optionValue="id"
-      [ngModel]="selectedBranchId()" (onChange)="onBranchChange($event.value)" />
+    <p-select #branchSelect styleClass="k-branch-select" [options]="branches()" optionLabel="name"
+      optionValue="id" [ngModel]="selectedBranchId()" (onChange)="onBranchChange($event.value)"
+      [overlayOptions]="{ styleClass: 'k-branch-panel' }" scrollHeight="20rem" ariaLabel="Switch branch">
+      <!-- The trigger reads the branch from the service rather than the template
+           context, so it stays right whatever optionValue is set to. -->
+      <ng-template #selectedItem>
+        <span class="k-branch-trigger">
+          <span class="k-branch-mark"><i class="pi pi-building"></i></span>
+          <span class="k-branch-text">
+            <span class="k-branch-caption">Branch</span>
+            <span class="k-branch-name">{{ branchContext.selectedBranch().name }}</span>
+          </span>
+        </span>
+      </ng-template>
+
+      <ng-template #item let-branch>
+        <span class="k-branch-option">
+          <span class="k-branch-mark"><i class="pi pi-building"></i></span>
+          <span class="k-branch-text">
+            <span class="k-branch-name">{{ branch.name }}</span>
+            @if (branch.address) {
+              <span class="k-branch-meta">{{ branch.address }}</span>
+            }
+          </span>
+          @if (isInactive(branch)) {
+            <p-tag value="Inactive" severity="secondary" [rounded]="true" />
+          }
+        </span>
+      </ng-template>
+
+      <ng-template #header>
+        <div class="k-branch-head">Switch branch</div>
+      </ng-template>
+
+      <ng-template #footer>
+        <a class="k-branch-foot" routerLink="/settings/branches" (click)="branchSelect.hide()">
+          <i class="pi pi-cog"></i>
+          <span>Manage branches</span>
+        </a>
+      </ng-template>
+    </p-select>
 
     <p-button text [rounded]="true" icon="pi pi-bell">
     </p-button>

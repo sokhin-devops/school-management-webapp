@@ -1,52 +1,88 @@
 # TODO — Students
 
 Spec: [`../plains/12-students.md`](../plains/12-students.md)
-Context: [`../plains/11-people.md`](../plains/11-people.md)
+Context: [`../plains/11-people.md`](../plains/11-people.md), [`../plains/05-sidebar-navigation.md`](../plains/05-sidebar-navigation.md)
 
-Stack: Angular 19 (standalone components) + PrimeNG v19 (`p-dataview`, `p-table`, `p-card`) + PrimeFlex.
+Stack: Angular 19 (standalone, signals) + PrimeNG v19 (`p-dataview`, `p-table`, `p-paginator`) + PrimeFlex.
 
-Status: **Implemented.** Route `/people/students` renders `StudentComponent`. Verified with `ng build` (development) and a headless-browser pass (1440px) covering: card view, table view via the global layout toggle, live search filtering, and paginator — no console errors.
+Status: **Implemented.** Route `/people/students` renders `StudentComponent`. Verified with `ng build` (production) and a headless-browser pass covering light/dark, 1600px and 430px, both layouts, sorting, both filters, search, the empty state, and the clear-filters path — no console errors.
 
-## Implementation notes (deviations from the original plan)
+Students is the first page of the navigation to get its final UI, and the pass deliberately produced a **shared list-page kit** rather than a one-off screen. Teachers, Parents, and every later list (Classes, Subjects, Fees …) are meant to be assembled from the same pieces.
 
-- The page-level header only owns Search + "Add Student" — the list/grid layout toggle already lives in the global breadcrumb bar (`LayoutComponent` / `LayoutUiService`, see [`04-system-layout.md`](../plains/04-system-layout.md)), so `StudentComponent` just reads `layoutUi.layout()` and binds it straight to `p-dataview`'s `[layout]` input (`DataViewLayout` is already `'list' | 'grid'`, a 1:1 match).
-- Search has no plan-mandated behavior beyond "Search" in the header, so it was wired to actually filter (name, admission number, class) via a `computed()` over the mock list — an inert search box would look broken.
-- Action buttons (view/edit/delete) are icon-only `p-button`s with no click handlers, per the plan note "just only small p-button icon UI no need method." `student-details` and `student-from` (already-scaffolded stub components) are not wired up — they belong to a future edit/view-modal pass.
-- `p-dataview`'s `#list`/`#grid` content-template API (Angular template-ref-variable `ContentChild`) is separate from `p-table`'s legacy `pTemplate="header"`/`pTemplate="body"` directive API — both had to be used correctly in the same page. `SharedModule` (from `primeng/api`, exporting the `pTemplate` directive) was added to `KShareModule` since nothing in the app had used `p-table` templates yet.
-- Student mock data lives in `StudentService` as a `StudentRecord` (`Person` + a denormalized `className` display field), built on the existing shared `Person`/`PersonType`/`Status` models from `11-people.md` rather than a one-off Student-only shape.
-- Table view wraps `p-table` in an `overflow-x-auto` div for narrow-viewport horizontal scrolling instead of the deprecated `responsiveLayout="scroll"` input.
+## The shared kit
+
+`share/components/` — import from the barrel, `share/components/index.ts`. None of these pull in `KShareModule`; each imports only the PrimeNG modules it actually needs, so a page that uses one does not drag the whole PrimeNG surface into its chunk.
+
+| Component | Selector | What it owns |
+|---|---|---|
+| `ListShellComponent` | `k-list-shell` | The page frame: fixed toolbar, one scrolling pane, pinned footer. Slots: `[k-toolbar]`, default, `[k-footer]`. |
+| `ListToolbarComponent` | `k-list-toolbar` | Search box (a `model()`, bound with `[(search)]`) plus `[k-filters]` and `[k-actions]` slots. |
+| `EmptyStateComponent` | `k-empty-state` | Icon, title, message, projected action. |
+| `StatusTagComponent` | `k-status-tag` | The single place `Status` is turned into a label and a severity. |
+| `RowActionsComponent` | `k-row-actions` | The view / edit / delete trio; `actions` input drops any of them. |
+| `PersonCardComponent` | `k-person-card` | Grid-view card for anyone in People; caller supplies the `meta` lines and projects the footer. |
+
+`share/style/scss/list.scss` — global, because PrimeNG's DataView and Table render with `ViewEncapsulation.None` and a component-scoped selector never reaches `.p-dataview-content` or `.p-datatable-tbody`. Keyed on `.k-dataview`, `.k-table`, `.k-table-wrap`, `.k-grid-scroll`, so only a list that opts in is affected.
+
+The table runs in PrimeNG's own flex-scroll mode — `[scrollable]` plus `scrollHeight="flex"` — which keeps the header and the body in **one** table. With `table-layout: fixed`, the width declared on a `th` then governs its whole column, body cells included, so a page declares each column's width once, in the markup, and alignment holds by construction rather than by the author keeping two lists in sync. The header is made sticky here (PrimeNG gives it `top` and a z-index but leaves `position` alone) and carries a `--p-content-hover-background` tint — which a sticky header needs anyway, since a transparent one lets rows scroll through underneath it. The table also has a `min-width: 54rem` floor, so a six-column table on a phone scrolls sideways instead of compressing every cell into a four-line sliver.
+
+A page now looks like this:
+
+```html
+<k-list-shell>
+  <k-list-toolbar k-toolbar [search]="search()" (searchChange)="onSearch($event)">
+    <ng-container k-filters>…</ng-container>
+    <ng-container k-actions>…</ng-container>
+  </k-list-toolbar>
+  <p-dataview class="k-dataview" …>…</p-dataview>
+  <p-paginator k-footer … />
+</k-list-shell>
+```
+
+## Bugs found and fixed in this pass
+
+- **The Class and Status filters did nothing.** Both signals existed and both selects were bound, but the `computed` that produced the list only ever applied the search term. Filtering now applies all three.
+- **The empty template never rendered.** `p-dataview` looks for `#emptymessage`; the page declared `#empty`, which silently renders nothing — an empty result just showed a blank pane. (The container class is `p-dataview-emptymessage`, not `p-dataview-empty-message`.)
+- **Status showed the raw enum** — a lowercase `active` / `inactive` straight out of the model. `k-status-tag` now renders `Active` / `Inactive`.
+- **The table header and body columns did not line up.** The first cut split `thead` and `tbody` into two separate fixed-layout tables so the tbody could be the only scroller. Only the `th`s carried width percentages, so the body table had nothing to go on and divided itself into six equal columns: measured in the browser, every `td` came out at exactly 217px (1300 / 6) while its header ranged from 130px to 390px, putting columns up to **171px** away from their own heading. The scrollbar-gutter `padding-right` on the thead also left the header row 8px narrower than the body rows whenever there was no scrollbar. Both are gone with the single-table approach above — re-measured drift is 0px on all six columns, and the two row widths match exactly.
+- **Body cells rendered at the browser default 16px** while the student-name cell was 13px, so the two halves looked like different tables. Header and body cells now share padding, vertical alignment and type scale; only weight, case and colour mark the header out.
+
+## Deliberate design decisions
+
+- **Inactive is neutral, not red.** Inactive is a state a record is allowed to be in, not a failure; spending the danger colour on it leaves nothing louder for things that are actually wrong. `severity="secondary"`.
+- **Sorting lives in the component, not in `p-table`.** Paging is external (`p-paginator` in the shell footer), so letting the table sort would only reorder the twelve rows already on screen. The table runs with `[customSort]="true"` and reports the clicked column through `(sortFunction)`; the component holds `sortField`/`sortOrder` signals and sorts the whole filtered list. Setting a signal to the value it already holds is a no-op, which is what stops the new page flowing back into `[value]` and cycling.
+- **Students sort by surname**, not by given name — a roster ordered by first name is not a roster anyone reads.
+- **Row actions sit at 0.55 opacity and come up to full on hover or focus**, so a long table reads as data rather than as a wall of buttons. They are never dimmed under `@media (hover: none)`, where there is no hover to reveal them.
+- **The layout toggle stays in the global breadcrumb bar** (`LayoutUiService`), as before — the page just reads `layoutUi.layout()`.
+- Action buttons remain UI-only per the spec note ("just only small p-button icon UI no need method"). `RowActionsComponent` emits `view` / `edit` / `remove`; `StudentCardComponent` re-emits them with the record. Nothing is wired to a handler yet.
 
 ## File layout
 
 ```
+share/components/
+  index.ts                            — barrel for the kit
+  list-shell/ list-toolbar/ empty-state/ status-tag/ row-actions/ person-card/
+share/style/scss/list.scss            — DataView + Table scroll layout (global)
 features/people/student/
-  student.component.ts/html/scss      — page: search + Add Student header, p-dataview (list/grid)
-  student-card/                       — presentational card for grid view (avatar, class, contact, status, actions)
-  student-details/, student-from/     — pre-existing stubs, out of scope for this pass
+  student.component.ts/html/scss      — filters, sorting, paging; assembles the kit
+  student-card/                       — thin student adapter over k-person-card
+  student-details/, student-from/     — still stubs, out of scope for this pass
 core/services/student.service.ts      — StudentRecord mock data (signal-backed)
 ```
 
-## 0. Setup
+## Verified by measurement
 
-- [x] Wire `people/students` in `app.routes.ts` to `StudentComponent` (was a `comingSoon` placeholder).
-- [x] Add `SharedModule` (primeng/api) to `KShareModule` so `pTemplate` works for `p-table`.
-- [x] `StudentService`: 16 mock `StudentRecord`s (Grade 1–8, A/B sections), 2 marked `inactive`, exposed via a readonly signal.
+Column geometry was read out of the live page rather than eyeballed — `th` versus `td` left edge, width, padding, `text-align`, `vertical-align` and font, for all six columns, before and after the fix. Sticky behaviour was checked by scrolling the container 400px and confirming the header's `y` was unchanged and that `elementFromPoint` at the header's position still returned a `th`, i.e. the background is opaque and no row bleeds through.
 
-## 1. Header
+## Next, in navigation order
 
-- [x] Search input (`p-iconfield` + `p-inputicon` + `pInputText`), filters live across name / admission number / class.
-- [x] Small "Add Student" `p-button` (icon + label, UI-only).
+- [ ] **Teachers** (`13-teachers.md`) — `TeacherService` mock + `teacher-card` over `k-person-card`; meta lines become employee number and subjects.
+- [ ] **Parents** (`14-parents.md`) — same shape; meta lines become linked children.
+- [ ] Student detail and create/edit form (`student-details`, `student-from`) — needs a spec for the modal/detail flow first.
+- [ ] Academic lists (Programs, Levels, Classes, Subjects, Rooms) — the kit should carry over unchanged; anything it cannot express is a gap in the kit, not a reason to fork a page.
 
-## 2. Body — p-dataview
+## Out of scope
 
-- [x] `p-dataview` bound to the filtered list, `[layout]` driven by the existing global `LayoutUiService` toggle, `[paginator]="true"` at 8 rows/page, empty-state template.
-- [x] Table view (`#list`): `p-table` with Student (avatar + name + email) / Admission No. / Class / Contact / Status (`p-tag`) / Actions columns.
-- [x] Card view (`#grid`): responsive PrimeFlex grid of `app-student-card`.
-- [x] Both views expose view/edit/delete as small icon-only `p-button`s (no methods wired).
-- [x] `StudentCardComponent` styled with its own SCSS (hover elevation, fixed avatar size, truncated contact lines) rather than relying on default `p-card` looks.
-
-## Out of scope (belongs to other docs / a later pass)
-
-- Real Add/Edit/Delete/View behavior and the `student-from` / `student-details` stub components — no spec yet for the modal/detail flow.
+- Real Add/Edit/Delete/View behaviour — no spec yet for the modal/detail flow.
 - Live data — `StudentService` is mock-only, no backend wiring.
-- Class (`classId`) resolution against a real `ClassGroup` list — `className` is currently denormalized directly onto the mock record.
+- `classId` resolution against a real `ClassGroup` list — `className` is still denormalized onto the mock record.

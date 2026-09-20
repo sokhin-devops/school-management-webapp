@@ -1,0 +1,73 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// The reference-data counterpart to the People kit's `k-person-card` — same
+// border, radius and hover treatment, so a grid of academic records reads like a
+// grid of people. It is page-local because the shared kit is owned elsewhere.
+.k-ref-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  height: 100%;
+  padding: 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 12px;
+  background: var(--p-card-background, var(--p-content-background));
+  transition:
+    border-color 0.18s ease,
+    box-shadow 0.18s ease;
+
+  &:hover,
+  &:focus-within {
+    border-color: color-mix(in srgb, var(--p-primary-color) 45%, var(--p-content-border-color));
+    box-shadow: 0 8px 20px -14px rgba(0, 0, 0, 0.5);
+  }
+}
+
+.k-ref-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.625rem;
+}
+
+.k-ref-identity {
+  min-width: 0;
+}
+
+.k-ref-name {
+  overflow: hidden;
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--p-text-color);
+}
+
+.k-ref-code {
+  font-size: 0.6875rem;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+  color: var(--p-text-muted-color);
+}
+
+.k-ref-actions {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--p-content-border-color);
+}
+// Three lines, then an ellipsis: one long description must not set the height of
+// every card in its row.
+.k-ref-text {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 3;
+  flex: 1 1 auto;
+  overflow: hidden;
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}

@@ -1,0 +1,53 @@
+<k-list-shell>
+  <div k-toolbar class="k-report-toolbar">
+    <p-datepicker [(ngModel)]="range" selectionMode="range" [readonlyInput]="true" size="small"
+      placeholder="Reporting period" [showIcon]="true" styleClass="k-report-range" inputId="academic-report-range"
+      ariaLabel="Reporting period" />
+
+    <p-select styleClass="k-list-filter" [options]="scopeOptions()" [ngModel]="scope()"
+      (ngModelChange)="scope.set($event)" optionLabel="label" optionValue="value" placeholder="All subjects"
+      size="small" [showClear]="true" [filter]="true" filterBy="label" ariaLabel="Filter by subject" />
+
+    <p-button label="Export" icon="pi pi-download" size="small" severity="secondary" [outlined]="true"
+      styleClass="k-report-export" />
+  </div>
+
+  <div class="k-page-scroll">
+    <p-card styleClass="k-card">
+      <dl class="k-facts">
+        @for (figure of figures(); track figure.label) {
+          <div>
+            <dt class="k-fact-label">{{ figure.label }}</dt>
+            <dd class="k-fact-value">{{ figure.value }}</dd>
+          </div>
+        }
+      </dl>
+    </p-card>
+
+    <div class="k-table-wrap k-report-table">
+      <p-table class="k-table" [value]="visible()" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 28%">Subject</th>
+            <th style="width: 15%">Assessments</th>
+            <th style="width: 15%">Average</th>
+            <th style="width: 14%">Highest</th>
+            <th style="width: 14%">Lowest</th>
+            <th style="width: 14%">Pass rate</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-row>
+          <tr>
+            <td class="k-cell-strong">{{ row.subject }}</td>
+            <td class="k-numeric">{{ row.assessments }}</td>
+            <td class="k-amount">{{ percent(row.average) }}</td>
+            <td class="k-numeric">{{ row.highest }}</td>
+            <td class="k-numeric">{{ row.lowest }}</td>
+            <td class="k-numeric">{{ percent(row.passRate) }}</td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  </div>
+</k-list-shell>

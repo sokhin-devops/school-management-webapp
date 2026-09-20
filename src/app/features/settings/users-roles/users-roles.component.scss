@@ -1,0 +1,41 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// The tab strip is fixed; only the active panel's list scrolls.
+:host ::ng-deep .k-tabs {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+:host ::ng-deep .k-tabs .p-tablist {
+  flex: 0 0 auto;
+}
+
+:host ::ng-deep .k-tabs .p-tabpanels {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 0.875rem 0 0;
+  background: transparent;
+}
+
+:host ::ng-deep .k-tabs .p-tabpanel {
+  display: flex;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+:host ::ng-deep .k-tabs k-list-shell {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+.k-branch-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}

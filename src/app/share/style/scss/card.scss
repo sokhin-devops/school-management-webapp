@@ -1,18 +1,18 @@
-// Flat card shell for the feature pages: hairline border instead of elevation,
-// and a body that lets its content absorb leftover height so cards sitting side
+// Card shell for the feature pages: a raised white surface on the tinted canvas,
+// with a body that lets its content absorb leftover height so cards sitting side
 // by side line their bottom edges up.
 //
 // Global because PrimeNG's Card renders with ViewEncapsulation.None — a
 // component-scoped selector never reaches .p-card-body or .p-card-content. The
 // rules are keyed on .k-card, so they only touch a card that opts in.
 .k-card.p-card {
-  --p-card-shadow: none;
+  --p-card-shadow: var(--k-panel-shadow);
   --p-card-body-padding: 1rem 1.25rem;
   --p-card-body-gap: 0.875rem;
 
   width: 100%;
-  border: 1px solid var(--p-content-border-color);
-  border-radius: 12px;
+  border: 0;
+  border-radius: var(--k-panel-radius);
 }
 
 .k-card .p-card-body {

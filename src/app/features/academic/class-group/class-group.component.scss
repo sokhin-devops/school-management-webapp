@@ -1,0 +1,43 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// Enrolment against capacity: the number is the value, the bar is the glance.
+.k-fill {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.k-fill-value {
+  font-variant-numeric: tabular-nums;
+}
+
+.k-fill-track {
+  display: block;
+  height: 5px;
+  max-width: 9rem;
+  border-radius: 999px;
+  overflow: hidden;
+  background: color-mix(in srgb, var(--p-primary-color) 14%, transparent);
+}
+
+.k-fill-bar {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--p-primary-color);
+
+  &.is-warning {
+    background: #b46a05;
+  }
+
+  &.is-critical {
+    background: #d03b3b;
+  }
+}
+
+:host-context(.app-dark) .k-fill-bar.is-warning {
+  background: #fab219;
+}

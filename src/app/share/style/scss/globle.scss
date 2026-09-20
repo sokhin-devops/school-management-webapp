@@ -25,3 +25,281 @@
     color: var(--p-primary-color);
   }
 }
+
+// Available to screen readers, invisible on screen — for the text that names an
+// icon standing in for a label.
+.k-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  border: 0;
+  clip-path: inset(50%);
+}
+
+// --- Surfaces --------------------------------------------------------------
+//
+// The app reads as tinted canvas + raised white panels rather than as bordered
+// boxes on white. Defining the two values here means a panel never has to decide
+// its own elevation, and dark mode re-steps both together: the canvas has to sit
+// BELOW the panel in both themes, which means lighter-than-white is impossible
+// and the order flips to surface-950 under surface-900.
+:root {
+  --k-canvas: var(--p-surface-100);
+  // A table header reads as its own band. Tinted with the accent rather than a
+  // neutral step, because the neutral one the theme offers is now the canvas
+  // colour, and a header the same shade as the page behind the panel looks muddy.
+  --k-table-header: color-mix(in srgb, var(--p-primary-color) 14%, var(--p-content-background));
+  // The accent is light enough that as TEXT on the tinted header it measures
+  // 2.2:1 — a darker step of the same hue is needed for the sorted column.
+  --k-table-header-accent: var(--p-primary-700);
+  --k-panel-radius: 12px;
+  // Navigation hover: slow enough to read as a transition rather than a flicker,
+  // decelerating so it starts promptly and settles softly.
+  --k-nav-ease-duration: 0.25s;
+  --k-nav-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
+  --k-panel-shadow:
+    0 1px 2px rgba(15, 23, 42, 0.06),
+    0 1px 3px rgba(15, 23, 42, 0.05);
+}
+
+:root.app-dark {
+  --k-canvas: var(--p-surface-950);
+  --k-table-header: color-mix(in srgb, var(--p-primary-color) 22%, var(--p-content-background));
+  --k-table-header-accent: var(--p-primary-color);
+  --k-panel-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 1px 3px rgba(0, 0, 0, 0.35);
+}
+
+// The raised white surface that content sits on.
+.k-panel {
+  border-radius: var(--k-panel-radius);
+  background: var(--p-content-background);
+  box-shadow: var(--k-panel-shadow);
+}
+
+// --- Scrollbars ------------------------------------------------------------
+//
+// Floating, not inline: the bar overlays the content instead of taking a column
+// of layout width, so nothing reflows or gets squeezed when a pane becomes
+// scrollable. Track transparent, thumb translucent ink — translucent rather than
+// a fixed grey so one value reads correctly on the canvas, inside a white panel
+// and in the sidebar.
+//
+// Deliberately the standard properties ALONE. Styling ::-webkit-scrollbar would
+// give a rounded, padded thumb, but it also switches Chromium back to a classic
+// scrollbar that occupies real width — the two cannot be combined, and floating
+// is the requirement.
+:root {
+  --k-scrollbar-thumb: rgba(15, 23, 42, 0.28);
+  --k-scrollbar-thumb-hover: rgba(15, 23, 42, 0.45);
+}
+
+:root.app-dark {
+  --k-scrollbar-thumb: rgba(255, 255, 255, 0.28);
+  --k-scrollbar-thumb-hover: rgba(255, 255, 255, 0.5);
+}
+
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--k-scrollbar-thumb) transparent;
+}
+
+// PrimeNG's ScrollPanel draws its own bar rather than the native one. It is
+// absolutely positioned, so it already floats; it just needs the same colour and
+// the same slimness, and to stay out of the way until the pane is used.
+.p-scrollpanel {
+  // Set through the tokens rather than plain CSS: PrimeNG's own bar rules are
+  // more specific and quietly won, leaving a 9px surface-coloured bar.
+  --p-scrollpanel-bar-size: 4px;
+  --p-scrollpanel-bar-background: var(--k-scrollbar-thumb);
+  --p-scrollpanel-bar-border-radius: 999px;
+}
+
+.p-scrollpanel-bar {
+  opacity: 0;
+  transition: opacity 0.2s ease;
+}
+
+.p-scrollpanel:hover .p-scrollpanel-bar,
+.p-scrollpanel:focus-within .p-scrollpanel-bar,
+.p-scrollpanel-grabbed .p-scrollpanel-bar {
+  opacity: 1;
+}
+
+
+// --- Floating scrollbar ----------------------------------------------------
+//
+// Drawn by FloatingScrollDirective. The native bar is hidden on the scroller so
+// it stops reserving width, and the thumb is positioned over the padding by the
+// directive, which is the only way to get a bar that floats rather than pushing
+// the content aside.
+
+.k-fscroll-host {
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+  }
+}
+
+.k-fscroll-track {
+  position: relative;
+}
+
+.k-fscroll-thumb {
+  position: absolute;
+  z-index: 3;
+  border-radius: 999px;
+  background: var(--k-scrollbar-thumb);
+  opacity: 0;
+  transition:
+    opacity 0.2s ease,
+    background-color 0.15s ease;
+  cursor: default;
+  touch-action: none;
+}
+
+.k-fscroll-thumb-y {
+  width: 6px;
+}
+
+.k-fscroll-thumb-x {
+  height: 6px;
+}
+
+// Visible while scrolling, while the pane is pointed at, and while dragging.
+.k-fscroll-active > .k-fscroll-thumb,
+.k-fscroll-track:hover > .k-fscroll-thumb {
+  opacity: 1;
+}
+
+.k-fscroll-thumb:hover,
+.k-fscroll-thumb.k-fscroll-dragging {
+  background: var(--k-scrollbar-thumb-hover, rgba(15, 23, 42, 0.45));
+}
+
+// Coarse pointers have no hover and their own overlay bars; leave those alone.
+@media (hover: none) {
+  .k-fscroll-thumb {
+    display: none !important;
+  }
+
+  .k-fscroll-host {
+    scrollbar-width: thin;
+  }
+}
+
+// --- Branch switcher --------------------------------------------------------
+//
+// Global because the dropdown is appended to <body>: the trigger lives in the
+// topbar but the option rows do not, and both share these pieces.
+
+.k-branch-trigger,
+.k-branch-option {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-width: 0;
+  width: 100%;
+}
+
+// The building glyph in a tinted tile — the same shape the sidebar brand uses,
+// so the two read as one identity.
+.k-branch-mark {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.75rem;
+  height: 1.75rem;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  background: color-mix(in srgb, var(--p-primary-color) 14%, transparent);
+  color: var(--p-primary-color);
+}
+
+.k-branch-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.25;
+}
+
+.k-branch-caption {
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+}
+
+.k-branch-name {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--p-text-color);
+}
+
+.k-branch-meta {
+  font-size: 0.6875rem;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--p-text-muted-color);
+}
+
+.k-branch-panel {
+  min-width: 18rem;
+
+  .p-select-list {
+    padding: 0.25rem;
+    gap: 0.125rem;
+  }
+
+  .p-select-option {
+    padding: 0.5rem 0.625rem;
+    border-radius: 8px;
+  }
+
+  // The theme's own selected background already reads correctly here; only the
+  // name needs lifting to the accent so the current branch is obvious at a glance.
+  .p-select-option.p-select-option-selected .k-branch-name {
+    color: var(--p-primary-color);
+  }
+}
+
+
+.k-branch-head {
+  padding: 0.625rem 0.75rem 0.25rem;
+  font-size: 0.5625rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+}
+
+.k-branch-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  border-top: 1px solid var(--p-content-border-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-decoration: none;
+  color: var(--p-primary-color);
+  cursor: pointer;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: color-mix(in srgb, var(--p-primary-color) 8%, transparent);
+  }
+}

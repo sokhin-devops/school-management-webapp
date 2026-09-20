@@ -1,1 +1,38 @@
+// --- Branch switcher trigger ------------------------------------------------
+//
+// Built on p-select rather than a popover so it keeps keyboard roving,
+// type-ahead and the ARIA roles for free; only the trigger and the option rows
+// are replaced. Everything that also appears inside the dropdown is styled
+// globally, because PrimeNG appends that overlay to <body> where these scoped
+// selectors no longer reach.
 
+:host ::ng-deep .k-branch-select.p-select {
+  min-width: 12.5rem;
+  max-width: 15rem;
+  padding: 0.25rem 0.5rem;
+  border-radius: 10px;
+  background: var(--p-content-background);
+  transition: border-color 0.18s ease;
+
+  &:not(.p-disabled):hover {
+    border-color: color-mix(in srgb, var(--p-primary-color) 55%, var(--p-content-border-color));
+  }
+
+  .p-select-label {
+    display: flex;
+    align-items: center;
+    padding: 0;
+  }
+}
+
+@media (max-width: 575.98px) {
+  :host ::ng-deep .k-branch-select.p-select {
+    min-width: 0;
+    max-width: 11rem;
+  }
+
+  // On a phone the caption is the first thing to go; the name still identifies it.
+  :host ::ng-deep .k-branch-caption {
+    display: none;
+  }
+}

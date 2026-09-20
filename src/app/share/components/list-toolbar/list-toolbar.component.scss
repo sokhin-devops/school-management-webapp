@@ -1,0 +1,61 @@
+:host {
+  display: block;
+}
+
+.k-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem 0.75rem;
+}
+
+.k-toolbar-lead,
+.k-toolbar-filters,
+.k-toolbar-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.k-toolbar-lead {
+  flex: 1 1 22rem;
+  min-width: 0;
+}
+
+.k-toolbar-actions {
+  flex: 0 0 auto;
+}
+
+.k-toolbar-search {
+  flex: 1 1 14rem;
+  max-width: 20rem;
+
+  input {
+    width: 100%;
+  }
+}
+
+// Search cancel button — WebKit draws its own, which sits oddly next to the
+// field's rounded end and duplicates the Clear control in the filter row.
+:host ::ng-deep input[type='search']::-webkit-search-cancel-button {
+  display: none;
+}
+
+@media (max-width: 575.98px) {
+  .k-toolbar-lead,
+  .k-toolbar-actions,
+  .k-toolbar-filters {
+    width: 100%;
+  }
+
+  .k-toolbar-search {
+    max-width: none;
+  }
+
+  // On a phone the primary action gets the full width rather than a stub of it.
+  .k-toolbar-actions ::ng-deep .p-button {
+    flex: 1 1 auto;
+  }
+}

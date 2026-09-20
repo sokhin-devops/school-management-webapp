@@ -1,1 +1,104 @@
-<p>teacher works!</p>
+<k-list-shell>
+  <k-list-toolbar k-toolbar searchPlaceholder="Search name, employee no. or subject" searchLabel="Search teachers"
+    [search]="records.search()" (searchChange)="records.onSearch($event)">
+    <ng-container k-filters>
+      <p-select styleClass="k-list-filter" [options]="departmentOptions()" [ngModel]="departmentFilter.value()"
+        (ngModelChange)="departmentFilter.value.set($event); records.onFilterChange()" optionLabel="label"
+        optionValue="value" placeholder="All departments" size="small" [showClear]="true" [filter]="true"
+        filterBy="label" ariaLabel="Filter by department" />
+
+      <p-select styleClass="k-list-filter" [options]="statusOptions" [ngModel]="statusFilter.value()"
+        (ngModelChange)="statusFilter.value.set($event); records.onFilterChange()" optionLabel="label" optionValue="value"
+        placeholder="All statuses" size="small" [showClear]="true" ariaLabel="Filter by status" />
+
+      @if (records.hasFilters()) {
+        <p-button label="Clear" icon="pi pi-filter-slash" size="small" severity="secondary" [text]="true"
+          (onClick)="records.clear()" />
+      }
+    </ng-container>
+
+    <ng-container k-actions>
+      <span class="k-list-count">{{ records.countLabel() }}</span>
+      <p-button label="Add Teacher" icon="pi pi-plus" size="small" />
+    </ng-container>
+  </k-list-toolbar>
+
+  <p-dataview class="k-dataview" [value]="records.page()" [layout]="layoutUi.layout()">
+    <ng-template #emptymessage>
+      <k-empty-state icon="pi-id-card" title="No teachers found"
+        [message]="records.hasFilters()
+          ? 'No teacher matches the current search and filters.'
+          : 'Teachers you add will be listed here.'">
+        @if (records.hasFilters()) {
+          <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
+            (onClick)="records.clear()" />
+        } @else {
+          <p-button label="Add Teacher" icon="pi pi-plus" size="small" />
+        }
+      </k-empty-state>
+    </ng-template>
+
+    <!-- Table view -->
+    <ng-template #list let-items>
+      <div class="k-table-wrap">
+        <p-table class="k-table" [value]="items" [customSort]="true" [sortField]="records.sortField()"
+          [sortOrder]="records.sortOrder()" (sortFunction)="records.onSort($event)" [scrollable]="true" scrollHeight="flex"
+          styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 26%" pSortableColumn="name">Teacher <p-sortIcon field="name" /></th>
+              <th style="width: 15%" pSortableColumn="employeeNumber">
+                Employee no. <p-sortIcon field="employeeNumber" />
+              </th>
+              <th style="width: 15%" pSortableColumn="department">Department <p-sortIcon field="department" /></th>
+              <th style="width: 20%">Subjects</th>
+              <th style="width: 14%">Phone</th>
+              <th style="width: 10%">Status</th>
+              <th style="width: 10%" class="text-right">Actions</th>
+            </tr>
+          </ng-template>
+
+          <ng-template pTemplate="body" let-teacher>
+            <tr>
+              <td>
+                <div class="k-person-cell">
+                  <p-avatar [label]="initials(teacher)" shape="circle" styleClass="k-person-cell-avatar" />
+                  <div class="k-person-cell-identity">
+                    <span class="k-person-cell-name">{{ fullName(teacher) }}</span>
+                    <span class="k-person-cell-sub" [title]="teacher.email">{{ teacher.email }}</span>
+                  </div>
+                </div>
+              </td>
+              <td class="k-numeric">{{ teacher.teacherDetails?.employeeNumber }}</td>
+              <td>{{ teacher.department }}</td>
+              <td [title]="teacher.subjects.join(', ')">{{ teacher.subjects.join(', ') }}</td>
+              <td>{{ teacher.phone }}</td>
+              <td><k-status-tag [status]="teacher.status" /></td>
+              <td class="text-right">
+                <k-row-actions [label]="fullName(teacher)" />
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    </ng-template>
+
+    <!-- Card view -->
+    <ng-template #grid let-items>
+      <div class="k-grid-scroll">
+        <div class="grid">
+          @for (teacher of items; track teacher.id) {
+            <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
+              <app-teacher-card [teacher]="teacher" />
+            </div>
+          }
+        </div>
+      </div>
+    </ng-template>
+  </p-dataview>
+
+  <p-paginator k-footer [first]="records.first()" [rows]="records.rows()" [totalRecords]="records.matching().length"
+    [rowsPerPageOptions]="records.pageSizeOptions" [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
+    (onPageChange)="records.onPageChange($event)" />
+</k-list-shell>

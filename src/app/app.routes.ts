@@ -1,12 +1,6 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
 
-const comingSoon = (title: string) => ({
-  loadComponent: () =>
-    import('./share/components/coming-soon/coming-soon.component').then((m) => m.ComingSoonComponent),
-  data: { title },
-});
-
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
   {
@@ -48,32 +42,89 @@ export const routes: Routes = [
         loadComponent: () => import('./features/dashboard/dashboard.component').then((m) => m.DashboardComponent),
       },
 
-      { path: 'academic/programs', ...comingSoon('Programs') },
-      { path: 'academic/levels', ...comingSoon('Levels') },
-      { path: 'academic/classes', ...comingSoon('Classes') },
-      { path: 'academic/subjects', ...comingSoon('Subjects') },
-      { path: 'academic/academic-years', ...comingSoon('Academic Years') },
-      { path: 'academic/rooms', ...comingSoon('Rooms') },
+      {
+        path: 'academic/programs',
+        loadComponent: () => import('./features/academic/program/program.component').then((m) => m.ProgramComponent),
+      },
+      {
+        path: 'academic/levels',
+        loadComponent: () => import('./features/academic/level/level.component').then((m) => m.LevelComponent),
+      },
+      {
+        path: 'academic/classes',
+        loadComponent: () => import('./features/academic/class-group/class-group.component').then((m) => m.ClassGroupComponent),
+      },
+      {
+        path: 'academic/subjects',
+        loadComponent: () => import('./features/academic/subject/subject.component').then((m) => m.SubjectComponent),
+      },
+      {
+        path: 'academic/academic-years',
+        loadComponent: () => import('./features/academic/academic-year/academic-year.component').then((m) => m.AcademicYearComponent),
+      },
+      {
+        path: 'academic/rooms',
+        loadComponent: () => import('./features/academic/room/room.component').then((m) => m.RoomComponent),
+      },
 
       {
         path: 'people/students',
         loadComponent: () => import('./features/people/student/student.component').then((m) => m.StudentComponent),
+        data: { layouts: true },
       },
-      { path: 'people/teachers', ...comingSoon('Teachers') },
-      { path: 'people/parents', ...comingSoon('Parents') },
+      {
+        path: 'people/teachers',
+        loadComponent: () => import('./features/people/teacher/teacher.component').then((m) => m.TeacherComponent),
+        data: { layouts: true },
+      },
+      {
+        path: 'people/parents',
+        loadComponent: () => import('./features/people/parent/parent.component').then((m) => m.ParentComponent),
+        data: { layouts: true },
+      },
 
-      { path: 'attendance', ...comingSoon('Attendance') },
-      { path: 'exams', ...comingSoon('Exams / Assessments') },
+      {
+        path: 'attendance',
+        loadComponent: () => import('./features/attendance/attendance.component').then((m) => m.AttendanceComponent),
+      },
+      {
+        path: 'exams',
+        loadComponent: () => import('./features/exam/exam.component').then((m) => m.ExamComponent),
+      },
 
-      { path: 'finance/fees', ...comingSoon('Fees') },
-      { path: 'finance/payments', ...comingSoon('Payments') },
-      { path: 'finance/expenses', ...comingSoon('Expenses') },
-      { path: 'finance/reports', ...comingSoon('Financial Reports') },
+      {
+        path: 'finance/fees',
+        loadComponent: () => import('./features/finance/fee/fee.component').then((m) => m.FeeComponent),
+      },
+      {
+        path: 'finance/payments',
+        loadComponent: () => import('./features/finance/payment/payment.component').then((m) => m.PaymentComponent),
+      },
+      {
+        path: 'finance/expenses',
+        loadComponent: () => import('./features/finance/expense/expense.component').then((m) => m.ExpenseComponent),
+      },
+      {
+        path: 'finance/reports',
+        loadComponent: () => import('./features/finance/finance-report/finance-report.component').then((m) => m.FinanceReportComponent),
+      },
 
-      { path: 'reports/students', ...comingSoon('Student Reports') },
-      { path: 'reports/attendance', ...comingSoon('Attendance Reports') },
-      { path: 'reports/academic', ...comingSoon('Academic Reports') },
-      { path: 'reports/financial', ...comingSoon('Financial Reports') },
+      {
+        path: 'reports/students',
+        loadComponent: () => import('./features/report/student-report/student-report.component').then((m) => m.StudentReportComponent),
+      },
+      {
+        path: 'reports/attendance',
+        loadComponent: () => import('./features/report/attendance-report/attendance-report.component').then((m) => m.AttendanceReportComponent),
+      },
+      {
+        path: 'reports/academic',
+        loadComponent: () => import('./features/report/academic-report/academic-report.component').then((m) => m.AcademicReportComponent),
+      },
+      {
+        path: 'reports/financial',
+        loadComponent: () => import('./features/report/financial-report/financial-report.component').then((m) => m.FinancialReportComponent),
+      },
 
       {
         path: 'settings/school',
@@ -83,16 +134,35 @@ export const routes: Routes = [
         path: 'settings/branches',
         loadComponent: () => import('./features/settings/branch/branch.component').then((m) => m.BranchComponent),
       },
-      { path: 'settings/academic', ...comingSoon('Academic Settings') },
-      { path: 'settings/users-roles', ...comingSoon('Users & Roles') },
-      { path: 'settings/notifications', ...comingSoon('Notifications') },
+      {
+        path: 'settings/academic',
+        loadComponent: () => import('./features/settings/academic-settings/academic-settings.component').then((m) => m.AcademicSettingsComponent),
+      },
+      {
+        path: 'settings/users-roles',
+        loadComponent: () =>
+          import('./features/settings/users-roles/users-roles.component').then((m) => m.UsersRolesComponent),
+      },
+      {
+        path: 'settings/notifications',
+        loadComponent: () => import('./features/settings/notifications/notification-settings.component').then((m) => m.NotificationSettingsComponent),
+      },
       {
         path: 'settings/appearance',
         loadComponent: () => import('./features/settings/appearance/appearance.component').then((m) => m.AppearanceComponent),
       },
-      { path: 'settings/security', ...comingSoon('Security') },
-      { path: 'settings/subscription', ...comingSoon('Subscription') },
-      { path: 'settings/system', ...comingSoon('System') },
+      {
+        path: 'settings/security',
+        loadComponent: () => import('./features/settings/security/security.component').then((m) => m.SecuritySettingsComponent),
+      },
+      {
+        path: 'settings/subscription',
+        loadComponent: () => import('./features/settings/subscription/subscription.component').then((m) => m.SubscriptionSettingsComponent),
+      },
+      {
+        path: 'settings/system',
+        loadComponent: () => import('./features/settings/system/system.component').then((m) => m.SystemSettingsComponent),
+      },
     ],
   },
   { path: '**', redirectTo: 'login' },

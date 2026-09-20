@@ -1,0 +1,10 @@
+<div class="k-capacity">
+  <span class="k-capacity-label">{{ label() }}</span>
+
+  @if (capacity()) {
+    <span class="k-capacity-track" aria-hidden="true">
+      <span class="k-capacity-fill" [class.is-warning]="warning()" [class.is-critical]="critical()"
+        [style.width.%]="percent()"></span>
+    </span>
+  }
+</div>

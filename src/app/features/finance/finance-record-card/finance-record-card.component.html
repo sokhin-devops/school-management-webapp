@@ -1,0 +1,32 @@
+<article class="k-record-card">
+  <header class="k-record-head">
+    <div class="k-record-identity">
+      <h3 class="k-record-title" [title]="title()">{{ title() }}</h3>
+      @if (subtitle()) {
+        <span class="k-record-subtitle">{{ subtitle() }}</span>
+      }
+    </div>
+
+    <ng-content select="[k-record-status]" />
+  </header>
+
+  @if (amount()) {
+    <p class="k-record-amount">{{ amount() }}</p>
+  }
+
+  <dl class="k-record-meta">
+    @for (row of meta(); track row.label) {
+      <div class="k-record-meta-row">
+        <dt>
+          <i class="pi" [ngClass]="row.icon" aria-hidden="true"></i>
+          <span class="k-visually-hidden">{{ row.label }}</span>
+        </dt>
+        <dd [title]="row.text">{{ row.text }}</dd>
+      </div>
+    }
+  </dl>
+
+  <footer class="k-record-actions">
+    <ng-content />
+  </footer>
+</article>

@@ -1,0 +1,15 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+.k-term-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.25rem;
+}
+
+.k-term-none {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}

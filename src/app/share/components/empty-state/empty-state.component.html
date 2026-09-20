@@ -1,0 +1,15 @@
+<div class="k-empty">
+  <span class="k-empty-icon" aria-hidden="true">
+    <i class="pi" [ngClass]="icon()"></i>
+  </span>
+
+  <p class="k-empty-title">{{ title() }}</p>
+
+  @if (message()) {
+    <p class="k-empty-message">{{ message() }}</p>
+  }
+
+  <div class="k-empty-action">
+    <ng-content />
+  </div>
+</div>

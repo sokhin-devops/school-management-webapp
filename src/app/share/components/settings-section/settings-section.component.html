@@ -1,0 +1,14 @@
+<p-card styleClass="k-card">
+  <header class="k-section-head">
+    <h2 class="k-section-title">{{ title() }}</h2>
+    @if (description()) {
+      <p class="k-section-description">{{ description() }}</p>
+    }
+  </header>
+
+  <div class="k-section-body">
+    <ng-content />
+  </div>
+
+  <footer class="k-section-actions"><ng-content select="[k-actions]" /></footer>
+</p-card>

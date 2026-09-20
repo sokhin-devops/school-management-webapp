@@ -1,0 +1,172 @@
+<div class="k-page-scroll">
+  <k-settings-section title="Academic structure"
+    description="Switch off anything this school does not use — it disappears from the menus, forms and reports.">
+    <div>
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Programs</div>
+          <p class="k-pref-note">Courses of study a student is admitted to, such as Science or Business.</p>
+        </div>
+        <p-toggleswitch inputId="use-programs" [(ngModel)]="usePrograms" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Levels</div>
+          <p class="k-pref-note">The yearly steps a student moves through, such as Grade 1 to Grade 12.</p>
+        </div>
+        <p-toggleswitch inputId="use-levels" [(ngModel)]="useLevels" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Classes</div>
+          <p class="k-pref-note">The group a student is taught in day to day.</p>
+        </div>
+        <p-toggleswitch inputId="use-classes" [(ngModel)]="useClasses" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Sections</div>
+          <p class="k-pref-note">Parallel streams within one class, such as 1-A and 1-B. Available only while classes
+            are in use.</p>
+        </div>
+        <p-toggleswitch inputId="use-sections" [(ngModel)]="useSections" [disabled]="!useClasses()" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Subjects</div>
+          <p class="k-pref-note">What is taught, and who teaches it. Some schools call these courses.</p>
+        </div>
+        <p-toggleswitch inputId="use-subjects" [(ngModel)]="useSubjects" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Terms and semesters</div>
+          <p class="k-pref-note">Divides the academic year into reporting periods.</p>
+        </div>
+        <p-toggleswitch inputId="use-terms" [(ngModel)]="useTerms" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Rooms</div>
+          <p class="k-pref-note">Physical spaces a class can be timetabled into.</p>
+        </div>
+        <p-toggleswitch inputId="use-rooms" [(ngModel)]="useRooms" />
+      </div>
+    </div>
+
+    <ng-container k-actions>
+      <p-button label="Save changes" icon="pi pi-check" size="small" />
+    </ng-container>
+  </k-settings-section>
+
+  <k-settings-section title="Terminology"
+    description="Every school has its own words for the same things. These labels replace the generic ones everywhere they appear.">
+    <div class="grid">
+      <div class="col-12 md:col-6 lg:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="term-level">Level is called</label>
+          <input pInputText pSize="small" id="term-level" [(ngModel)]="levelLabel" />
+          <span class="k-field-hint">Used in the Academic menu, class names and report cards.</span>
+        </div>
+      </div>
+      <div class="col-12 md:col-6 lg:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="term-class">Class is called</label>
+          <input pInputText pSize="small" id="term-class" [(ngModel)]="classLabel" />
+          <span class="k-field-hint">Used on enrolment screens, timetables and attendance registers.</span>
+        </div>
+      </div>
+      <div class="col-12 md:col-6 lg:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="term-subject">Subject is called</label>
+          <input pInputText pSize="small" id="term-subject" [(ngModel)]="subjectLabel" />
+          <span class="k-field-hint">Used wherever a teacher is assigned something to teach.</span>
+        </div>
+      </div>
+      <div class="col-12 md:col-6 lg:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="term-student">Student is called</label>
+          <input pInputText pSize="small" id="term-student" [(ngModel)]="studentLabel" />
+          <span class="k-field-hint">Used in the People menu, admissions and the parent portal.</span>
+        </div>
+      </div>
+      <div class="col-12 md:col-6 lg:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="term-teacher">Teacher is called</label>
+          <input pInputText pSize="small" id="term-teacher" [(ngModel)]="teacherLabel" />
+          <span class="k-field-hint">Used in the People menu, timetables and class assignments.</span>
+        </div>
+      </div>
+    </div>
+
+    <ng-container k-actions>
+      <p-button label="Cancel" size="small" severity="secondary" [text]="true" />
+      <p-button label="Save changes" icon="pi pi-check" size="small" />
+    </ng-container>
+  </k-settings-section>
+
+  <k-settings-section title="Academic year" description="Which year the school is working in, and how it moves on.">
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="k-field">
+          <label class="k-field-label" for="active-year">Active year</label>
+          <p-select inputId="active-year" [options]="yearOptions" [(ngModel)]="activeYear" optionLabel="label"
+            optionValue="value" size="small" />
+          <span class="k-field-hint">New enrolments, classes and invoices default to this year.</span>
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="k-field">
+          <label class="k-field-label" for="term-structure">Term structure</label>
+          <p-select inputId="term-structure" [options]="termStructureOptions" [(ngModel)]="termStructure"
+            optionLabel="label" optionValue="value" size="small" [disabled]="!useTerms()" />
+          <span class="k-field-hint">Only used while terms and semesters are switched on above.</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="k-pref-row">
+      <div>
+        <div class="k-pref-title">Roll over automatically</div>
+        <p class="k-pref-note">When the active year ends, the next one becomes active and classes carry forward. Leave
+          off to do it by hand.</p>
+      </div>
+      <p-toggleswitch inputId="auto-rollover" [(ngModel)]="autoRollover" />
+    </div>
+
+    <ng-container k-actions>
+      <p-button label="Save changes" icon="pi pi-check" size="small" />
+    </ng-container>
+  </k-settings-section>
+
+  <k-settings-section title="Grading" description="How results are recorded and what counts as a pass.">
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="k-field">
+          <label class="k-field-label" for="grading-scale">Grading scale</label>
+          <p-select inputId="grading-scale" [options]="gradingScaleOptions" [(ngModel)]="gradingScale"
+            optionLabel="label" optionValue="value" size="small" />
+          <span class="k-field-hint">Applies to assessments, report cards and transcripts.</span>
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="k-field">
+          <label class="k-field-label" for="pass-mark">Pass mark</label>
+          <p-inputnumber inputId="pass-mark" [(ngModel)]="passMark" [min]="0" [max]="100" size="small"
+            [disabled]="gradingScale() === 'pass_fail'" />
+          <span class="k-field-hint">The lowest result that counts as a pass. Not used on a pass / fail scale.</span>
+        </div>
+      </div>
+    </div>
+
+    <ng-container k-actions>
+      <p-button label="Save changes" icon="pi pi-check" size="small" />
+    </ng-container>
+  </k-settings-section>
+</div>

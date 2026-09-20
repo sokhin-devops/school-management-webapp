@@ -1,1 +1,96 @@
-<p>school works!</p>
+<div class="k-page-scroll">
+  <k-settings-section title="School profile" description="Identity used across reports, invoices and the parent portal.">
+    <div class="grid">
+      <div class="col-12 md:col-8">
+        <div class="k-field">
+          <label class="k-field-label" for="school-name">School name</label>
+          <input pInputText pSize="small" id="school-name" [(ngModel)]="name" />
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="school-short">Short name</label>
+          <input pInputText pSize="small" id="school-short" [(ngModel)]="shortName" />
+          <span class="k-field-hint">Used where space is tight, such as the sidebar.</span>
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="k-field">
+          <label class="k-field-label" for="school-type">Institution type</label>
+          <p-select inputId="school-type" [options]="schoolTypeOptions" [(ngModel)]="schoolType" optionLabel="label"
+            optionValue="value" size="small" />
+          <span class="k-field-hint">Decides which academic concepts the rest of the app offers.</span>
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="k-field">
+          <label class="k-field-label" for="school-site">Website</label>
+          <input pInputText pSize="small" id="school-site" [(ngModel)]="website" />
+        </div>
+      </div>
+    </div>
+
+    <ng-container k-actions>
+      <p-button label="Cancel" size="small" severity="secondary" [text]="true" />
+      <p-button label="Save changes" icon="pi pi-check" size="small" />
+    </ng-container>
+  </k-settings-section>
+
+  <k-settings-section title="Contact details" description="How families and staff reach the school office.">
+    <div class="grid">
+      <div class="col-12 md:col-6">
+        <div class="k-field">
+          <label class="k-field-label" for="school-email">Email</label>
+          <input pInputText pSize="small" id="school-email" type="email" [(ngModel)]="email" />
+        </div>
+      </div>
+      <div class="col-12 md:col-6">
+        <div class="k-field">
+          <label class="k-field-label" for="school-phone">Phone</label>
+          <input pInputText pSize="small" id="school-phone" type="tel" [(ngModel)]="phone" />
+        </div>
+      </div>
+      <div class="col-12">
+        <div class="k-field">
+          <label class="k-field-label" for="school-address">Address</label>
+          <textarea pTextarea id="school-address" rows="3" [(ngModel)]="address"></textarea>
+        </div>
+      </div>
+    </div>
+
+    <ng-container k-actions>
+      <p-button label="Save changes" icon="pi pi-check" size="small" />
+    </ng-container>
+  </k-settings-section>
+
+  <k-settings-section title="Regional settings"
+    description="Defaults for dates, money and language throughout the system.">
+    <div class="grid">
+      <div class="col-12 md:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="school-tz">Time zone</label>
+          <p-select inputId="school-tz" [options]="timezoneOptions" [(ngModel)]="timezone" optionLabel="label"
+            optionValue="value" size="small" />
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="school-currency">Currency</label>
+          <p-select inputId="school-currency" [options]="currencyOptions" [(ngModel)]="currency" optionLabel="label"
+            optionValue="value" size="small" />
+        </div>
+      </div>
+      <div class="col-12 md:col-4">
+        <div class="k-field">
+          <label class="k-field-label" for="school-language">Default language</label>
+          <p-select inputId="school-language" [options]="languageOptions" [(ngModel)]="language" optionLabel="label"
+            optionValue="value" size="small" />
+        </div>
+      </div>
+    </div>
+
+    <ng-container k-actions>
+      <p-button label="Save changes" icon="pi pi-check" size="small" />
+    </ng-container>
+  </k-settings-section>
+</div>

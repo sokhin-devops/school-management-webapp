@@ -1,0 +1,32 @@
+<article class="k-person-card">
+  <header class="k-person-head">
+    <p-avatar [label]="initials()" shape="circle" styleClass="k-person-avatar" />
+
+    <div class="k-person-identity">
+      <h3 class="k-person-name" [title]="name()">{{ name() }}</h3>
+      @if (subtitle()) {
+        <span class="k-person-subtitle">{{ subtitle() }}</span>
+      }
+    </div>
+
+    @if (status(); as value) {
+      <k-status-tag [status]="value" />
+    }
+  </header>
+
+  <dl class="k-person-meta">
+    @for (row of meta(); track row.label) {
+      <div class="k-person-meta-row">
+        <dt>
+          <i class="pi" [ngClass]="row.icon" aria-hidden="true"></i>
+          <span class="k-visually-hidden">{{ row.label }}</span>
+        </dt>
+        <dd [title]="row.text">{{ row.text }}</dd>
+      </div>
+    }
+  </dl>
+
+  <footer class="k-person-actions">
+    <ng-content />
+  </footer>
+</article>

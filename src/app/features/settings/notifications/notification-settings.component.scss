@@ -1,0 +1,47 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// The shared kit has no multi-channel preference row, so the three channel
+// columns are held in step here: one fixed column width shared by the header
+// labels and the checkbox cells beneath them.
+$k-channel-column: 3.5rem;
+$k-channel-gap: 0.75rem;
+
+.k-channel-head {
+  display: flex;
+  justify-content: flex-end;
+  gap: $k-channel-gap;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.k-channel-head span {
+  width: $k-channel-column;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-align: center;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+}
+
+.k-channel-cells {
+  display: flex;
+  flex: 0 0 auto;
+  gap: $k-channel-gap;
+}
+
+.k-channel-cells > p-checkbox {
+  display: flex;
+  width: $k-channel-column;
+  justify-content: center;
+}
+
+@media (max-width: 40rem) {
+  .k-channel-head span,
+  .k-channel-cells > p-checkbox {
+    width: 2.5rem;
+  }
+}

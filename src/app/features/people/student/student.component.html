@@ -1,71 +1,79 @@
-<div class="k-student-page">
-  <div class="k-student-toolbar flex flex-column sm:flex-row sm:align-items-center sm:justify-content-between gap-2">
-    <div class="flex flex-column sm:flex-row sm:align-items-center gap-2">
-      <p-iconfield iconPosition="left" class="k-student-search">
-        <p-inputicon class="pi pi-search" />
-        <input pInputText pSize="small" type="text" placeholder="Search students..." [ngModel]="searchTerm()"
-          (ngModelChange)="onSearchChange($event)" />
-      </p-iconfield>
+<k-list-shell>
+  <k-list-toolbar k-toolbar searchPlaceholder="Search name, admission no. or class" searchLabel="Search students"
+    [search]="records.search()" (searchChange)="records.onSearch($event)">
+    <ng-container k-filters>
+      <p-select styleClass="k-list-filter" [options]="classOptions()" [ngModel]="classFilter.value()"
+        (ngModelChange)="classFilter.value.set($event); records.onFilterChange()" optionLabel="label" optionValue="value"
+        placeholder="All classes" size="small" [showClear]="true" [filter]="true" filterBy="label"
+        ariaLabel="Filter by class" />
 
-      <p-select [options]="classOptions()" [ngModel]="selectedClass()" (ngModelChange)="selectedClass.set($event)"
-        optionLabel="label" optionValue="value" placeholder="All classes" size="small" [showClear]="true"
-        [filter]="true" filterBy="label" styleClass="k-student-filter" />
+      <p-select styleClass="k-list-filter" [options]="statusOptions" [ngModel]="statusFilter.value()"
+        (ngModelChange)="statusFilter.value.set($event); records.onFilterChange()" optionLabel="label" optionValue="value"
+        placeholder="All statuses" size="small" [showClear]="true" ariaLabel="Filter by status" />
 
-      <p-select [options]="statusOptions" [ngModel]="selectedStatus()" (ngModelChange)="selectedStatus.set($event)"
-        optionLabel="label" optionValue="value" placeholder="All statuses" size="small" [showClear]="true"
-        styleClass="k-student-filter" />
+      @if (records.hasFilters()) {
+        <p-button label="Clear" icon="pi pi-filter-slash" size="small" severity="secondary" [text]="true"
+          (onClick)="records.clear()" />
+      }
+    </ng-container>
 
-      <p-button label="Clear" icon="pi pi-filter-slash" size="small" severity="secondary" [text]="true"
-        [disabled]="!hasFilters()" (onClick)="clearFilters()" />
-    </div>
+    <ng-container k-actions>
+      <span class="k-list-count">{{ records.countLabel() }}</span>
+      <p-button label="Add Student" icon="pi pi-plus" size="small" />
+    </ng-container>
+  </k-list-toolbar>
 
-    <p-button label="Add Student" icon="pi pi-plus" size="small" />
-  </div>
-
-  <p-dataview class="k-student-dataview" [value]="pagedStudents()" [layout]="layoutUi.layout()">
-    <ng-template #empty>
-      <div class="text-center text-color-secondary py-6">No students found.</div>
+  <p-dataview class="k-dataview" [value]="records.page()" [layout]="layoutUi.layout()">
+    <ng-template #emptymessage>
+      <k-empty-state icon="pi-users" title="No students found"
+        [message]="records.hasFilters()
+          ? 'No student matches the current search and filters.'
+          : 'Students you add will be listed here.'">
+        @if (records.hasFilters()) {
+          <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
+            (onClick)="records.clear()" />
+        } @else {
+          <p-button label="Add Student" icon="pi pi-plus" size="small" />
+        }
+      </k-empty-state>
     </ng-template>
 
+    <!-- Table view -->
     <ng-template #list let-items>
-      <div class="k-student-table-wrap">
-        <p-table class="k-student-table" [value]="items" styleClass="p-datatable-sm">
+      <div class="k-table-wrap">
+        <p-table class="k-table" [value]="items" [customSort]="true" [sortField]="records.sortField()"
+          [sortOrder]="records.sortOrder()" (sortFunction)="records.onSort($event)" [scrollable]="true" scrollHeight="flex"
+          styleClass="p-datatable-sm">
           <ng-template pTemplate="header">
             <tr>
-              <th style="width: 28%">Student</th>
-              <th style="width: 16%">Admission No.</th>
-              <th style="width: 14%">Class</th>
-              <th style="width: 18%">Contact</th>
-              <th style="width: 12%">Status</th>
-              <th style="width: 12%">Actions</th>
+              <th style="width: 30%" pSortableColumn="name">Student <p-sortIcon field="name" /></th>
+              <th style="width: 16%" pSortableColumn="admissionNumber">
+                Admission no. <p-sortIcon field="admissionNumber" />
+              </th>
+              <th style="width: 14%" pSortableColumn="className">Class <p-sortIcon field="className" /></th>
+              <th style="width: 18%">Phone</th>
+              <th style="width: 10%" pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+              <th style="width: 12%" class="text-right">Actions</th>
             </tr>
           </ng-template>
+
           <ng-template pTemplate="body" let-student>
             <tr>
               <td>
-                <div class="flex align-items-center gap-2">
-                  <p-avatar [label]="initials(student)" shape="circle" styleClass="bg-primary" />
-                  <div>
-                    <div class="font-medium">{{ student.firstName }} {{ student.lastName }}</div>
-                    <div class="text-xs text-color-secondary">{{ student.email }}</div>
+                <div class="k-person-cell">
+                  <p-avatar [label]="initials(student)" shape="circle" styleClass="k-person-cell-avatar" />
+                  <div class="k-person-cell-identity">
+                    <span class="k-person-cell-name">{{ fullName(student) }}</span>
+                    <span class="k-person-cell-sub" [title]="student.email">{{ student.email }}</span>
                   </div>
                 </div>
               </td>
-              <td>{{ student.studentDetails?.admissionNumber }}</td>
+              <td class="k-numeric">{{ student.studentDetails?.admissionNumber }}</td>
               <td>{{ student.className }}</td>
               <td>{{ student.phone }}</td>
-              <td>
-                <p-tag [value]="student.status" [severity]="statusSeverity(student.status)" />
-              </td>
-              <td>
-                <div class="flex gap-1">
-                  <p-button icon="pi pi-eye" [text]="true" [rounded]="true" size="small" severity="secondary"
-                    pTooltip="View" />
-                  <p-button icon="pi pi-pencil" [text]="true" [rounded]="true" size="small" severity="info"
-                    pTooltip="Edit" />
-                  <p-button icon="pi pi-trash" [text]="true" [rounded]="true" size="small" severity="danger"
-                    pTooltip="Delete" />
-                </div>
+              <td><k-status-tag [status]="student.status" /></td>
+              <td class="text-right">
+                <k-row-actions [label]="fullName(student)" />
               </td>
             </tr>
           </ng-template>
@@ -73,21 +81,21 @@
       </div>
     </ng-template>
 
+    <!-- Card view -->
     <ng-template #grid let-items>
-      <div class="k-student-scroll">
+      <div class="k-grid-scroll">
         <div class="grid">
           @for (student of items; track student.id) {
-          <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
-            <app-student-card [student]="student" />
-          </div>
+            <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
+              <app-student-card [student]="student" />
+            </div>
           }
         </div>
       </div>
     </ng-template>
   </p-dataview>
 
-  <p-paginator class="k-student-paginator" [first]="first()" [rows]="rows()" [totalRecords]="students().length"
-    [rowsPerPageOptions]="rowsPerPageOptions" [showCurrentPageReport]="true"
-    currentPageReportTemplate="Showing {first} to {last} of {totalRecords} students"
-    (onPageChange)="onPageChange($event)" />
-</div>
+  <p-paginator  k-footer [first]="records.first()" [rows]="records.rows()" [totalRecords]="records.matching().length"
+    [rowsPerPageOptions]="records.pageSizeOptions" [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords}" (onPageChange)="records.onPageChange($event)" />
+</k-list-shell>

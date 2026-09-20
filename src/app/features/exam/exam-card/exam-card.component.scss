@@ -1,0 +1,51 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// Cards sitting side by side line their bottom edges up, which only works if the
+// card itself takes the row's height rather than its content's.
+:host ::ng-deep .p-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.k-exam-head {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.625rem;
+}
+
+.k-exam-identity {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.k-exam-name {
+  font-size: 0.9375rem;
+  font-weight: 600;
+  line-height: 1.3;
+  color: var(--p-text-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k-exam-subtitle {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.k-exam-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: auto;
+  padding-top: 0.625rem;
+  border-top: 1px solid var(--p-content-border-color);
+}

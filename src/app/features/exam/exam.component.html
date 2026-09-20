@@ -1,0 +1,81 @@
+<k-list-shell>
+  <k-list-toolbar k-toolbar searchPlaceholder="Search assessment, subject or class" searchLabel="Search assessments"
+    [search]="records.search()" (searchChange)="records.onSearch($event)">
+    <ng-container k-filters>
+      <p-select styleClass="k-list-filter" [options]="subjectOptions()" [ngModel]="subjectFilter.value()"
+        (ngModelChange)="subjectFilter.value.set($event); records.onFilterChange()" optionLabel="label"
+        optionValue="value" placeholder="All subjects" size="small" [showClear]="true" [filter]="true"
+        filterBy="label" ariaLabel="Filter by subject" />
+
+      <p-select styleClass="k-list-filter" [options]="typeOptions" [ngModel]="typeFilter.value()"
+        (ngModelChange)="typeFilter.value.set($event); records.onFilterChange()" optionLabel="label"
+        optionValue="value" placeholder="All types" size="small" [showClear]="true" ariaLabel="Filter by type" />
+
+      @if (records.hasFilters()) {
+        <p-button label="Clear" icon="pi pi-filter-slash" size="small" severity="secondary" [text]="true"
+          (onClick)="records.clear()" />
+      }
+    </ng-container>
+
+    <ng-container k-actions>
+      <span class="k-list-count">{{ records.countLabel() }}</span>
+      <p-button label="Add Assessment" icon="pi pi-plus" size="small" />
+    </ng-container>
+  </k-list-toolbar>
+
+  @if (records.page().length) {
+    <div class="k-table-wrap">
+      <p-table class="k-table" [value]="records.page()" [customSort]="true" [sortField]="records.sortField()"
+        [sortOrder]="records.sortOrder()" (sortFunction)="records.onSort($event)" [scrollable]="true"
+        scrollHeight="flex" styleClass="p-datatable-sm">
+        <ng-template pTemplate="header">
+          <tr>
+            <th style="width: 26%" pSortableColumn="name">Assessment <p-sortIcon field="name" /></th>
+            <th style="width: 16%" pSortableColumn="subject">Subject <p-sortIcon field="subject" /></th>
+            <th style="width: 14%">Class</th>
+            <th style="width: 11%">Type</th>
+            <th style="width: 12%" pSortableColumn="date">Date <p-sortIcon field="date" /></th>
+            <th style="width: 12%" pSortableColumn="averageScore">Average <p-sortIcon field="averageScore" /></th>
+            <th style="width: 9%" class="text-right">Actions</th>
+          </tr>
+        </ng-template>
+
+        <ng-template pTemplate="body" let-assessment>
+          <tr>
+            <td class="k-cell-strong">{{ assessment.name }}</td>
+            <td>{{ assessment.subject }}</td>
+            <td>{{ assessment.className }}</td>
+            <td>{{ assessment.type }}</td>
+            <td class="k-numeric">{{ assessment.date | date: 'd MMM y' }}</td>
+            <td>
+              @if (assessment.graded) {
+                <span class="k-amount">{{ score(assessment) }}</span>
+                <span class="k-score-share">{{ sharePercent(assessment) }}</span>
+              } @else {
+                <p-tag value="Not graded" severity="secondary" [rounded]="true" />
+              }
+            </td>
+            <td class="text-right"><k-row-actions [label]="assessment.name" /></td>
+          </tr>
+        </ng-template>
+      </p-table>
+    </div>
+  } @else {
+    <k-empty-state icon="pi-clipboard" title="No assessments found"
+      [message]="records.hasFilters()
+        ? 'No assessment matches the current search and filters.'
+        : 'Assessments you schedule will be listed here.'">
+      @if (records.hasFilters()) {
+        <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
+          (onClick)="records.clear()" />
+      } @else {
+        <p-button label="Add Assessment" icon="pi pi-plus" size="small" />
+      }
+    </k-empty-state>
+  }
+
+  <p-paginator k-footer [first]="records.first()" [rows]="records.rows()" [totalRecords]="records.matching().length"
+    [rowsPerPageOptions]="records.pageSizeOptions" [showCurrentPageReport]="true"
+    currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
+    (onPageChange)="records.onPageChange($event)" />
+</k-list-shell>

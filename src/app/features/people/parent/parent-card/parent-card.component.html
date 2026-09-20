@@ -1,1 +1,4 @@
-<p>parent-card works!</p>
+<k-person-card [name]="fullName()" [subtitle]="parent().relationship" [status]="parent().status" [meta]="meta()">
+  <k-row-actions [label]="fullName()" (view)="view.emit(parent())" (edit)="edit.emit(parent())"
+    (remove)="remove.emit(parent())" />
+</k-person-card>

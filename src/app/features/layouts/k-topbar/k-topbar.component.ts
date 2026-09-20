@@ -1,9 +1,10 @@
 import { Component, computed, inject } from '@angular/core';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { OverlayBadgeModule } from 'primeng/overlaybadge';
 import { KShareModule } from '../../../share/k-share.module';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
 import { BranchContextService } from '../../../core/services/branch-context.service';
+import { Branch, Status } from '../../../core/models';
 import { OnboardingService } from '../../../core/services/onboarding.service';
 
 interface TopbarNotification {
@@ -15,7 +16,7 @@ interface TopbarNotification {
 
 @Component({
   selector: 'app-k-topbar',
-  imports: [KShareModule, OverlayBadgeModule],
+  imports: [KShareModule, OverlayBadgeModule, RouterLink],
   templateUrl: './k-topbar.component.html',
   styleUrl: './k-topbar.component.scss',
 })
@@ -42,6 +43,10 @@ export class KTopbarComponent {
     { id: '1', icon: 'pi-graduation-cap', message: 'New student registration submitted', time: '2h ago' },
     { id: '2', icon: 'pi-wallet', message: 'Fee payment received', time: '5h ago' },
   ];
+
+  protected isInactive(branch: Branch): boolean {
+    return branch.status === Status.Inactive;
+  }
 
   onBranchChange(branchId: string): void {
     this.branchContext.selectBranch(branchId);

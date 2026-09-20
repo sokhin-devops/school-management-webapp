@@ -1,0 +1,70 @@
+<div class="k-page-scroll">
+  <k-settings-section title="Environment" description="What this installation is running. Read-only.">
+    <dl class="k-facts">
+      @for (fact of environment; track fact.label) {
+        <div>
+          <dt class="k-fact-label">{{ fact.label }}</dt>
+          <dd class="k-fact-value">{{ fact.value }}</dd>
+        </div>
+      }
+    </dl>
+  </k-settings-section>
+
+  <k-settings-section title="Data" description="Exporting, importing and how long records are kept.">
+    <div class="grid">
+      <div class="col-12 md:col-5">
+        <div class="k-field">
+          <label class="k-field-label" for="retention">Data retention</label>
+          <p-select inputId="retention" [options]="retentionOptions" [(ngModel)]="retention" optionLabel="label"
+            optionValue="value" size="small" />
+          <span class="k-field-hint">How long archived records are kept before deletion.</span>
+        </div>
+      </div>
+    </div>
+
+    <ng-container k-actions>
+      <p-button label="Import data" icon="pi pi-upload" size="small" severity="secondary" [outlined]="true" />
+      <p-button label="Export all data" icon="pi pi-download" size="small" />
+    </ng-container>
+  </k-settings-section>
+
+  <k-settings-section title="Maintenance" description="Take the school offline for planned work.">
+    <div class="k-pref-row">
+      <div>
+        <div class="k-pref-title">Maintenance mode</div>
+        <div class="k-pref-note">
+          Everyone except owners is signed out and shown a maintenance notice until this is turned off.
+        </div>
+      </div>
+      <p-toggleswitch [(ngModel)]="maintenanceMode" ariaLabel="Maintenance mode" />
+    </div>
+
+    @if (maintenanceMode()) {
+      <p-message severity="warn" text="Maintenance mode is on. Staff and families cannot sign in." />
+    }
+
+    <ng-container k-actions>
+      <p-button label="Clear cache" icon="pi pi-refresh" size="small" severity="secondary" [outlined]="true" />
+    </ng-container>
+  </k-settings-section>
+
+  <k-settings-section title="Danger zone" description="These actions cannot be undone.">
+    <div class="k-danger">
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Delete all school data</div>
+          <div class="k-pref-note">Removes every student, staff, academic and finance record. Irreversible.</div>
+        </div>
+        <p-button label="Delete data" icon="pi pi-trash" size="small" severity="danger" [outlined]="true" />
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Close this account</div>
+          <div class="k-pref-note">Ends the subscription and schedules the workspace for deletion.</div>
+        </div>
+        <p-button label="Close account" icon="pi pi-power-off" size="small" severity="danger" />
+      </div>
+    </div>
+  </k-settings-section>
+</div>

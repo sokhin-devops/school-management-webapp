@@ -1,0 +1,16 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// Set apart so an irreversible action is never a click away from a routine one.
+.k-danger {
+  padding: 0 1rem;
+  border: 1px solid color-mix(in srgb, #d03b3b 40%, var(--p-content-border-color));
+  border-radius: 10px;
+  background: color-mix(in srgb, #d03b3b 4%, transparent);
+}
+
+.k-danger .k-pref-row:first-child {
+  border-top: 0;
+}

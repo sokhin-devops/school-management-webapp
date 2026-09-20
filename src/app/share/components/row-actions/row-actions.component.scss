@@ -1,0 +1,16 @@
+:host {
+  display: inline-flex;
+}
+
+.k-row-actions {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.125rem;
+}
+
+// PrimeNG's small text button still reserves a 2.5rem box, which is too much
+// weight for three icons sitting at the end of a dense row.
+:host ::ng-deep .p-button.p-button-icon-only {
+  width: 2rem;
+  height: 2rem;
+}
