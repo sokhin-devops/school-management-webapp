@@ -13,20 +13,17 @@
   .p-panelmenu-header-link,
   .p-panelmenu-item-link {
     border-radius: var(--p-content-border-radius, 5px);
-    // `transform` is in here for the nudge below: a colour fade alone has nothing
-    // moving, so the row reads as switching rather than responding.
+    // This rule is the one in force while the pointer is leaving, so the short
+    // duration belongs here and the longer one on :hover below.
     transition:
-      background-color var(--k-nav-ease-duration) var(--k-nav-ease),
-      color var(--k-nav-ease-duration) var(--k-nav-ease),
-      transform var(--k-nav-ease-duration) var(--k-nav-ease);
+      background-color var(--k-nav-ease-out) var(--k-nav-ease),
+      color var(--k-nav-ease-out) var(--k-nav-ease);
   }
 
-  // A small lean towards the content the row opens. Deliberately not applied to
-  // the current page: that row carries `transition: none` so it would jump
-  // rather than glide, and the page you are already on should sit still.
+  // Entering is where the transition is worth seeing.
   .p-panelmenu-header-link:hover,
-  .p-panelmenu-item-link:not(.p-panelmenu-item-link-active):hover {
-    transform: translateX(3px);
+  .p-panelmenu-item-link:hover {
+    transition-duration: var(--k-nav-ease-duration);
   }
 
   // The icon, label and chevron are coloured by their own rules, so without
@@ -37,7 +34,18 @@
   .p-panelmenu-header-label,
   .p-panelmenu-item-label,
   svg {
-    transition: color var(--k-nav-ease-duration) var(--k-nav-ease);
+    transition: color var(--k-nav-ease-out) var(--k-nav-ease);
+  }
+
+  :is(.p-panelmenu-header-link, .p-panelmenu-item-link):hover :is(
+      .p-panelmenu-header-icon,
+      .p-panelmenu-item-icon,
+      .p-panelmenu-submenu-icon,
+      .p-panelmenu-header-label,
+      .p-panelmenu-item-label,
+      svg
+    ) {
+    transition-duration: var(--k-nav-ease-duration);
   }
 
   // Hover and "this is the page you are on" share one treatment: solid primary

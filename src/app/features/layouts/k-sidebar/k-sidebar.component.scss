@@ -5,6 +5,8 @@
   --k-nav-inset: 1rem;
   --k-nav-row-height: 2.75rem;
   --k-brand-size: 2.25rem;
+  // Where the nav rows start. The brand shares it so the two align.
+  --k-brand-inset: 0.75rem;
   // PrimeNG paints a hovered row's label, icon and chevron from these tokens, and
   // its own rules win over ours. Since a hovered row is now solid primary, they
   // have to be the contrast colour — left as primary they painted the icons the
@@ -35,20 +37,29 @@
       padding-left: calc((var(--k-rail-width) - var(--k-brand-size)) / 2);
     }
 
+    // The label is not just invisible in the rail, it is out of the way: left in
+    // the flow it kept 126px of width inside a 64px rail.
+    .k-brand-text {
+      pointer-events: none;
+    }
+
     > p-scrollpanel {
       width: var(--k-rail-width);
     }
   }
 
-  // Matches the topbar's height so the brand and the topbar read as one band.
+  // Matches the topbar's height so the brand and the topbar read as one band,
+  // and takes the nav's own inset so the mark lines up with the rows below it
+  // rather than sitting two pixels proud of them.
   .k-sidebar-brand {
     display: flex;
     align-items: center;
     gap: 0.625rem;
     flex-shrink: 0;
-    width: var(--k-sidebar-width);
+    width: 100%;
     height: var(--k-topbar-height, 4rem);
-    padding-left: 0.875rem;
+    padding-left: var(--k-brand-inset);
+    overflow: hidden;
     transition: padding-left 0.2s ease;
   }
 
@@ -59,7 +70,9 @@
     flex-shrink: 0;
     width: var(--k-brand-size);
     height: var(--k-brand-size);
-    border-radius: 10px;
+    // One step up from the nav rows rather than an unrelated number, so the
+    // brand and the rows below it read as the same set of shapes.
+    border-radius: calc(var(--p-content-border-radius, 5px) + 3px);
     font-size: 0.9375rem;
     background: var(--p-primary-color);
     color: var(--p-primary-contrast-color);
@@ -100,19 +113,28 @@
   .k-rail-item {
     display: flex;
     align-items: center;
+    // Centred outright rather than by matching paddings, which only looked
+    // centred while the rail happened to be exactly twice the inset wide. The
+    // width is explicit because a button shrinks to its content otherwise, and
+    // an icon-wide button is not what the highlight should be the size of.
+    justify-content: center;
+    width: 100%;
     height: var(--k-nav-row-height);
-    padding: 0 var(--k-nav-inset);
+    padding: 0;
     border: 0;
     background: transparent;
     color: var(--p-text-color);
     cursor: pointer;
+    // Short on the way out, longer on the way in — the same split the full menu
+    // uses, so the two feel like one control at either width.
     transition:
-      background-color var(--k-nav-ease-duration) var(--k-nav-ease),
-      color var(--k-nav-ease-duration) var(--k-nav-ease);
+      background-color var(--k-nav-ease-out) var(--k-nav-ease),
+      color var(--k-nav-ease-out) var(--k-nav-ease);
 
     &:hover {
       background: var(--p-primary-color);
       color: var(--p-primary-contrast-color);
+      transition-duration: var(--k-nav-ease-duration);
     }
 
     &:focus-visible {

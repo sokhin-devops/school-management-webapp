@@ -69,9 +69,14 @@
   // 2.2:1 — a darker step of the same hue is needed for the sorted column.
   --k-table-header-accent: var(--p-primary-700);
   --k-panel-radius: 12px;
-  // Navigation hover: slow enough to read as a transition rather than a flicker,
-  // decelerating so it starts promptly and settles softly.
-  --k-nav-ease-duration: 0.32s;
+  // Navigation hover, entering: long enough to read as a transition rather than
+  // a flicker, and no longer.
+  --k-nav-ease-duration: 0.18s;
+  // Leaving, deliberately quicker. At a third of a second out, sweeping down the
+  // menu left four of the eight rows still glowing behind the pointer, which is
+  // what read as a glitch. Fading out in half the time keeps at most one row
+  // trailing the cursor.
+  --k-nav-ease-out: 0.1s;
   // Ease-out: leaves immediately on the pointer and settles slowly, which reads
   // as smooth. A symmetric curve makes the same duration feel sluggish.
   --k-nav-ease: cubic-bezier(0.22, 0.61, 0.36, 1);

@@ -169,3 +169,49 @@ request that opens the form, not the navigation.
 - **The old Quick Add button did nothing.** It had a tooltip and no behaviour,
   and it only appeared on routes without the layout toggle. It is now real, and
   it is on every route.
+
+## Sidebar: hover and brand
+
+### The hover "glitch" was a trail
+
+Sweeping down the menu left **four of the eight rows still lit** behind the
+pointer and **three of them mid-slide**, because hover was a 0.32s fade plus a
+`translateX(3px)` nudge, applied equally to entering and leaving. Half the menu
+was animating at once, which is what read as flickering rather than smooth.
+
+- **Entering and leaving now have separate durations.** The base rule is the one
+  in force while the pointer leaves, so the short duration lives there
+  (`--k-nav-ease-out`, 0.1s) and the longer one on `:hover`
+  (`--k-nav-ease-duration`, 0.18s). Entering is where a transition is worth
+  seeing; leaving only has to get out of the way.
+- **The nudge is gone.** A row sliding 3px was the noisiest part of a sweep, and
+  the fill already changing to solid primary is response enough.
+- Measured after: rows moving at once **3 → 0**, rows carrying any fill at the
+  peak of a fast sweep **4 → 3** (one of which is the current page, permanently
+  lit), and only **2 visibly lit** once rows under a quarter opacity are
+  discounted.
+
+The mount fade fixed earlier still holds: the active row is sampled at solid
+primary from its first frame, with `transition: 0s`.
+
+### Brand
+
+- **The mark now starts where the nav rows start.** It sat at x=14 against rows
+  at x=12; both take `--k-brand-inset` and measure 12 in both themes.
+- **Its corner radius is one step up from the rows'** (9px against 6px) rather
+  than an unrelated 10px, so the brand and the rows read as the same set of
+  shapes.
+- **The brand no longer keeps the full sidebar width inside the rail.** It was a
+  260px element in a 64px rail, with its label holding 126px of layout at zero
+  opacity; it is now 64px with 4px of clipped label.
+
+### Rail
+
+- **Rail rows are centred by rule**, not by matching left and right paddings that
+  only happened to centre while the rail was exactly twice the inset wide.
+  Setting the padding to zero first exposed that a `<button>` shrinks to its
+  content: the rows collapsed to icon width and sat at x=16 in a rail centred on
+  32, so the width is now explicit. Rail centre, row centre and icon centre all
+  measure 32.
+- Rail rows take the same split hover timing as the menu rows, so the two feel
+  like one control at either width.
