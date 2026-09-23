@@ -19,7 +19,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Class" icon="pi pi-plus" size="small" />
+      <p-button label="Add Class" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -56,7 +56,7 @@
               </div>
             </td>
             <td><k-status-tag [status]="group.status" /></td>
-            <td class="text-right"><k-row-actions [label]="group.name" /></td>
+            <td class="text-right"><k-row-actions [label]="group.name" (edit)="openEdit(group)" /></td>
           </tr>
         </ng-template>
       </p-table>
@@ -70,7 +70,7 @@
         <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
           (onClick)="records.clear()" />
       } @else {
-        <p-button label="Add Class" icon="pi pi-plus" size="small" />
+        <p-button label="Add Class" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
       }
     </k-empty-state>
   }
@@ -80,3 +80,7 @@
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
     (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
+
+<app-class-group-form [(visible)]="formVisible" [group]="editing()" [levelOptions]="levelOptions()" [programOptions]="programOptions()"
+  [teacherOptions]="teacherOptions()"
+  (saved)="onSaved($event)" />

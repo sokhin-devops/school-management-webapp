@@ -1,0 +1,40 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit room' : 'Add room'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a room to the current branch.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add room'" width="38rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.name" inputId="room-name" [control]="form.controls.name">
+        <input pInputText id="room-name" formControlName="name" autocomplete="off" placeholder="Room 101" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.code" inputId="room-code" [control]="form.controls.code"
+        hint="Short and unique, e.g. R101.">
+        <input pInputText id="room-code" formControlName="code" autocomplete="off" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.building" inputId="room-building" [control]="form.controls.building">
+        <input pInputText id="room-building" formControlName="building" autocomplete="off" placeholder="Main Block" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.kind" inputId="room-kind" [control]="form.controls.kind">
+        <p-select inputId="room-kind" formControlName="kind" [options]="kindChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a kind" [editable]="true" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.capacity" inputId="room-capacity" [control]="form.controls.capacity"
+        hint="How many people the room seats.">
+        <p-inputnumber inputId="room-capacity" formControlName="capacity" [min]="1" [max]="500" [showButtons]="true" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.status" inputId="room-status" [control]="form.controls.status">
+        <p-select inputId="room-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+          optionValue="value" />
+      </k-form-field>
+    </div>
+  </form>
+</k-form-dialog>

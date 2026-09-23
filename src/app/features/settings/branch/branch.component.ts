@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -15,6 +15,8 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { BranchContextService } from '../../../core/services/branch-context.service';
 import { Branch, Status } from '../../../core/models';
+import { BranchFormComponent } from './branch-form/branch-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 /**
  * 62-branches.md — Branch Name, Address, Phone, Status. The list is the same one
@@ -34,6 +36,7 @@ import { Branch, Status } from '../../../core/models';
     EmptyStateComponent,
     RowActionsComponent,
     StatusTagComponent,
+    BranchFormComponent,
   ],
   templateUrl: './branch.component.html',
   styleUrl: './branch.component.scss',
@@ -64,5 +67,26 @@ export class BranchComponent {
 
   protected isSelected(branch: Branch): boolean {
     return this.branchContext.selectedBranch().id === branch.id;
+  }
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<Branch | null>(null);
+
+  constructor() {
+    openOnQuickAdd('branch', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(branch: Branch): void {
+    this.editing.set(branch);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(branch: Branch): void {
+    this.branchContext.upsert(branch);
   }
 }

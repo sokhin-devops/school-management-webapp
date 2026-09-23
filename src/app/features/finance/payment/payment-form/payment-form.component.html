@@ -1,0 +1,52 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit payment' : 'Record payment'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Record a payment against a student and a fee.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Record payment'" width="40rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.reference" inputId="payment-reference" [control]="form.controls.reference"
+        hint="Unique across the school.">
+        <input pInputText id="payment-reference" formControlName="reference" autocomplete="off" placeholder="PAY-2026-0001" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.studentName" inputId="payment-studentname" [control]="form.controls.studentName">
+        <p-select inputId="payment-studentname" formControlName="studentName" [options]="studentChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a student" [filter]="true" filterBy="label" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.feeName" inputId="payment-feename" [control]="form.controls.feeName">
+        <p-select inputId="payment-feename" formControlName="feeName" [options]="feeChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a fee" [filter]="true" filterBy="label" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.amount" inputId="payment-amount" [control]="form.controls.amount">
+        <p-inputnumber inputId="payment-amount" formControlName="amount" mode="currency" currency="USD" locale="en-US"
+          [min]="0" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.date" inputId="payment-date" [control]="form.controls.date">
+        <p-datepicker inputId="payment-date" formControlName="date" dateFormat="dd M yy" [showIcon]="true"
+          appendTo="body" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.method" inputId="payment-method" [control]="form.controls.method">
+        <p-select inputId="payment-method" formControlName="method" [options]="methodOptions" optionLabel="label"
+          optionValue="value" placeholder="Select a method" />
+      </k-form-field>
+    </div>
+
+    <k-form-field [label]="labels.status" inputId="payment-status" [control]="form.controls.status">
+      <p-select inputId="payment-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+        optionValue="value" />
+    </k-form-field>
+
+    <k-form-field [label]="labels.notes" inputId="payment-notes" [control]="form.controls.notes"
+      hint="Optional.">
+      <textarea pTextarea id="payment-notes" formControlName="notes" rows="3"></textarea>
+    </k-form-field>
+  </form>
+</k-form-dialog>

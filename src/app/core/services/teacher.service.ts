@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Person, PersonType, Status } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 /** Teacher row for People > Teachers, denormalized with display-ready subjects. */
 export interface TeacherRecord extends Person {
@@ -56,4 +57,13 @@ function seedTeachers(): TeacherRecord[] {
 export class TeacherService {
   private readonly _teachers = signal<TeacherRecord[]>(seedTeachers());
   readonly teachers = this._teachers.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: TeacherRecord): void {
+    this._teachers.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._teachers.update((current) => removeById(current, id));
+  }
 }

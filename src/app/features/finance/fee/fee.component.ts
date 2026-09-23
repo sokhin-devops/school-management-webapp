@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -16,6 +16,8 @@ import { RecordFilter, createRecordList } from '../../../share/data/record-list'
 import { money } from '../../../share/data/format';
 import { FeeService } from '../../../core/services/fee.service';
 import { Fee, Status } from '../../../core/models';
+import { FeeFormComponent } from './fee-form/fee-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 /** 41-fees.md — configurable charges: tuition, registration, transportation, materials. */
 @Component({
@@ -32,6 +34,7 @@ import { Fee, Status } from '../../../core/models';
     EmptyStateComponent,
     RowActionsComponent,
     StatusTagComponent,
+    FeeFormComponent,
   ],
   templateUrl: './fee.component.html',
   styleUrl: './fee.component.scss',
@@ -69,4 +72,25 @@ export class FeeComponent {
   );
 
   protected readonly money = money;
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<Fee | null>(null);
+
+  constructor() {
+    openOnQuickAdd('fee', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(fee: Fee): void {
+    this.editing.set(fee);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(fee: Fee): void {
+    this.feeService.upsert(fee);
+  }
 }

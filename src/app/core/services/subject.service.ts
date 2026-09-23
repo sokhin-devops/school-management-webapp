@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Status, Subject } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 function subject(id: string, name: string, code: string, description: string, status = Status.Active): Subject {
   return { id, branchId: 'branch-1', name, code, description, status };
@@ -27,4 +28,13 @@ export class SubjectService {
   ]);
 
   readonly subjects = this._subjects.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: Subject): void {
+    this._subjects.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._subjects.update((current) => removeById(current, id));
+  }
 }

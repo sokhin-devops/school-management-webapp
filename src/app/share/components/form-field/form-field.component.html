@@ -1,0 +1,14 @@
+<div class="k-form-field" [class.is-invalid]="isInvalid">
+  <label class="k-form-label" [attr.for]="inputId() || null">
+    {{ label() }}
+    @if (isRequired) {
+      <span class="k-required" [class.is-met]="isMet" [attr.aria-label]="isMet ? null : 'required'">*</span>
+    }
+  </label>
+
+  <ng-content />
+
+  <!-- @if (hint()) {
+    <span class="k-form-hint">{{ hint() }}</span>
+  } -->
+</div>

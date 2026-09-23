@@ -6,16 +6,33 @@
 // globally, because PrimeNG appends that overlay to <body> where these scoped
 // selectors no longer reach.
 
+// The trigger is dressed as a primary text button: no field chrome, just the
+// icon, the current branch name and a chevron, all in the accent colour.
 :host ::ng-deep .k-branch-select.p-select {
-  min-width: 12.5rem;
   max-width: 15rem;
-  padding: 0.25rem 0.5rem;
-  border-radius: 10px;
-  background: var(--p-content-background);
-  transition: border-color 0.18s ease;
+  padding: 0.375rem 0.625rem;
+  gap: 0.5rem;
+  border: 0 none;
+  border-radius: 8px;
+  background: transparent;
+  box-shadow: none;
+  color: var(--p-primary-color);
+  transition: background-color 0.15s ease;
 
-  &:not(.p-disabled):hover {
-    border-color: color-mix(in srgb, var(--p-primary-color) 55%, var(--p-content-border-color));
+  &:not(.p-disabled):hover,
+  &.p-select-open {
+    background: color-mix(in srgb, var(--p-primary-color) 10%, transparent);
+  }
+
+  // No border or ring on click; keyboard users still get one.
+  &:not(.p-disabled).p-focus {
+    outline: none;
+    box-shadow: none;
+  }
+
+  &:has(:focus-visible) {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 2px;
   }
 
   .p-select-label {
@@ -23,16 +40,41 @@
     align-items: center;
     padding: 0;
   }
+
+  .p-select-dropdown {
+    width: auto;
+    color: inherit;
+    font-size: 0.75rem;
+  }
+
+  .k-branch-trigger {
+    gap: 0.5rem;
+  }
+
+  .k-branch-name {
+    font-size: 0.875rem;
+    color: inherit;
+  }
 }
 
 @media (max-width: 575.98px) {
   :host ::ng-deep .k-branch-select.p-select {
-    min-width: 0;
-    max-width: 11rem;
+    max-width: 10rem;
   }
+}
 
-  // On a phone the caption is the first thing to go; the name still identifies it.
-  :host ::ng-deep .k-branch-caption {
-    display: none;
+// The avatar opens a menu, so it is a button. As a div with a click handler it
+// could not be tabbed to, showed no focus ring and announced nothing.
+.k-avatar-button {
+  display: inline-flex;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: 2px;
   }
 }

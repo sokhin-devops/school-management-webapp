@@ -1,0 +1,27 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit subject' : 'Add subject'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a subject to the current branch.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add subject'" width="36rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.name" inputId="subject-name" [control]="form.controls.name">
+        <input pInputText id="subject-name" formControlName="name" autocomplete="off" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.code" inputId="subject-code" [control]="form.controls.code"
+        hint="Short and unique, e.g. MATH.">
+        <input pInputText id="subject-code" formControlName="code" autocomplete="off" />
+      </k-form-field>
+    </div>
+
+    <k-form-field [label]="labels.description" inputId="subject-description" [control]="form.controls.description"
+      hint="Optional. One line on what the subject covers.">
+      <textarea pTextarea id="subject-description" formControlName="description" rows="3"></textarea>
+    </k-form-field>
+
+    <k-form-field [label]="labels.status" inputId="subject-status" [control]="form.controls.status">
+      <p-select inputId="subject-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+        optionValue="value" />
+    </k-form-field>
+  </form>
+</k-form-dialog>

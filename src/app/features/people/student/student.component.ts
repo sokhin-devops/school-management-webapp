@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -19,6 +19,8 @@ import { LayoutUiService } from '../../../core/services/layout-ui.service';
 import { StudentRecord, StudentService } from '../../../core/services/student.service';
 import { Status } from '../../../core/models';
 import { StudentCardComponent } from './student-card/student-card.component';
+import { StudentFormComponent } from './student-form/student-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 @Component({
   selector: 'app-student',
@@ -37,6 +39,7 @@ import { StudentCardComponent } from './student-card/student-card.component';
     RowActionsComponent,
     StatusTagComponent,
     StudentCardComponent,
+    StudentFormComponent,
   ],
   templateUrl: './student.component.html',
   styleUrl: './student.component.scss',
@@ -87,6 +90,28 @@ export class StudentComponent {
       .sort((a, b) => a.localeCompare(b))
       .map((className) => ({ label: className, value: className })),
   );
+
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<StudentRecord | null>(null);
+
+  constructor() {
+    openOnQuickAdd('student', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(student: StudentRecord): void {
+    this.editing.set(student);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(student: StudentRecord): void {
+    this.studentService.upsert(student);
+  }
 
   protected fullName(student: StudentRecord): string {
     return `${student.firstName} ${student.lastName}`;

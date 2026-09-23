@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -16,6 +16,10 @@ import { RecordFilter, createRecordList } from '../../../share/data/record-list'
 import { humanize, money } from '../../../share/data/format';
 import { PaymentRecord, PaymentService } from '../../../core/services/payment.service';
 import { PaymentMethod, PaymentStatus } from '../../../core/models';
+import { PaymentFormComponent } from './payment-form/payment-form.component';
+import { FeeService } from '../../../core/services/fee.service';
+import { StudentService } from '../../../core/services/student.service';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 type Severity = 'success' | 'warn' | 'info' | 'danger' | 'secondary';
 
@@ -34,12 +38,15 @@ type Severity = 'success' | 'warn' | 'info' | 'danger' | 'secondary';
     ListShellComponent,
     ListToolbarComponent,
     EmptyStateComponent,
+    PaymentFormComponent,
   ],
   templateUrl: './payment.component.html',
   styleUrl: './payment.component.scss',
 })
 export class PaymentComponent {
   private readonly paymentService = inject(PaymentService);
+  private readonly studentService = inject(StudentService);
+  private readonly feeService = inject(FeeService);
 
   protected readonly methodFilter = new RecordFilter<PaymentRecord, PaymentMethod>(
     (payment, value) => payment.method === value,
@@ -83,6 +90,7 @@ export class PaymentComponent {
   protected readonly humanize = humanize;
 
   constructor() {
+    openOnQuickAdd('payment', () => this.openCreate());
     this.records.sortOrder.set(-1);
   }
 
@@ -99,5 +107,40 @@ export class PaymentComponent {
       default:
         return 'secondary';
     }
+  }
+  /** A payment is booked against a real student and a real fee. */
+  protected readonly studentOptions = computed(() =>
+    this.studentService
+      .students()
+      .map((student) => ({
+        label: `${student.firstName} ${student.lastName}`,
+        value: `${student.firstName} ${student.lastName}`,
+      }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
+
+  protected readonly feeOptions = computed(() =>
+    this.feeService
+      .fees()
+      .map((fee) => ({ label: fee.name, value: fee.name }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
+
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<PaymentRecord | null>(null);
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(payment: PaymentRecord): void {
+    this.editing.set(payment);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(payment: PaymentRecord): void {
+    this.paymentService.upsert(payment);
   }
 }

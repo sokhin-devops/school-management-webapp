@@ -19,7 +19,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Student" icon="pi pi-plus" size="small" />
+      <p-button label="Add Student" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -33,7 +33,7 @@
           <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
             (onClick)="records.clear()" />
         } @else {
-          <p-button label="Add Student" icon="pi pi-plus" size="small" />
+          <p-button label="Add Student" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
         }
       </k-empty-state>
     </ng-template>
@@ -73,7 +73,7 @@
               <td>{{ student.phone }}</td>
               <td><k-status-tag [status]="student.status" /></td>
               <td class="text-right">
-                <k-row-actions [label]="fullName(student)" />
+                <k-row-actions [label]="fullName(student)" (edit)="openEdit(student)" />
               </td>
             </tr>
           </ng-template>
@@ -87,7 +87,7 @@
         <div class="grid">
           @for (student of items; track student.id) {
             <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
-              <app-student-card [student]="student" />
+              <app-student-card [student]="student" (edit)="openEdit($event)" />
             </div>
           }
         </div>
@@ -99,3 +99,6 @@
     [rowsPerPageOptions]="records.pageSizeOptions" [showCurrentPageReport]="true"
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords}" (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
+
+<app-student-form [(visible)]="formVisible" [student]="editing()" [classOptions]="classOptions()"
+  (saved)="onSaved($event)" />

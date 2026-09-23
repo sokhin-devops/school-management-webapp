@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -15,6 +15,10 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { ClassGroupRecord, ClassGroupService } from '../../../core/services/class-group.service';
 import { Status } from '../../../core/models';
+import { ClassGroupFormComponent } from './class-group-form/class-group-form.component';
+import { ProgramService } from '../../../core/services/program.service';
+import { TeacherService } from '../../../core/services/teacher.service';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 type Fill = 'ok' | 'warning' | 'critical';
 
@@ -36,12 +40,15 @@ type Fill = 'ok' | 'warning' | 'critical';
     EmptyStateComponent,
     RowActionsComponent,
     StatusTagComponent,
+    ClassGroupFormComponent,
   ],
   templateUrl: './class-group.component.html',
   styleUrl: './class-group.component.scss',
 })
 export class ClassGroupComponent {
   private readonly classGroupService = inject(ClassGroupService);
+  private readonly programService = inject(ProgramService);
+  private readonly teacherService = inject(TeacherService);
 
   protected readonly levelFilter = new RecordFilter<ClassGroupRecord, string>(
     (group, value) => group.levelName === value,
@@ -91,5 +98,41 @@ export class ClassGroupComponent {
   protected fill(group: ClassGroupRecord): Fill {
     const percent = this.percentFull(group);
     return percent >= 100 ? 'critical' : percent >= 85 ? 'warning' : 'ok';
+  }
+  /** A class is placed on a real programme and given a real member of staff. */
+  protected readonly programOptions = computed(() =>
+    this.programService
+      .programs()
+      .map((program) => ({ label: program.name, value: program.name }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
+
+  protected readonly teacherOptions = computed(() =>
+    this.teacherService
+      .teachers()
+      .map((teacher) => ({ label: `${teacher.firstName} ${teacher.lastName}`, value: `${teacher.firstName} ${teacher.lastName}` }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
+
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<ClassGroupRecord | null>(null);
+
+  constructor() {
+    openOnQuickAdd('class-group', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(group: ClassGroupRecord): void {
+    this.editing.set(group);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(group: ClassGroupRecord): void {
+    this.classGroupService.upsert(group);
   }
 }

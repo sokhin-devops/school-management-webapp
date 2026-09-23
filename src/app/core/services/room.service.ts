@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Room, Status } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 /** 26-rooms.md: rooms are independent resources, never a permanent child of a class. */
 export interface RoomRecord extends Room {
@@ -31,4 +32,13 @@ export class RoomService {
   ]);
 
   readonly rooms = this._rooms.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: RoomRecord): void {
+    this._rooms.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._rooms.update((current) => removeById(current, id));
+  }
 }

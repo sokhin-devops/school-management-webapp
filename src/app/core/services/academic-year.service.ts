@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { AcademicYear, AcademicYearStatus, Term } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 function academicYear(
   id: string,
@@ -39,4 +40,13 @@ export class AcademicYearService {
   ]);
 
   readonly years = this._years.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: AcademicYear): void {
+    this._years.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._years.update((current) => removeById(current, id));
+  }
 }

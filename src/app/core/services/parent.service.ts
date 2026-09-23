@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Person, PersonType, Status } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 /** Parent/guardian row for People > Parents, denormalized with the linked children's names. */
 export interface ParentRecord extends Person {
@@ -55,4 +56,13 @@ function seedParents(): ParentRecord[] {
 export class ParentService {
   private readonly _parents = signal<ParentRecord[]>(seedParents());
   readonly parents = this._parents.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: ParentRecord): void {
+    this._parents.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._parents.update((current) => removeById(current, id));
+  }
 }

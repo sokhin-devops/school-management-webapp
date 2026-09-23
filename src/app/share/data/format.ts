@@ -22,3 +22,18 @@ export function humanize(value: string): string {
   const spaced = value.replace(/_/g, ' ');
   return spaced.charAt(0).toUpperCase() + spaced.slice(1);
 }
+
+/**
+ * The date part of a Date, as the records store it.
+ *
+ * Built from the local calendar fields rather than toISOString(), which shifts
+ * into UTC and can hand back the day before.
+ */
+export function isoDate(value: Date | null): string {
+  if (!value) {
+    return '';
+  }
+  const month = String(value.getMonth() + 1).padStart(2, '0');
+  const day = String(value.getDate()).padStart(2, '0');
+  return `${value.getFullYear()}-${month}-${day}`;
+}

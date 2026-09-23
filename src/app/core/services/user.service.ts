@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { DefaultRoleType, PermissionAction, Role, Status, User } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 /** User row for Settings > Users & Roles, denormalized with its role name and branch names. */
 export interface UserRecord extends User {
@@ -47,6 +48,15 @@ export class UserService {
   ]);
 
   readonly users = this._users.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: UserRecord): void {
+    this._users.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._users.update((current) => removeById(current, id));
+  }
 }
 
 /** Role row for the Roles tab, with the branch names spelled out for display. */
@@ -100,4 +110,13 @@ export class RoleService {
   ]);
 
   readonly roles = this._roles.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: RoleRecord): void {
+    this._roles.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._roles.update((current) => removeById(current, id));
+  }
 }

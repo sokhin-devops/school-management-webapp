@@ -7,10 +7,12 @@ import { KTopbarComponent } from '../k-topbar/k-topbar.component';
 import { BreadcrumbService } from '../../../core/services/breadcrumb.service';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
 import { KShareModule } from '../../../share/k-share.module';
+import { FormErrorDialogComponent } from '../../../share/components';
+import { KQuickAddComponent } from '../k-quick-add/k-quick-add.component';
 
 @Component({
   selector: 'app-layout',
-  imports: [RouterOutlet, KSidebarComponent, KTopbarComponent, KShareModule],
+  imports: [RouterOutlet, KSidebarComponent, KTopbarComponent, KShareModule, FormErrorDialogComponent, KQuickAddComponent],
   templateUrl: './layout.component.html',
   styleUrl: './layout.component.scss',
 })

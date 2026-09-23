@@ -1,0 +1,41 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit assessment' : 'Add assessment'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Set a new assessment for a class.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add assessment'" width="38rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.name" inputId="assessment-name" [control]="form.controls.name">
+        <input pInputText id="assessment-name" formControlName="name" autocomplete="off" placeholder="Term 1 Midterm" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.subject" inputId="assessment-subject" [control]="form.controls.subject">
+        <p-select inputId="assessment-subject" formControlName="subject" [options]="subjectChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a subject" [filter]="true" filterBy="label" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.className" inputId="assessment-classname" [control]="form.controls.className">
+        <p-select inputId="assessment-classname" formControlName="className" [options]="classChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a class" [filter]="true" filterBy="label" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.type" inputId="assessment-type" [control]="form.controls.type">
+        <p-select inputId="assessment-type" formControlName="type" [options]="typeOptions" optionLabel="label"
+          optionValue="value" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.date" inputId="assessment-date" [control]="form.controls.date">
+        <p-datepicker inputId="assessment-date" formControlName="date" dateFormat="dd M yy" [showIcon]="true"
+          appendTo="body" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.maxScore" inputId="assessment-maxscore" [control]="form.controls.maxScore"
+        hint="The score a perfect paper earns.">
+        <p-inputnumber inputId="assessment-maxscore" formControlName="maxScore" [min]="1" [max]="1000" [showButtons]="true" />
+      </k-form-field>
+    </div>
+  </form>
+</k-form-dialog>

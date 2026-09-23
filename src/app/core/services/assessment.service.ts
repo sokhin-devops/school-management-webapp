@@ -1,4 +1,5 @@
 import { Injectable, signal } from '@angular/core';
+import { removeById, upsertById } from '../utils/collection';
 
 /**
  * 31-exams-and-grades.md. No Assessment model exists in core/models yet, so the
@@ -52,4 +53,13 @@ export class AssessmentService {
   ]);
 
   readonly assessments = this._assessments.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: AssessmentRecord): void {
+    this._assessments.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._assessments.update((current) => removeById(current, id));
+  }
 }

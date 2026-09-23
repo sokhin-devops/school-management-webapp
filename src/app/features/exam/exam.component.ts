@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -16,6 +16,9 @@ import {
 import { RecordFilter, createRecordList } from '../../share/data/record-list';
 import { percent } from '../../share/data/format';
 import { AssessmentRecord, AssessmentService, AssessmentType } from '../../core/services/assessment.service';
+import { AssessmentFormComponent } from './assessment-form/assessment-form.component';
+import { ClassGroupService } from '../../core/services/class-group.service';
+import { openOnQuickAdd } from '../../core/services/quick-add.service';
 
 /** 31-exams-and-grades.md — assessments, scores and results. */
 @Component({
@@ -33,12 +36,14 @@ import { AssessmentRecord, AssessmentService, AssessmentType } from '../../core/
     ListToolbarComponent,
     EmptyStateComponent,
     RowActionsComponent,
+    AssessmentFormComponent,
   ],
   templateUrl: './exam.component.html',
   styleUrl: './exam.component.scss',
 })
 export class ExamComponent {
   private readonly assessmentService = inject(AssessmentService);
+  private readonly classGroupService = inject(ClassGroupService);
 
   protected readonly subjectFilter = new RecordFilter<AssessmentRecord, string>(
     (assessment, value) => assessment.subject === value,
@@ -81,6 +86,7 @@ export class ExamComponent {
   );
 
   constructor() {
+    openOnQuickAdd('assessment', () => this.openCreate());
     this.records.sortOrder.set(-1);
   }
 
@@ -91,5 +97,30 @@ export class ExamComponent {
 
   protected sharePercent(assessment: AssessmentRecord): string {
     return percent(assessment.maxScore ? (assessment.averageScore / assessment.maxScore) * 100 : 0, 0);
+  }
+  /** An assessment is set for a class that actually runs. */
+  protected readonly classOptions = computed(() =>
+    this.classGroupService
+      .classes()
+      .map((group) => ({ label: group.name, value: group.name }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
+
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<AssessmentRecord | null>(null);
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(assessment: AssessmentRecord): void {
+    this.editing.set(assessment);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(assessment: AssessmentRecord): void {
+    this.assessmentService.upsert(assessment);
   }
 }

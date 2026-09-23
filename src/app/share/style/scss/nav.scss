@@ -13,9 +13,20 @@
   .p-panelmenu-header-link,
   .p-panelmenu-item-link {
     border-radius: var(--p-content-border-radius, 5px);
+    // `transform` is in here for the nudge below: a colour fade alone has nothing
+    // moving, so the row reads as switching rather than responding.
     transition:
       background-color var(--k-nav-ease-duration) var(--k-nav-ease),
-      color var(--k-nav-ease-duration) var(--k-nav-ease);
+      color var(--k-nav-ease-duration) var(--k-nav-ease),
+      transform var(--k-nav-ease-duration) var(--k-nav-ease);
+  }
+
+  // A small lean towards the content the row opens. Deliberately not applied to
+  // the current page: that row carries `transition: none` so it would jump
+  // rather than glide, and the page you are already on should sit still.
+  .p-panelmenu-header-link:hover,
+  .p-panelmenu-item-link:not(.p-panelmenu-item-link-active):hover {
+    transform: translateX(3px);
   }
 
   // The icon, label and chevron are coloured by their own rules, so without

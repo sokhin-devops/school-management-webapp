@@ -18,7 +18,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Record Payment" icon="pi pi-plus" size="small" />
+      <p-button label="Record Payment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -63,7 +63,7 @@
         <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
           (onClick)="records.clear()" />
       } @else {
-        <p-button label="Record Payment" icon="pi pi-plus" size="small" />
+        <p-button label="Record Payment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
       }
     </k-empty-state>
   }
@@ -73,3 +73,6 @@
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
     (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
+
+<app-payment-form [(visible)]="formVisible" [payment]="editing()" [studentOptions]="studentOptions()" [feeOptions]="feeOptions()"
+  (saved)="onSaved($event)" />

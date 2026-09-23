@@ -7,6 +7,7 @@
 // rules are keyed on .k-card, so they only touch a card that opts in.
 .k-card.p-card {
   --p-card-shadow: var(--k-panel-shadow);
+  --p-card-background: var(--k-panel-bg);
   --p-card-body-padding: 1rem 1.25rem;
   --p-card-body-gap: 0.875rem;
 

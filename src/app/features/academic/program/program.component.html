@@ -14,7 +14,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Program" icon="pi pi-plus" size="small" />
+      <p-button label="Add Program" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -39,7 +39,7 @@
             <td class="k-numeric">{{ program.code }}</td>
             <td [title]="program.description">{{ program.description }}</td>
             <td><k-status-tag [status]="program.status" /></td>
-            <td class="text-right"><k-row-actions [label]="program.name" /></td>
+            <td class="text-right"><k-row-actions [label]="program.name" (edit)="openEdit(program)" /></td>
           </tr>
         </ng-template>
       </p-table>
@@ -53,7 +53,7 @@
         <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
           (onClick)="records.clear()" />
       } @else {
-        <p-button label="Add Program" icon="pi pi-plus" size="small" />
+        <p-button label="Add Program" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
       }
     </k-empty-state>
   }
@@ -63,3 +63,6 @@
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
     (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
+
+<app-program-form [(visible)]="formVisible" [program]="editing()"
+  (saved)="onSaved($event)" />

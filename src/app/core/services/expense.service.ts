@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Expense, ExpenseStatus } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 function expense(
   id: string,
@@ -34,4 +35,13 @@ export class ExpenseService {
   ]);
 
   readonly expenses = this._expenses.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: Expense): void {
+    this._expenses.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._expenses.update((current) => removeById(current, id));
+  }
 }

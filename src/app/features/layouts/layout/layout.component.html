@@ -1,29 +1,35 @@
 <div class="k-layout">
   <app-k-sidebar />
+
   <div class="k-layout-main">
     <app-k-topbar />
+
     <div class="k-layout-content">
-      <div
-        class="k-breadcrumb flex justify-content-between align-items-center border-bottom-1 surface-border">
+      <div class="k-breadcrumb">
         <p-breadcrumb [home]="breadcrumb.home()" [model]="breadcrumb.items()" />
-        <div class="flex gap-2">
+
+        <div class="k-breadcrumb-actions">
+          <app-k-quick-add />
+
           @if (showLayoutToggle()) {
-          <p-selectbutton [ngModel]="layoutUi.layout()" (ngModelChange)="layoutUi.setLayout($event)"
-            [options]="layoutUi.options" [allowEmpty]="false" size="small">
-            <ng-template #item let-item>
-              <i class="pi" [ngClass]="{ 'pi-bars': item === 'list', 'pi-table': item === 'grid' }"></i>
-            </ng-template>
-          </p-selectbutton>
-          } @else {
-          <p-button icon="pi pi-plus-circle" rounded="true" size="small" pTooltip="Quick Add"></p-button>
+            <p-selectbutton [ngModel]="layoutUi.layout()" (ngModelChange)="layoutUi.setLayout($event)"
+              [options]="layoutUi.options" [allowEmpty]="false" size="small"
+              ariaLabel="Switch between table and cards">
+              <ng-template #item let-item>
+                <i class="pi" [ngClass]="{ 'pi-bars': item === 'list', 'pi-table': item === 'grid' }"></i>
+              </ng-template>
+            </p-selectbutton>
           }
         </div>
-
-
       </div>
+
       <main class="k-layout-body">
         <router-outlet />
       </main>
     </div>
   </div>
 </div>
+
+<!-- One dialog for every record form in the app; the forms raise it through
+     FormValidationService rather than each carrying its own. -->
+<k-form-error-dialog />

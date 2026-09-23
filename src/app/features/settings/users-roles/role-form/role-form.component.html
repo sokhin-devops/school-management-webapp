@@ -1,0 +1,22 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit role' : 'Create role'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Create a role and choose what it can reach.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Create role'" width="38rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <k-form-field [label]="labels.name" inputId="role-name" [control]="form.controls.name">
+      <input pInputText id="role-name" formControlName="name" autocomplete="off" placeholder="Branch Admin" />
+    </k-form-field>
+
+    <k-form-field [label]="labels.modules" inputId="role-modules" [control]="form.controls.modules"
+      hint="What this role can reach.">
+      <p-multiselect inputId="role-modules" formControlName="modules" [options]="moduleOptions" optionLabel="label"
+        optionValue="value" placeholder="Select modules" display="chip" [filter]="true" filterBy="label" />
+    </k-form-field>
+
+    <k-form-field [label]="labels.branchNames" inputId="role-branchnames" [control]="form.controls.branchNames"
+      hint="Which branches the role applies to.">
+      <p-multiselect inputId="role-branchnames" formControlName="branchNames" [options]="branchChoices()" optionLabel="label"
+        optionValue="value" placeholder="Select branches" display="chip" [filter]="true" filterBy="label" />
+    </k-form-field>
+  </form>
+</k-form-dialog>

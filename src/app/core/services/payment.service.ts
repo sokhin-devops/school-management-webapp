@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Payment, PaymentMethod, PaymentStatus } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 /** Payment row for Finance > Payments, denormalized with display-ready names. */
 export interface PaymentRecord extends Payment {
@@ -54,4 +55,13 @@ export class PaymentService {
   ]);
 
   readonly payments = this._payments.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: PaymentRecord): void {
+    this._payments.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._payments.update((current) => removeById(current, id));
+  }
 }

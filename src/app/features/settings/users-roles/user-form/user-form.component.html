@@ -1,0 +1,35 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit user' : 'Invite user'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Invite someone and choose what they can reach.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Send invitation'" width="40rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.fullName" inputId="user-fullname" [control]="form.controls.fullName">
+        <input pInputText id="user-fullname" formControlName="fullName" autocomplete="off" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.email" inputId="user-email" [control]="form.controls.email"
+        hint="The invitation is sent here.">
+        <input pInputText id="user-email" formControlName="email" autocomplete="off" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.roleName" inputId="user-rolename" [control]="form.controls.roleName">
+        <p-select inputId="user-rolename" formControlName="roleName" [options]="roleChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a role" [filter]="true" filterBy="label" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.status" inputId="user-status" [control]="form.controls.status">
+        <p-select inputId="user-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+          optionValue="value" />
+      </k-form-field>
+    </div>
+
+    <k-form-field [label]="labels.branchNames" inputId="user-branchnames" [control]="form.controls.branchNames"
+      hint="Which branches this person can work in.">
+      <p-multiselect inputId="user-branchnames" formControlName="branchNames" [options]="branchChoices()" optionLabel="label"
+        optionValue="value" placeholder="Select branches" display="chip" [filter]="true" filterBy="label" />
+    </k-form-field>
+  </form>
+</k-form-dialog>

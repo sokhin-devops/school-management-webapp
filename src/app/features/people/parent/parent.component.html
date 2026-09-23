@@ -19,7 +19,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Parent" icon="pi pi-plus" size="small" />
+      <p-button label="Add Parent" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -33,7 +33,7 @@
           <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
             (onClick)="records.clear()" />
         } @else {
-          <p-button label="Add Parent" icon="pi pi-plus" size="small" />
+          <p-button label="Add Parent" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
         }
       </k-empty-state>
     </ng-template>
@@ -73,7 +73,7 @@
               <td>{{ parent.phone }}</td>
               <td><k-status-tag [status]="parent.status" /></td>
               <td class="text-right">
-                <k-row-actions [label]="fullName(parent)" />
+                <k-row-actions [label]="fullName(parent)" (edit)="openEdit(parent)" />
               </td>
             </tr>
           </ng-template>
@@ -87,7 +87,7 @@
         <div class="grid">
           @for (parent of items; track parent.id) {
             <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
-              <app-parent-card [parent]="parent" />
+              <app-parent-card [parent]="parent" (edit)="openEdit($event)" />
             </div>
           }
         </div>
@@ -100,3 +100,6 @@
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
     (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
+
+<app-parent-form [(visible)]="formVisible" [parent]="editing()"
+  (saved)="onSaved($event)" />

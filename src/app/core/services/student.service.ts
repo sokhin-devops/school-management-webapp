@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Person, PersonType, Status } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 /** Student row shown in the People > Students dataview, denormalized with a display-ready class name. */
 export interface StudentRecord extends Person {
@@ -93,4 +94,13 @@ function seedStudents(): StudentRecord[] {
 export class StudentService {
   private readonly _students = signal<StudentRecord[]>(seedStudents());
   readonly students = this._students.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: StudentRecord): void {
+    this._students.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._students.update((current) => removeById(current, id));
+  }
 }

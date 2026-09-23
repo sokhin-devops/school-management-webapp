@@ -8,37 +8,22 @@
 
   <div class="flex align-items-center gap-1 sm:gap-2 ml-auto">
     <p-select #branchSelect styleClass="k-branch-select" [options]="branches()" optionLabel="name"
-      optionValue="id" [ngModel]="selectedBranchId()" (onChange)="onBranchChange($event.value)"
+      optionValue="id" dropdownIcon="pi pi-chevron-down" [ngModel]="selectedBranchId()"
+      (onChange)="onBranchChange($event.value)"
       [overlayOptions]="{ styleClass: 'k-branch-panel' }" scrollHeight="20rem" ariaLabel="Switch branch">
       <!-- The trigger reads the branch from the service rather than the template
            context, so it stays right whatever optionValue is set to. -->
       <ng-template #selectedItem>
         <span class="k-branch-trigger">
-          <span class="k-branch-mark"><i class="pi pi-building"></i></span>
-          <span class="k-branch-text">
-            <span class="k-branch-caption">Branch</span>
-            <span class="k-branch-name">{{ branchContext.selectedBranch().name }}</span>
-          </span>
+          <i class="pi pi-building"></i>
+          <span class="k-branch-name">{{ branchContext.selectedBranch().name }}</span>
         </span>
       </ng-template>
 
       <ng-template #item let-branch>
         <span class="k-branch-option">
-          <span class="k-branch-mark"><i class="pi pi-building"></i></span>
-          <span class="k-branch-text">
-            <span class="k-branch-name">{{ branch.name }}</span>
-            @if (branch.address) {
-              <span class="k-branch-meta">{{ branch.address }}</span>
-            }
-          </span>
-          @if (isInactive(branch)) {
-            <p-tag value="Inactive" severity="secondary" [rounded]="true" />
-          }
+          <span class="k-branch-name">{{ branch.name }}</span>
         </span>
-      </ng-template>
-
-      <ng-template #header>
-        <div class="k-branch-head">Switch branch</div>
       </ng-template>
 
       <ng-template #footer>
@@ -49,16 +34,18 @@
       </ng-template>
     </p-select>
 
-    <p-button text [rounded]="true" icon="pi pi-bell">
+    <p-button text [rounded]="true" icon="pi pi-bell" pTooltip="Notifications" tooltipPosition="bottom"
+      ariaLabel="Notifications">
     </p-button>
 
-    <div class="cursor-pointer" (click)="userPopover.toggle($event)">
-      <p-avatar [label]="userInitials" shape="circle" styleClass="bg-primary" />
-    </div>
+    <button type="button" class="k-avatar-button" [attr.aria-label]="'Account menu for ' + userName"
+      (click)="userPopover.toggle($event)">
+      <p-avatar [label]="userInitials" shape="circle" styleClass="k-topbar-avatar" />
+    </button>
     <p-popover #userPopover>
-      <div class="flex flex-column gap-3" style="min-width: 220px;">
+      <div class="k-user-popover flex flex-column gap-3">
         <div class="flex align-items-center gap-2">
-          <p-avatar [label]="userInitials" shape="circle" styleClass="bg-primary" />
+          <p-avatar [label]="userInitials" shape="circle" styleClass="k-topbar-avatar" />
           <div>
             <div class="font-medium">{{ userName }}</div>
             <div class="text-sm text-color-secondary">{{ userEmail }}</div>

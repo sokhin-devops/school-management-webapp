@@ -48,30 +48,57 @@
 // BELOW the panel in both themes, which means lighter-than-white is impossible
 // and the order flips to surface-950 under surface-900.
 :root {
+  // The inset edge where the content canvas meets the chrome around it.
+  --k-shell-shadow-color: rgba(15, 23, 42, 0.12);
+
+  // The one red a problem is stated in: field labels, field borders and the
+  // dialog that lists what is wrong. Dark mode takes a lighter one because the
+  // light red measures 3.28:1 on the dark panel, under the 4.5 body text needs.
+  --k-bad: #c2312f;
+
   --k-canvas: var(--p-surface-100);
+  // The surface a panel is painted in. Its own token because light and dark
+  // pick it from opposite ends of the ramp: on white the panel IS the content
+  // colour, on dark it has to be a step ABOVE the canvas to read as raised.
+  --k-panel-bg: var(--p-content-background);
   // A table header reads as its own band. Tinted with the accent rather than a
   // neutral step, because the neutral one the theme offers is now the canvas
   // colour, and a header the same shade as the page behind the panel looks muddy.
-  --k-table-header: color-mix(in srgb, var(--p-primary-color) 14%, var(--p-content-background));
+  --k-table-header: color-mix(in srgb, var(--p-primary-color) 14%, var(--k-panel-bg));
   // The accent is light enough that as TEXT on the tinted header it measures
   // 2.2:1 — a darker step of the same hue is needed for the sorted column.
   --k-table-header-accent: var(--p-primary-700);
   --k-panel-radius: 12px;
   // Navigation hover: slow enough to read as a transition rather than a flicker,
   // decelerating so it starts promptly and settles softly.
-  --k-nav-ease-duration: 0.25s;
-  --k-nav-ease: cubic-bezier(0.25, 0.8, 0.25, 1);
-  --k-panel-shadow:
-    0 1px 2px rgba(15, 23, 42, 0.06),
-    0 1px 3px rgba(15, 23, 42, 0.05);
+  --k-nav-ease-duration: 0.32s;
+  // Ease-out: leaves immediately on the pointer and settles slowly, which reads
+  // as smooth. A symmetric curve makes the same duration feel sluggish.
+  --k-nav-ease: cubic-bezier(0.22, 0.61, 0.36, 1);
+  // Deliberately slight. The tinted canvas already separates a panel from the
+  // page, so the shadow only has to settle the edge — a heavier one would be
+  // doing a job the background has already done.
+  --k-panel-shadow: 0 1px 2px rgba(15, 23, 42, 0.05);
 }
 
 :root.app-dark {
+  // Black draws nothing on a near-black canvas, so the inset edge has to come
+  // from the light end instead.
+  --k-shell-shadow-color: rgba(255, 255, 255, 0.07);
+
+  --k-bad: #f87171;
+
   --k-canvas: var(--p-surface-950);
-  --k-table-header: color-mix(in srgb, var(--p-primary-color) 22%, var(--p-content-background));
+  // Lifted a full step off the canvas. At --p-content-background the panel and
+  // the page behind it measured 1.13:1 apart — no visible separation at all.
+  --k-panel-bg: var(--p-surface-800);
+  --k-table-header: color-mix(in srgb, var(--p-primary-color) 22%, var(--k-panel-bg));
   --k-table-header-accent: var(--p-primary-color);
+  // A drop shadow is invisible against a near-black canvas, so elevation in dark
+  // is carried by a hairline ring of light instead. The ring stays; only the
+  // drop softens, since it was the part doing no work.
   --k-panel-shadow:
-    0 1px 2px rgba(0, 0, 0, 0.45),
+    0 0 0 1px rgba(255, 255, 255, 0.06),
     0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
@@ -209,36 +236,6 @@
   width: 100%;
 }
 
-// The building glyph in a tinted tile — the same shape the sidebar brand uses,
-// so the two read as one identity.
-.k-branch-mark {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 1.75rem;
-  height: 1.75rem;
-  border-radius: 8px;
-  font-size: 0.75rem;
-  background: color-mix(in srgb, var(--p-primary-color) 14%, transparent);
-  color: var(--p-primary-color);
-}
-
-.k-branch-text {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  line-height: 1.25;
-}
-
-.k-branch-caption {
-  font-size: 0.5625rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--p-text-muted-color);
-}
-
 .k-branch-name {
   font-size: 0.8125rem;
   font-weight: 600;
@@ -246,14 +243,6 @@
   text-overflow: ellipsis;
   white-space: nowrap;
   color: var(--p-text-color);
-}
-
-.k-branch-meta {
-  font-size: 0.6875rem;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  color: var(--p-text-muted-color);
 }
 
 .k-branch-panel {
@@ -269,6 +258,11 @@
     border-radius: 8px;
   }
 
+  // Plain weight in the list; only the topbar trigger carries the bold name.
+  .k-branch-name {
+    font-weight: 400;
+  }
+
   // The theme's own selected background already reads correctly here; only the
   // name needs lifting to the accent so the current branch is obvious at a glance.
   .p-select-option.p-select-option-selected .k-branch-name {
@@ -276,15 +270,6 @@
   }
 }
 
-
-.k-branch-head {
-  padding: 0.625rem 0.75rem 0.25rem;
-  font-size: 0.5625rem;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--p-text-muted-color);
-}
 
 .k-branch-foot {
   display: flex;
@@ -302,4 +287,133 @@
   &:hover {
     background: color-mix(in srgb, var(--p-primary-color) 8%, transparent);
   }
+}
+
+// The shell covers the viewport, but any gap it leaves must not show the
+// browser's default white/black through.
+html,
+body {
+  background: var(--k-canvas);
+}
+
+// --- Topbar account ---------------------------------------------------------
+//
+// Global because the same avatar appears on the topbar and again inside the
+// account popover, which PrimeNG appends to <body>.
+
+// Was the only avatar in the app on PrimeFlex's solid `bg-primary`; every other
+// one — person cells, the sidebar brand, the branch mark — uses this tint.
+.k-topbar-avatar.p-avatar {
+  background: color-mix(in srgb, var(--p-primary-color) 16%, transparent);
+  color: var(--p-primary-color);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.k-user-popover {
+  min-width: 14rem;
+}
+
+// --- Quick Add -------------------------------------------------------------
+//
+// The panel is appended to <body>, so it is styled here rather than from the
+// component that opens it.
+
+.k-quick-add-panel .p-popover-content {
+  padding: 0.5rem;
+}
+
+.k-quick-add {
+  width: 15rem;
+}
+
+.k-quick-add-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  padding: 0.25rem 0.5rem 0.5rem;
+}
+
+.k-quick-add-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+}
+
+.k-quick-add-hint {
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+}
+
+.k-quick-add-group + .k-quick-add-group {
+  margin-top: 0.25rem;
+  padding-top: 0.25rem;
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.k-quick-add-section {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.625rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+}
+
+.k-quick-add-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  width: 100%;
+  padding: 0.375rem 0.5rem;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--p-text-color);
+  font: inherit;
+  font-size: 0.8125rem;
+  text-align: start;
+  cursor: pointer;
+  transition: background 0.15s ease;
+
+  &:hover {
+    background: var(--p-content-hover-background);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--p-primary-color);
+    outline-offset: -2px;
+  }
+}
+
+.k-quick-add-icon {
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}
+
+.k-quick-add-label {
+  flex: 1;
+  min-width: 0;
+}
+
+// The combination that opens this form from anywhere.
+.k-quick-add-keys {
+  display: inline-flex;
+  flex: none;
+  gap: 0.1875rem;
+}
+
+.k-quick-add-key {
+  min-width: 1.25rem;
+  padding: 0.0625rem 0.25rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 4px;
+  background: var(--k-canvas);
+  color: var(--p-text-muted-color);
+  font-family: inherit;
+  font-size: 0.625rem;
+  font-weight: 600;
+  line-height: 1.4;
+  text-align: center;
 }

@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -16,6 +16,8 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { LevelRecord, LevelService } from '../../../core/services/level.service';
 import { Status } from '../../../core/models';
+import { LevelFormComponent } from './level-form/level-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 /**
  * 22-levels.md — configurable academic stages. The displayed terminology is the
@@ -37,6 +39,7 @@ import { Status } from '../../../core/models';
     EmptyStateComponent,
     RowActionsComponent,
     StatusTagComponent,
+    LevelFormComponent,
   ],
   templateUrl: './level.component.html',
   styleUrl: './level.component.scss',
@@ -80,4 +83,25 @@ export class LevelComponent {
       .sort((a, b) => a.localeCompare(b))
       .map((programName) => ({ label: programName, value: programName })),
   );
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<LevelRecord | null>(null);
+
+  constructor() {
+    openOnQuickAdd('level', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(level: LevelRecord): void {
+    this.editing.set(level);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(level: LevelRecord): void {
+    this.levelService.upsert(level);
+  }
 }

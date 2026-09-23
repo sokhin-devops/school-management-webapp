@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -17,6 +17,8 @@ import { RecordFilter, createRecordList } from '../../../share/data/record-list'
 import { humanize, money } from '../../../share/data/format';
 import { ExpenseService } from '../../../core/services/expense.service';
 import { Expense, ExpenseStatus } from '../../../core/models';
+import { ExpenseFormComponent } from './expense-form/expense-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 type Severity = 'success' | 'info' | 'warn' | 'danger';
 
@@ -36,6 +38,7 @@ type Severity = 'success' | 'info' | 'warn' | 'danger';
     ListToolbarComponent,
     EmptyStateComponent,
     RowActionsComponent,
+    ExpenseFormComponent,
   ],
   templateUrl: './expense.component.html',
   styleUrl: './expense.component.scss',
@@ -85,6 +88,7 @@ export class ExpenseComponent {
   protected readonly humanize = humanize;
 
   constructor() {
+    openOnQuickAdd('expense', () => this.openCreate());
     this.records.sortOrder.set(-1);
   }
 
@@ -99,5 +103,22 @@ export class ExpenseComponent {
       default:
         return 'danger';
     }
+  }
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<Expense | null>(null);
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(expense: Expense): void {
+    this.editing.set(expense);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(expense: Expense): void {
+    this.expenseService.upsert(expense);
   }
 }

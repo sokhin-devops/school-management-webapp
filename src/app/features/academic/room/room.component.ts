@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -15,6 +15,8 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { RoomRecord, RoomService } from '../../../core/services/room.service';
 import { Status } from '../../../core/models';
+import { RoomFormComponent } from './room-form/room-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 /** 26-rooms.md — rooms are independent resources, never a permanent child of a class. */
 @Component({
@@ -31,6 +33,7 @@ import { Status } from '../../../core/models';
     EmptyStateComponent,
     RowActionsComponent,
     StatusTagComponent,
+    RoomFormComponent,
   ],
   templateUrl: './room.component.html',
   styleUrl: './room.component.scss',
@@ -71,4 +74,25 @@ export class RoomComponent {
       .sort((a, b) => a.localeCompare(b))
       .map((kind) => ({ label: kind, value: kind })),
   );
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<RoomRecord | null>(null);
+
+  constructor() {
+    openOnQuickAdd('room', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(room: RoomRecord): void {
+    this.editing.set(room);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(room: RoomRecord): void {
+    this.roomService.upsert(room);
+  }
 }

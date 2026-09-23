@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Level, Status } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 /** 22-levels.md: `displayLabel` carries the per-school terminology (Grade / Level / Year). */
 export interface LevelRecord extends Level {
@@ -35,4 +36,13 @@ export class LevelService {
   ]);
 
   readonly levels = this._levels.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: LevelRecord): void {
+    this._levels.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._levels.update((current) => removeById(current, id));
+  }
 }

@@ -1,0 +1,29 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit branch' : 'Add branch'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a branch to this school.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add branch'" width="38rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.name" inputId="branch-name" [control]="form.controls.name">
+        <input pInputText id="branch-name" formControlName="name" autocomplete="off" placeholder="Riverside North" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.status" inputId="branch-status" [control]="form.controls.status">
+        <p-select inputId="branch-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+          optionValue="value" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.address" inputId="branch-address" [control]="form.controls.address"
+        hint="Optional.">
+        <input pInputText id="branch-address" formControlName="address" autocomplete="off" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.phone" inputId="branch-phone" [control]="form.controls.phone"
+        hint="Optional.">
+        <input pInputText id="branch-phone" formControlName="phone" autocomplete="off" />
+      </k-form-field>
+    </div>
+  </form>
+</k-form-dialog>

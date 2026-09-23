@@ -1,0 +1,11 @@
+:host {
+  display: inline-flex;
+}
+
+// The panel is appended to <body>, out of reach of these scoped selectors, so
+// everything inside it is styled globally in form.scss alongside the dialogs it
+// opens. Only the trigger lives here.
+:host ::ng-deep .k-quick-add-button {
+  width: 2rem;
+  height: 2rem;
+}

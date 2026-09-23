@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -15,6 +15,8 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { ProgramService } from '../../../core/services/program.service';
 import { Program, Status } from '../../../core/models';
+import { ProgramFormComponent } from './program-form/program-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 /** 21-programs.md — programs suit universities, colleges and training centers. */
 @Component({
@@ -31,6 +33,7 @@ import { Program, Status } from '../../../core/models';
     EmptyStateComponent,
     RowActionsComponent,
     StatusTagComponent,
+    ProgramFormComponent,
   ],
   templateUrl: './program.component.html',
   styleUrl: './program.component.scss',
@@ -59,4 +62,25 @@ export class ProgramComponent {
     { label: 'Active', value: Status.Active },
     { label: 'Inactive', value: Status.Inactive },
   ];
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<Program | null>(null);
+
+  constructor() {
+    openOnQuickAdd('program', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(program: Program): void {
+    this.editing.set(program);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(program: Program): void {
+    this.programService.upsert(program);
+  }
 }

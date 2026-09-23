@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -15,6 +15,8 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { SubjectService } from '../../../core/services/subject.service';
 import { Status, Subject } from '../../../core/models';
+import { SubjectFormComponent } from './subject-form/subject-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 /** 24-subjects.md — configurable academic offerings (Mathematics, Programming, Speaking...). */
 @Component({
@@ -31,6 +33,7 @@ import { Status, Subject } from '../../../core/models';
     EmptyStateComponent,
     RowActionsComponent,
     StatusTagComponent,
+    SubjectFormComponent,
   ],
   templateUrl: './subject.component.html',
   styleUrl: './subject.component.scss',
@@ -59,4 +62,25 @@ export class SubjectComponent {
     { label: 'Active', value: Status.Active },
     { label: 'Inactive', value: Status.Inactive },
   ];
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<Subject | null>(null);
+
+  constructor() {
+    openOnQuickAdd('subject', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(subject: Subject): void {
+    this.editing.set(subject);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(subject: Subject): void {
+    this.subjectService.upsert(subject);
+  }
 }

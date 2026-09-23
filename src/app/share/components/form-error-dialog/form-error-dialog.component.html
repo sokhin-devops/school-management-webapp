@@ -1,0 +1,22 @@
+<p-confirmDialog [key]="dialogKey" styleClass="k-form-error-dialog" [style]="{ width: '26rem' }"
+  [breakpoints]="{ '640px': '92vw' }" [closable]="true" [draggable]="false"
+  acceptButtonStyleClass="p-button-sm p-button-secondary p-button-outlined">
+  <!-- The same head the form dialogs use, so the two read as one family. -->
+  <ng-template #header>
+    <div class="k-form-dialog-head">
+      <h2 class="k-form-dialog-title">
+        <i class="pi pi-exclamation-circle"></i>
+        Check these fields
+      </h2>
+      <p class="k-form-dialog-sub">{{ summary() }}</p>
+    </div>
+  </ng-template>
+
+  <ng-template #message>
+    <ul class="k-form-error-list">
+      @for (message of validation.messages(); track message) {
+        <li>{{ message }}</li>
+      }
+    </ul>
+  </ng-template>
+</p-confirmDialog>

@@ -1,0 +1,35 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit fee' : 'Add fee'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a fee to the current academic year.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add fee'" width="38rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.name" inputId="fee-name" [control]="form.controls.name">
+        <input pInputText id="fee-name" formControlName="name" autocomplete="off" placeholder="Tuition — Primary" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.category" inputId="fee-category" [control]="form.controls.category"
+        hint="Groups the fee on invoices and reports.">
+        <p-select inputId="fee-category" formControlName="category" [options]="categoryChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a category" [editable]="true" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.amount" inputId="fee-amount" [control]="form.controls.amount">
+        <p-inputnumber inputId="fee-amount" formControlName="amount" mode="currency" currency="USD" locale="en-US"
+          [min]="0" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.status" inputId="fee-status" [control]="form.controls.status">
+        <p-select inputId="fee-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+          optionValue="value" />
+      </k-form-field>
+    </div>
+
+    <k-form-field [label]="labels.description" inputId="fee-description" [control]="form.controls.description"
+      hint="Optional. What the fee covers.">
+      <textarea pTextarea id="fee-description" formControlName="description" rows="3"></textarea>
+    </k-form-field>
+  </form>
+</k-form-dialog>

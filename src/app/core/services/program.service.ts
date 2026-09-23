@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { Program, Status } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 function program(id: string, name: string, code: string, description: string, status = Status.Active): Program {
   return { id, branchId: 'branch-1', name, code, description, status };
@@ -21,4 +22,13 @@ export class ProgramService {
   ]);
 
   readonly programs = this._programs.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: Program): void {
+    this._programs.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._programs.update((current) => removeById(current, id));
+  }
 }

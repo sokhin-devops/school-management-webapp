@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -19,6 +19,8 @@ import { LayoutUiService } from '../../../core/services/layout-ui.service';
 import { ParentRecord, ParentService } from '../../../core/services/parent.service';
 import { Status } from '../../../core/models';
 import { ParentCardComponent } from './parent-card/parent-card.component';
+import { ParentFormComponent } from './parent-form/parent-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 @Component({
   selector: 'app-parent',
@@ -37,6 +39,7 @@ import { ParentCardComponent } from './parent-card/parent-card.component';
     RowActionsComponent,
     StatusTagComponent,
     ParentCardComponent,
+    ParentFormComponent,
   ],
   templateUrl: './parent.component.html',
   styleUrl: './parent.component.scss',
@@ -92,5 +95,26 @@ export class ParentComponent {
 
   protected initials(parent: ParentRecord): string {
     return `${parent.firstName.charAt(0)}${parent.lastName.charAt(0)}`.toUpperCase();
+  }
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<ParentRecord | null>(null);
+
+  constructor() {
+    openOnQuickAdd('parent', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(parent: ParentRecord): void {
+    this.editing.set(parent);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(parent: ParentRecord): void {
+    this.parentService.upsert(parent);
   }
 }

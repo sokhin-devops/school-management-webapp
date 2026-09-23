@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -17,8 +17,11 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
 import { TeacherRecord, TeacherService } from '../../../core/services/teacher.service';
+import { SubjectService } from '../../../core/services/subject.service';
 import { Status } from '../../../core/models';
 import { TeacherCardComponent } from './teacher-card/teacher-card.component';
+import { TeacherFormComponent } from './teacher-form/teacher-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 @Component({
   selector: 'app-teacher',
@@ -37,6 +40,7 @@ import { TeacherCardComponent } from './teacher-card/teacher-card.component';
     RowActionsComponent,
     StatusTagComponent,
     TeacherCardComponent,
+    TeacherFormComponent,
   ],
   templateUrl: './teacher.component.html',
   styleUrl: './teacher.component.scss',
@@ -44,6 +48,7 @@ import { TeacherCardComponent } from './teacher-card/teacher-card.component';
 export class TeacherComponent {
   protected readonly layoutUi = inject(LayoutUiService);
   private readonly teacherService = inject(TeacherService);
+  private readonly subjectService = inject(SubjectService);
 
   protected readonly departmentFilter = new RecordFilter<TeacherRecord, string>(
     (teacher, value) => teacher.department === value,
@@ -95,5 +100,34 @@ export class TeacherComponent {
 
   protected initials(teacher: TeacherRecord): string {
     return `${teacher.firstName.charAt(0)}${teacher.lastName.charAt(0)}`.toUpperCase();
+  }
+  /** The subjects a teacher can be assigned, from the subject catalogue. */
+  protected readonly subjectOptions = computed(() =>
+    this.subjectService
+      .subjects()
+      .map((subject) => ({ label: subject.name, value: subject.name }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
+
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<TeacherRecord | null>(null);
+
+  constructor() {
+    openOnQuickAdd('teacher', () => this.openCreate());
+  }
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(teacher: TeacherRecord): void {
+    this.editing.set(teacher);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(teacher: TeacherRecord): void {
+    this.teacherService.upsert(teacher);
   }
 }

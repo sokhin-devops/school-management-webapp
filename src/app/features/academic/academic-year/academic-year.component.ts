@@ -1,4 +1,4 @@
-import { Component, inject } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -16,6 +16,8 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { AcademicYear, AcademicYearStatus } from '../../../core/models';
+import { AcademicYearFormComponent } from './academic-year-form/academic-year-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 type Severity = 'success' | 'info' | 'secondary';
 
@@ -35,6 +37,7 @@ type Severity = 'success' | 'info' | 'secondary';
     ListToolbarComponent,
     EmptyStateComponent,
     RowActionsComponent,
+    AcademicYearFormComponent,
   ],
   templateUrl: './academic-year.component.html',
   styleUrl: './academic-year.component.scss',
@@ -68,6 +71,7 @@ export class AcademicYearComponent {
   ];
 
   constructor() {
+    openOnQuickAdd('academic-year', () => this.openCreate());
     this.records.sortOrder.set(-1);
   }
 
@@ -85,5 +89,22 @@ export class AcademicYearComponent {
 
   protected label(status: AcademicYearStatus): string {
     return status.charAt(0).toUpperCase() + status.slice(1);
+  }
+  protected readonly formVisible = signal(false);
+  /** The record the dialog is editing; null opens it as a create form. */
+  protected readonly editing = signal<AcademicYear | null>(null);
+
+  protected openCreate(): void {
+    this.editing.set(null);
+    this.formVisible.set(true);
+  }
+
+  protected openEdit(year: AcademicYear): void {
+    this.editing.set(year);
+    this.formVisible.set(true);
+  }
+
+  protected onSaved(year: AcademicYear): void {
+    this.academicYearService.upsert(year);
   }
 }

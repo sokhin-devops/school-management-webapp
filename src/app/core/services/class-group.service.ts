@@ -1,5 +1,6 @@
 import { Injectable, signal } from '@angular/core';
 import { ClassGroup, Status } from '../models';
+import { removeById, upsertById } from '../utils/collection';
 
 /**
  * 23-classes.md: the same shape must express Grade 1 to 1-A, Program to Year 2 to
@@ -65,4 +66,13 @@ export class ClassGroupService {
   ]);
 
   readonly classes = this._classes.asReadonly();
+
+  /** Adds the record, or replaces the one already carrying this id. */
+  upsert(record: ClassGroupRecord): void {
+    this._classes.update((current) => upsertById(current, record));
+  }
+
+  remove(id: string): void {
+    this._classes.update((current) => removeById(current, id));
+  }
 }

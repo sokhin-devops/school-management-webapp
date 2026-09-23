@@ -1,4 +1,4 @@
-import { Component, computed, inject } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { SelectModule } from 'primeng/select';
@@ -17,6 +17,10 @@ import {
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { RoleRecord, RoleService, UserRecord, UserService } from '../../../core/services/user.service';
 import { Status } from '../../../core/models';
+import { BranchContextService } from '../../../core/services/branch-context.service';
+import { RoleFormComponent } from './role-form/role-form.component';
+import { UserFormComponent } from './user-form/user-form.component';
+import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 
 /** 64-users-and-roles.md — Users and Roles, as two tabs of one settings page. */
 @Component({
@@ -35,6 +39,8 @@ import { Status } from '../../../core/models';
     EmptyStateComponent,
     RowActionsComponent,
     StatusTagComponent,
+    UserFormComponent,
+    RoleFormComponent,
   ],
   templateUrl: './users-roles.component.html',
   styleUrl: './users-roles.component.scss',
@@ -42,6 +48,7 @@ import { Status } from '../../../core/models';
 export class UsersRolesComponent {
   private readonly userService = inject(UserService);
   private readonly roleService = inject(RoleService);
+  private readonly branchContext = inject(BranchContextService);
 
   // --- Users tab -----------------------------------------------------------
 
@@ -89,6 +96,69 @@ export class UsersRolesComponent {
     noun: { one: 'role', many: 'roles' },
     pageSize: 24,
   });
+
+  // --- Dialogs -------------------------------------------------------------
+  //
+  // Two lists, so two dialogs; each keeps its own record so opening one never
+  // disturbs the other tab.
+
+  /** Roles a user can be given, and branches either dialog can assign. */
+  protected readonly roleChoices = computed(() =>
+    this.roleService
+      .roles()
+      .map((role) => ({ label: role.name, value: role.name }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
+
+  protected readonly branchOptions = computed(() =>
+    this.branchContext.branches().map((branch) => ({ label: branch.name, value: branch.name })),
+  );
+
+  /** Bound to the tabs so Quick Add can bring the right list forward. */
+  protected readonly activeTab = signal<'users' | 'roles'>('users');
+
+  protected readonly userFormVisible = signal(false);
+  protected readonly editingUser = signal<UserRecord | null>(null);
+
+  protected readonly roleFormVisible = signal(false);
+  protected readonly editingRole = signal<RoleRecord | null>(null);
+
+  constructor() {
+    openOnQuickAdd('user', () => this.openCreateUser());
+    openOnQuickAdd('role', () => this.openCreateRole());
+  }
+
+  protected openCreateUser(): void {
+    this.activeTab.set('users');
+    this.editingUser.set(null);
+    this.userFormVisible.set(true);
+  }
+
+  protected openEditUser(user: UserRecord): void {
+    this.editingUser.set(user);
+    this.userFormVisible.set(true);
+  }
+
+  protected onUserSaved(user: UserRecord): void {
+    this.userService.upsert(user);
+  }
+
+  protected openCreateRole(): void {
+    // Quick Add can reach this from the Users tab; saving into a list the reader
+    // cannot see would look like nothing happened.
+    this.activeTab.set('roles');
+    this.editingRole.set(null);
+    this.roleFormVisible.set(true);
+  }
+
+  protected openEditRole(role: RoleRecord): void {
+    this.editingRole.set(role);
+    this.roleFormVisible.set(true);
+  }
+
+  protected onRoleSaved(role: RoleRecord): void {
+    this.roleService.upsert(role);
+  }
 
   protected initials(fullName: string): string {
     return fullName

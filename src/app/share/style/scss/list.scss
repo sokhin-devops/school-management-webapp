@@ -62,7 +62,7 @@
   flex: 1 1 auto;
   min-height: 0;
   overflow: hidden;
-  background: var(--p-content-background);
+  background: var(--k-panel-bg);
   box-shadow: var(--k-panel-shadow);
 }
 
@@ -81,6 +81,10 @@
   // The header needs a real background, not least because a transparent sticky
   // header lets the rows scroll through underneath it.
   --k-header-background: var(--k-table-header);
+  // Rows paint their own background over the panel, so the panel colour has to
+  // be handed to them too — otherwise the table keeps the old surface and the
+  // lift applied to .k-table-wrap is never seen.
+  --p-datatable-row-background: var(--k-panel-bg);
   --p-datatable-header-cell-background: var(--k-header-background);
 
   display: flex;

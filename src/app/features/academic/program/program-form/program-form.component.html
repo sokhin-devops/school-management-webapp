@@ -1,0 +1,27 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit programme' : 'Add programme'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a programme to the current branch.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add programme'" width="36rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.name" inputId="program-name" [control]="form.controls.name">
+        <input pInputText id="program-name" formControlName="name" autocomplete="off" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.code" inputId="program-code" [control]="form.controls.code"
+        hint="Short and unique, e.g. PRI.">
+        <input pInputText id="program-code" formControlName="code" autocomplete="off" />
+      </k-form-field>
+    </div>
+
+    <k-form-field [label]="labels.description" inputId="program-description" [control]="form.controls.description"
+      hint="Optional. One line on who this programme is for.">
+      <textarea pTextarea id="program-description" formControlName="description" rows="3"></textarea>
+    </k-form-field>
+
+    <k-form-field [label]="labels.status" inputId="program-status" [control]="form.controls.status">
+      <p-select inputId="program-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+        optionValue="value" />
+    </k-form-field>
+  </form>
+</k-form-dialog>

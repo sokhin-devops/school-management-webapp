@@ -1,0 +1,29 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit academic year' : 'Add academic year'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add an academic year to the current branch.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add academic year'" width="38rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.name" inputId="academic-year-name" [control]="form.controls.name">
+        <input pInputText id="academic-year-name" formControlName="name" autocomplete="off" placeholder="2027 - 2028" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.status" inputId="academic-year-status" [control]="form.controls.status">
+        <p-select inputId="academic-year-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+          optionValue="value" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.startDate" inputId="academic-year-startdate" [control]="form.controls.startDate">
+        <p-datepicker inputId="academic-year-startdate" formControlName="startDate" dateFormat="dd M yy" [showIcon]="true"
+          appendTo="body" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.endDate" inputId="academic-year-enddate" [control]="form.controls.endDate">
+        <p-datepicker inputId="academic-year-enddate" formControlName="endDate" dateFormat="dd M yy" [showIcon]="true"
+          appendTo="body" />
+      </k-form-field>
+    </div>
+  </form>
+</k-form-dialog>

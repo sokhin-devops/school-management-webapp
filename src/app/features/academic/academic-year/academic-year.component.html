@@ -14,7 +14,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Academic Year" icon="pi pi-plus" size="small" />
+      <p-button label="Add Academic Year" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -51,7 +51,7 @@
             <td>
               <p-tag [value]="label(year.status)" [severity]="severity(year.status)" [rounded]="true" />
             </td>
-            <td class="text-right"><k-row-actions [label]="year.name" /></td>
+            <td class="text-right"><k-row-actions [label]="year.name" (edit)="openEdit(year)" /></td>
           </tr>
         </ng-template>
       </p-table>
@@ -65,7 +65,7 @@
         <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
           (onClick)="records.clear()" />
       } @else {
-        <p-button label="Add Academic Year" icon="pi pi-plus" size="small" />
+        <p-button label="Add Academic Year" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
       }
     </k-empty-state>
   }
@@ -75,3 +75,6 @@
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
     (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
+
+<app-academic-year-form [(visible)]="formVisible" [year]="editing()"
+  (saved)="onSaved($event)" />

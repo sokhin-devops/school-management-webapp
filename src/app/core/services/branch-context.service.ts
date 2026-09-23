@@ -1,6 +1,7 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
 import { Branch, Status } from '../models';
 import { OnboardingService } from './onboarding.service';
+import { removeById, upsertById } from '../utils/collection';
 
 /**
  * Holds the global selected-branch state for the topbar (06-topbar.md).
@@ -17,6 +18,18 @@ export class BranchContextService {
   readonly selectedBranch = computed(
     () => this._branches().find((branch) => branch.id === this._selectedBranchId()) ?? this._branches()[0],
   );
+
+  /** Adds the branch, or replaces the one already carrying this id. */
+  upsert(branch: Branch): void {
+    this._branches.update((current) => upsertById(current, branch));
+  }
+
+  removeBranch(branchId: string): void {
+    this._branches.update((current) => removeById(current, branchId));
+    if (this._selectedBranchId() === branchId) {
+      this._selectedBranchId.set(this._branches()[0]?.id ?? '');
+    }
+  }
 
   selectBranch(branchId: string): void {
     this._selectedBranchId.set(branchId);

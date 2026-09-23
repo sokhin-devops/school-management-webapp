@@ -1,10 +1,13 @@
-
 :host {
-  --k-shell-shadow-color: rgba(0, 0, 0, 0.16);
   --k-topbar-height: 4rem;
   --k-content-radius: 16px;
   --k-content-pad: 0.875rem;
   --k-breadcrumb-pad-y: 0.375rem;
+  // Fixed rather than left to its contents, so the page below starts on the
+  // same line whether or not the route offers the list/grid toggle. It used to
+  // measure 45px without the toggle and 47px with it, and the body jumped by
+  // two pixels on every navigation between the two kinds of page.
+  --k-breadcrumb-height: 2.8125rem;
 }
 
 .k-layout {
@@ -13,7 +16,10 @@
   overflow: hidden;
 }
 
+// Carries the chrome colour behind the topbar. Without it the strip fell
+// through to the body and rendered pure black under a dark theme.
 .k-layout-main {
+  background: var(--p-content-background);
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -36,24 +42,94 @@
   box-shadow: inset 1px 1px 2px -1px var(--k-shell-shadow-color);
 }
 
+.k-breadcrumb-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+}
+
 // Shares the body's horizontal inset rather than carrying its own, so the
 // crumb trail and the content below it start on the same line.
 .k-breadcrumb {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  min-height: var(--k-breadcrumb-height);
   padding: var(--k-breadcrumb-pad-y) var(--k-content-pad);
-  ::ng-deep .p-breadcrumb {
-    padding: 0;
-    background: transparent;
-  }
-  ::ng-deep .p-breadcrumb-item.p-disabled {
-    opacity: 1;
+  border-bottom: 1px solid var(--p-content-border-color);
+
+  ::ng-deep {
+    .p-breadcrumb {
+      padding: 0;
+      border: 0;
+      background: transparent;
+    }
+
+    // Every crumb renders disabled, because the ancestors are navigation groups
+    // rather than pages. Undo the dimming that comes with that and carry the
+    // hierarchy in colour and weight instead.
+    .p-breadcrumb-item.p-disabled {
+      opacity: 1;
+    }
+
+    .p-breadcrumb-item-label,
+    .p-breadcrumb-item-icon {
+      font-size: 0.8125rem;
+      color: var(--p-text-muted-color);
+    }
+
+    // The page you are on is what the trail is for: solid ink, and the only
+    // crumb carrying any weight.
+    .p-breadcrumb-list > .p-breadcrumb-item:last-child .p-breadcrumb-item-label {
+      font-weight: 600;
+      color: var(--p-text-color);
+    }
+
+    .p-breadcrumb-separator {
+      margin: 0 0.125rem;
+      color: var(--p-text-muted-color);
+      opacity: 0.55;
+
+      svg {
+        width: 0.75rem;
+        height: 0.75rem;
+      }
+    }
+
+    // An icon-only toggle does not need the height of a text button, and
+    // trimming it is what lets the bar hold one height on every route.
+    .p-selectbutton .p-togglebutton {
+      min-height: 1.875rem;
+      padding: 0.125rem;
+    }
+
+    .p-selectbutton .p-togglebutton-content {
+      min-height: 1.625rem;
+      padding: 0 0.5rem;
+    }
+
+    // Home is the one crumb that goes anywhere, so it is the one that reacts.
+    .p-breadcrumb-home-item .p-breadcrumb-item-link {
+      border-radius: 4px;
+
+      &:hover .p-breadcrumb-item-icon {
+        color: var(--p-primary-color);
+      }
+
+      &:focus-visible {
+        outline: 2px solid var(--p-primary-color);
+        outline-offset: 2px;
+      }
+    }
   }
 }
 
 .k-layout-body {
   flex: 1;
   min-height: 0;
-  padding:  var(--k-content-pad);
+  padding: var(--k-content-pad);
   overflow-y: auto;
 }
 
@@ -66,5 +142,4 @@
     border-left: 0;
     border-top-left-radius: 0;
   }
-
 }

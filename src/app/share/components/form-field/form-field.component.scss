@@ -1,0 +1,68 @@
+:host {
+  display: block;
+}
+
+.k-form-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+}
+
+// Red while the field is unhappy, normal ink once it is fine. The colour is the
+// whole signal here, so it animates rather than switching.
+.k-form-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--p-text-color);
+  transition: color 0.2s ease;
+}
+
+.is-invalid .k-form-label {
+  color: var(--k-bad);
+}
+
+// The asterisk runs one step ahead of the label: it is red from the moment the
+// field is required and goes quiet as soon as it has a value, without waiting
+// for a save to be attempted.
+.k-required {
+  margin-inline-start: 0.125rem;
+  color: var(--k-bad);
+  transition: color 0.2s ease;
+
+  &.is-met {
+    color: var(--p-text-muted-color);
+  }
+}
+
+.k-form-hint {
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+}
+
+// The projected control fills the field, whatever PrimeNG component it is.
+:host ::ng-deep {
+  .p-inputtext,
+  .p-select,
+  .p-datepicker,
+  .p-inputnumber,
+  .p-inputnumber-input,
+  .p-textarea,
+  .p-password,
+  .p-password-input,
+  .p-multiselect {
+    width: 100%;
+  }
+
+  // An invalid field is outlined as well as labelled, so the state survives
+  // being read in greyscale or by someone who does not see the red.
+  .is-invalid {
+    .p-inputtext,
+    .p-select,
+    .p-inputnumber-input,
+    .p-textarea,
+    .p-multiselect,
+    .p-datepicker-input {
+      border-color: var(--k-bad);
+    }
+  }
+}

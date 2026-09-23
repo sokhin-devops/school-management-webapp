@@ -1,0 +1,34 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit expense' : 'Add expense'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Record an expense against the current branch.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add expense'" width="38rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.description" inputId="expense-description" [control]="form.controls.description">
+        <input pInputText id="expense-description" formControlName="description" autocomplete="off" placeholder="Science lab consumables" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.category" inputId="expense-category" [control]="form.controls.category">
+        <p-select inputId="expense-category" formControlName="category" [options]="categoryChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a category" [editable]="true" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.amount" inputId="expense-amount" [control]="form.controls.amount">
+        <p-inputnumber inputId="expense-amount" formControlName="amount" mode="currency" currency="USD" locale="en-US"
+          [min]="0" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.date" inputId="expense-date" [control]="form.controls.date">
+        <p-datepicker inputId="expense-date" formControlName="date" dateFormat="dd M yy" [showIcon]="true"
+          appendTo="body" />
+      </k-form-field>
+    </div>
+
+    <k-form-field [label]="labels.status" inputId="expense-status" [control]="form.controls.status">
+      <p-select inputId="expense-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+        optionValue="value" />
+    </k-form-field>
+  </form>
+</k-form-dialog>

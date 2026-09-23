@@ -1,4 +1,90 @@
+<div class="k-page-scroll">
+  <k-settings-section title="Theme"
+    description="Changes apply immediately and are remembered on this device, so there is nothing to save.">
+    <div>
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Colour mode</div>
+          <p class="k-pref-note">Light suits bright rooms and printing; dark is easier on the eyes at night.</p>
+        </div>
+        <p-selectbutton [options]="modeOptions" [ngModel]="isDark()" (ngModelChange)="setDarkMode($event)"
+          optionLabel="label" optionValue="value" [allowEmpty]="false" size="small" ariaLabel="Colour mode">
+          <ng-template #item let-option>
+            <i class="pi" [ngClass]="option.icon"></i>
+            <span class="k-mode-label">{{ option.label }}</span>
+          </ng-template>
+        </p-selectbutton>
+      </div>
 
-<p-panel header="Appearance Settings">
-    <app-theme-switcher></app-theme-switcher>
-</p-panel>
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Accent colour</div>
+          <p class="k-pref-note">Used for the active menu item, primary buttons, charts and every highlight.</p>
+        </div>
+        <div class="k-swatches">
+          @for (item of accents; track item.token) {
+            <button type="button" class="k-swatch" [class.is-active]="accent() === item.token"
+              [style.--k-swatch]="item.color" [pTooltip]="item.name" tooltipPosition="top"
+              [attr.aria-label]="item.name" [attr.aria-pressed]="accent() === item.token"
+              (click)="setAccent(item.token)">
+              @if (accent() === item.token) {
+                <i class="pi pi-check"></i>
+              }
+            </button>
+          }
+
+          <label class="k-swatch k-swatch-custom" [class.is-active]="isCustomAccent()"
+            [style.--k-swatch]="customAccent()" pTooltip="Custom colour" tooltipPosition="top">
+            <i class="pi pi-palette"></i>
+            <input type="color" [ngModel]="customAccent()" (ngModelChange)="setCustomAccent($event)"
+              aria-label="Custom accent colour" />
+          </label>
+        </div>
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Surface</div>
+          <p class="k-pref-note">The neutral the page canvas, panels and borders are mixed from.</p>
+        </div>
+        <p-select styleClass="k-appearance-select" [options]="surfaces" [ngModel]="surface()"
+          (ngModelChange)="setSurface($event)" optionLabel="name" optionValue="token" size="small"
+          ariaLabel="Surface neutral">
+          <ng-template #selectedItem let-item>
+            <span class="k-swatch-row">
+              <span class="k-swatch-dot" [style.background]="item.color"></span>
+              <span>{{ item.name }}</span>
+            </span>
+          </ng-template>
+          <ng-template #item let-item>
+            <span class="k-swatch-row">
+              <span class="k-swatch-dot" [style.background]="item.color"></span>
+              <span>{{ item.name }}</span>
+            </span>
+          </ng-template>
+        </p-select>
+      </div>
+
+      <div class="k-pref-row">
+        <div>
+          <div class="k-pref-title">Style preset</div>
+          <p class="k-pref-note">{{ presetHint() }}</p>
+        </div>
+        <p-select styleClass="k-appearance-select" [options]="presetOptions" [ngModel]="preset()"
+          (ngModelChange)="setPreset($event)" optionLabel="label" optionValue="value" size="small"
+          ariaLabel="Style preset" />
+      </div>
+    </div>
+  </k-settings-section>
+
+  <k-settings-section title="Preview" description="The current settings, on the components you see most.">
+    <div class="k-preview">
+      <p-button label="Primary" size="small" />
+      <p-button label="Secondary" size="small" severity="secondary" [outlined]="true" />
+      <p-button icon="pi pi-check" size="small" [rounded]="true" [text]="true" ariaLabel="Example icon button" />
+      <p-tag value="Active" severity="success" [rounded]="true" />
+      <p-tag value="Pending" severity="warn" [rounded]="true" />
+      <p-tag value="Inactive" severity="secondary" [rounded]="true" />
+    </div>
+  </k-settings-section>
+</div>

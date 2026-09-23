@@ -1,0 +1,35 @@
+<k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
+  [title]="isEdit() ? 'Edit level' : 'Add level'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a level to a programme.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add level'" width="38rem" (save)="onSave()">
+  <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
+    <div class="k-form-row">
+      <k-form-field [label]="labels.name" inputId="level-name" [control]="form.controls.name">
+        <input pInputText id="level-name" formControlName="name" autocomplete="off" placeholder="Grade 1" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.displayLabel" inputId="level-displaylabel" [control]="form.controls.displayLabel"
+        hint="What a level of this kind is called here.">
+        <p-select inputId="level-displaylabel" formControlName="displayLabel" [options]="displayLabelOptions" optionLabel="label"
+          optionValue="value" [editable]="true" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.programName" inputId="level-programname" [control]="form.controls.programName">
+        <p-select inputId="level-programname" formControlName="programName" [options]="programChoices()" optionLabel="label"
+          optionValue="value" placeholder="Select a programme" [filter]="true" filterBy="label" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.order" inputId="level-order" [control]="form.controls.order"
+        hint="Where this level sits in the sequence.">
+        <p-inputnumber inputId="level-order" formControlName="order" [min]="1" [max]="50" [showButtons]="true" />
+      </k-form-field>
+    </div>
+
+    <k-form-field [label]="labels.status" inputId="level-status" [control]="form.controls.status">
+      <p-select inputId="level-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+        optionValue="value" />
+    </k-form-field>
+  </form>
+</k-form-dialog>

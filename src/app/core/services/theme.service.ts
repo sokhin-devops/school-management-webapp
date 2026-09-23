@@ -42,6 +42,14 @@ export class ThemeService {
     Nora
   };
 
+  /** Lets a settings page pick a mode outright rather than guess the current one. */
+  setDarkMode(darkMode: boolean): void {
+    if (this.config.darkMode === darkMode) {
+      return;
+    }
+    this.toggleDarkMode();
+  }
+
   toggleDarkMode(): void {
     this.config.darkMode = !this.config.darkMode;
     this.applyDarkMode();

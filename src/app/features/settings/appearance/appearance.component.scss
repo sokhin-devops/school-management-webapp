@@ -1,0 +1,94 @@
+:host {
+  display: block;
+  height: 100%;
+}
+
+// Every control sits on the right of a .k-pref-row, the same shape the other
+// Settings pages use, so they are held to a consistent width.
+:host ::ng-deep .k-appearance-select {
+  min-width: 11rem;
+}
+
+.k-mode-label {
+  margin-inline-start: 0.375rem;
+}
+
+// --- Accent swatches -------------------------------------------------------
+
+.k-swatches {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  max-width: 21rem;
+}
+
+.k-swatch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.75rem;
+  height: 1.75rem;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: var(--k-swatch);
+  color: #ffffff;
+  font-size: 0.625rem;
+  cursor: pointer;
+  transition:
+    transform 0.15s ease,
+    box-shadow 0.15s ease;
+
+  &:hover {
+    transform: translateY(-1px);
+  }
+
+  // A ring in the page colour, then the swatch's own colour outside it, so the
+  // selected state reads on any accent without changing the dot's size.
+  &.is-active {
+    box-shadow:
+      0 0 0 2px var(--p-content-background),
+      0 0 0 4px var(--k-swatch);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--p-text-color);
+    outline-offset: 3px;
+  }
+}
+
+.k-swatch-custom {
+  overflow: hidden;
+
+  input[type='color'] {
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    cursor: pointer;
+  }
+}
+
+// --- Surface rows inside the select ----------------------------------------
+
+.k-swatch-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.k-swatch-dot {
+  width: 0.75rem;
+  height: 0.75rem;
+  border-radius: 999px;
+}
+
+// --- Preview ---------------------------------------------------------------
+
+.k-preview {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.625rem;
+}

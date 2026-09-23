@@ -1,0 +1,29 @@
+<p-button #trigger icon="pi pi-plus-circle" [text]="true" [rounded]="true" size="small" styleClass="k-quick-add-button"
+  pTooltip="Quick add (Ctrl+K)" tooltipPosition="left" ariaLabel="Quick add"
+  (onClick)="quickAddPanel.toggle($event)" />
+
+<p-popover #quickAddPanel styleClass="k-quick-add-panel" (onShow)="isOpen.set(true)" (onHide)="isOpen.set(false)">
+  <div class="k-quick-add">
+    <div class="k-quick-add-head">
+      <span class="k-quick-add-title">Quick add</span>
+      <span class="k-quick-add-hint">Alt + key</span>
+    </div>
+
+    @for (group of quickAdd.groups; track group.section) {
+      <div class="k-quick-add-group">
+        <p class="k-quick-add-section">{{ group.section }}</p>
+
+        @for (action of group.actions; track action.id) {
+          <button type="button" class="k-quick-add-item" (click)="run(action, quickAddPanel)">
+            <i class="pi {{ action.icon }} k-quick-add-icon"></i>
+            <span class="k-quick-add-label">{{ action.label }}</span>
+            <span class="k-quick-add-keys">
+              <kbd class="k-quick-add-key">Alt</kbd>
+              <kbd class="k-quick-add-key">{{ action.key }}</kbd>
+            </span>
+          </button>
+        }
+      </div>
+    }
+  </div>
+</p-popover>
