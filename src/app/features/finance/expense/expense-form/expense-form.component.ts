@@ -99,8 +99,10 @@ export class ExpenseFormComponent {
 
     return {
       ...existing,
-      id: existing?.id ?? `exp-${Date.now().toString(36)}`,
-      branchId: existing?.branchId ?? this.branchContext.selectedBranch().id,
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
+      branchId: existing?.branchId ?? this.branchContext.selectedBranch()?.id ?? '',
       description: value.description.trim(),
       category: value.category,
       amount: value.amount,

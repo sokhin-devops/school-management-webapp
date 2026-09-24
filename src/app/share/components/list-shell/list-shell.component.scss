@@ -65,3 +65,13 @@
 :host ::ng-deep .k-shell-footer .p-paginator .p-select-dropdown {
   width: 1.75rem;
 }
+
+// Transparent to the layout, so the body's own flex rules still apply to what
+// the page projected rather than to this wrapper.
+.k-shell-content {
+  display: contents;
+}
+
+.k-shell-content-away {
+  display: none;
+}

@@ -135,7 +135,7 @@
                   </td>
                   <td class="text-right">
                     <!-- Default roles cannot be edited or deleted, so only View is offered. -->
-                    <k-row-actions [label]="role.name" [actions]="role.isDefault ? ['view'] : ['view', 'edit', 'delete']"
+                    <k-row-actions [label]="role.name" [actions]="actionsFor(role)"
                       (edit)="openEditRole(role)" />
                   </td>
                 </tr>

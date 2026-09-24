@@ -17,6 +17,7 @@ import { SubjectService } from '../../../core/services/subject.service';
 import { Status, Subject } from '../../../core/models';
 import { SubjectFormComponent } from './subject-form/subject-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 /** 24-subjects.md — configurable academic offerings (Mathematics, Programming, Speaking...). */
 @Component({
@@ -39,7 +40,7 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
   styleUrl: './subject.component.scss',
 })
 export class SubjectComponent {
-  private readonly subjectService = inject(SubjectService);
+  protected readonly subjectService = inject(SubjectService);
 
   protected readonly statusFilter = new RecordFilter<Subject, Status>(
     (subject, value) => subject.status === value,
@@ -62,6 +63,9 @@ export class SubjectComponent {
     { label: 'Active', value: Status.Active },
     { label: 'Inactive', value: Status.Inactive },
   ];
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<Subject | null>(null);
@@ -81,6 +85,10 @@ export class SubjectComponent {
   }
 
   protected onSaved(subject: Subject): void {
-    this.subjectService.upsert(subject);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.subjectService.save(subject).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

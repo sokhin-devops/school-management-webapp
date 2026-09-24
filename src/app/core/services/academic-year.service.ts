@@ -1,52 +1,78 @@
-import { Injectable, signal } from '@angular/core';
-import { AcademicYear, AcademicYearStatus, Term } from '../models';
-import { removeById, upsertById } from '../utils/collection';
+import { Injectable, computed } from '@angular/core';
+import { Observable } from 'rxjs';
+import { AcademicYear, AcademicYearStatus } from '../models';
+import { ApiAcademicYear } from '../api/api.models';
+import { createTenantResource } from '../api/tenant-resource';
 
-function academicYear(
-  id: string,
-  name: string,
-  startDate: string,
-  endDate: string,
-  status: AcademicYearStatus,
-  terms: Term[],
-): AcademicYear {
-  return { id, branchId: 'branch-1', name, startDate, endDate, status, terms };
+/** The body POST and PUT /api/v1/academic-years accept. */
+interface AcademicYearWrite {
+  name: string;
+  startDate: string;
+  endDate: string;
+  current?: boolean;
 }
 
-function semesters(startYear: number): Term[] {
-  return [
-    { id: `${startYear}-s1`, name: 'Semester 1', startDate: `${startYear}-09-01`, endDate: `${startYear}-12-20` },
-    { id: `${startYear}-s2`, name: 'Semester 2', startDate: `${startYear + 1}-01-08`, endDate: `${startYear + 1}-06-30` },
-  ];
-}
-
-function trimesters(startYear: number): Term[] {
-  return [
-    { id: `${startYear}-t1`, name: 'Term 1', startDate: `${startYear}-09-01`, endDate: `${startYear}-12-05` },
-    { id: `${startYear}-t2`, name: 'Term 2', startDate: `${startYear + 1}-01-08`, endDate: `${startYear + 1}-03-25` },
-    { id: `${startYear}-t3`, name: 'Term 3', startDate: `${startYear + 1}-04-08`, endDate: `${startYear + 1}-06-30` },
-  ];
-}
-
+/**
+ * Academic years belong to the school rather than to a branch, so they are the
+ * same list whichever branch is selected.
+ */
 @Injectable({ providedIn: 'root' })
 export class AcademicYearService {
-  private readonly _years = signal<AcademicYear[]>([
-    academicYear('ay-2026', '2026 - 2027', '2026-09-01', '2027-06-30', AcademicYearStatus.Active, semesters(2026)),
-    academicYear('ay-2027', '2027 - 2028', '2027-09-01', '2028-06-30', AcademicYearStatus.Upcoming, semesters(2027)),
-    academicYear('ay-2025', '2025 - 2026', '2025-09-01', '2026-06-30', AcademicYearStatus.Completed, semesters(2025)),
-    academicYear('ay-2024', '2024 - 2025', '2024-09-01', '2025-06-30', AcademicYearStatus.Completed, semesters(2024)),
-    academicYear('ay-2023', '2023 - 2024', '2023-09-01', '2024-06-30', AcademicYearStatus.Completed, trimesters(2023)),
-    academicYear('ay-2022', '2022 - 2023', '2022-09-01', '2023-06-30', AcademicYearStatus.Completed, trimesters(2022)),
-  ]);
+  private readonly resource = createTenantResource<ApiAcademicYear, AcademicYearWrite>(
+    'api/v1/academic-years',
+  );
 
-  readonly years = this._years.asReadonly();
+  readonly years = computed(() => this.resource.items().map(toAcademicYear));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
 
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: AcademicYear): void {
-    this._years.update((current) => upsertById(current, record));
+  reload(): void {
+    this.resource.reload();
   }
 
-  remove(id: string): void {
-    this._years.update((current) => removeById(current, id));
+  save(year: AcademicYear): Observable<ApiAcademicYear> {
+    const body = toWrite(year);
+    return year.id ? this.resource.update(year.id, body) : this.resource.create(body);
   }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toAcademicYear(year: ApiAcademicYear): AcademicYear {
+  return {
+    id: year.id,
+    branchId: year.schoolId,
+    name: year.name,
+    startDate: year.startDate,
+    endDate: year.endDate,
+    status: statusOf(year),
+    terms: [],
+  };
+}
+
+/**
+ * The API records which year is current; the screens show three states. The
+ * other two are read off the dates rather than stored, so a year cannot be
+ * marked completed while it is still running.
+ */
+function statusOf(year: ApiAcademicYear): AcademicYearStatus {
+  if (year.current) {
+    return AcademicYearStatus.Active;
+  }
+  const today = new Date().toISOString().slice(0, 10);
+  return year.endDate < today ? AcademicYearStatus.Completed : AcademicYearStatus.Upcoming;
+}
+
+function toWrite(year: AcademicYear): AcademicYearWrite {
+  return {
+    name: year.name,
+    startDate: year.startDate,
+    endDate: year.endDate,
+    // Only Active means current; Upcoming and Completed are both "not current"
+    // and the dates already say which.
+    current: year.status === AcademicYearStatus.Active,
+  };
 }

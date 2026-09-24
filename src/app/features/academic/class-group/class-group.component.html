@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="classGroupService.loading()" [error]="classGroupService.error()"
+  [hasContent]="records.total() > 0" [layout]="'list'" [skeletonColumns]="[22, 8, 14, 16, 20, 10, 10]"
+  (retry)="classGroupService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search class, code or teacher" searchLabel="Search classes"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

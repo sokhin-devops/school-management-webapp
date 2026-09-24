@@ -38,8 +38,8 @@ export class AssessmentFormComponent {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(60)]],
-    subject: ['', Validators.required],
-    className: ['', Validators.required],
+    subjectId: ['', Validators.required],
+    classGroupId: ['', Validators.required],
     type: ['Quiz' as AssessmentType, Validators.required],
     date: [null as Date | null, Validators.required],
     maxScore: [100, [Validators.required, Validators.min(1), Validators.max(1000)]],
@@ -59,8 +59,8 @@ export class AssessmentFormComponent {
   /** One source for the field names, shared by the labels and the alert. */
   protected readonly labels = {
     name: 'Name',
-    subject: 'Subject',
-    className: 'Class',
+    subjectId: 'Subject',
+    classGroupId: 'Class',
     type: 'Type',
     date: 'Date',
     maxScore: 'Maximum score',
@@ -90,8 +90,8 @@ export class AssessmentFormComponent {
   private reset(record: AssessmentRecord | null): void {
     this.form.reset({
       name: record?.name ?? '',
-      subject: record?.subject ?? '',
-      className: record?.className ?? '',
+      subjectId: record?.subjectId ?? '',
+      classGroupId: record?.classGroupId ?? '',
       type: record?.type ?? 'Quiz',
       date: record?.date ? new Date(record.date) : new Date(),
       maxScore: record?.maxScore ?? 100,
@@ -104,10 +104,15 @@ export class AssessmentFormComponent {
 
     return {
       ...existing,
-      id: existing?.id ?? `asm-${Date.now().toString(36)}`,
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
       name: value.name.trim(),
-      subject: value.subject,
-      className: value.className,
+      subjectId: value.subjectId,
+      classGroupId: value.classGroupId,
+      // Names are for the screen; the record is keyed by id.
+      subject: '',
+      className: '',
       type: value.type,
       date: isoDate(value.date),
       maxScore: value.maxScore,

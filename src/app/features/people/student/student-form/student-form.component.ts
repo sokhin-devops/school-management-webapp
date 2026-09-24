@@ -103,8 +103,10 @@ export class StudentFormComponent {
 
     return {
       ...existing,
-      id: existing?.id ?? admissionNumber.toLowerCase(),
-      branchIds: existing?.branchIds ?? [this.branchContext.selectedBranch().id],
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
+      branchIds: existing?.branchIds ?? [this.branchContext.selectedBranch()?.id ?? ''],
       type: PersonType.Student,
       firstName: value.firstName.trim(),
       lastName: value.lastName.trim(),

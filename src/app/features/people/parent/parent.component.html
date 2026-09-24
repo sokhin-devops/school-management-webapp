@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="parentService.loading()" [error]="parentService.error()"
+  [hasContent]="records.total() > 0" [layout]="layoutUi.layout()" [skeletonColumns]="[26, 14, 24, 16, 10, 10]"
+  (retry)="parentService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search name, child or contact" searchLabel="Search parents"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

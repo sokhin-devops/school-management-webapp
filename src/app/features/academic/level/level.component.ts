@@ -18,6 +18,8 @@ import { LevelRecord, LevelService } from '../../../core/services/level.service'
 import { Status } from '../../../core/models';
 import { LevelFormComponent } from './level-form/level-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
+import { ProgramService } from '../../../core/services/program.service';
 
 /**
  * 22-levels.md — configurable academic stages. The displayed terminology is the
@@ -45,7 +47,8 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
   styleUrl: './level.component.scss',
 })
 export class LevelComponent {
-  private readonly levelService = inject(LevelService);
+  protected readonly levelService = inject(LevelService);
+  private readonly programService = inject(ProgramService);
 
   protected readonly programFilter = new RecordFilter<LevelRecord, string>(
     (level, value) => level.programName === value,
@@ -55,8 +58,17 @@ export class LevelComponent {
     (level, value) => level.status === value,
   );
 
+  /** The API stores programId; the table shows the programme's name. */
+  private readonly named = computed<LevelRecord[]>(() => {
+    const programs = new Map(this.programService.programs().map((program) => [program.id, program.name]));
+    return this.levelService.levels().map((level) => ({
+      ...level,
+      programName: level.programId ? (programs.get(level.programId) ?? '') : '',
+    }));
+  });
+
   protected readonly records = createRecordList<LevelRecord>({
-    source: this.levelService.levels,
+    source: this.named,
     searchKeys: [
       (level) => level.name,
       (level) => level.displayLabel,
@@ -83,6 +95,9 @@ export class LevelComponent {
       .sort((a, b) => a.localeCompare(b))
       .map((programName) => ({ label: programName, value: programName })),
   );
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<LevelRecord | null>(null);
@@ -102,6 +117,10 @@ export class LevelComponent {
   }
 
   protected onSaved(level: LevelRecord): void {
-    this.levelService.upsert(level);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.levelService.save(level).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

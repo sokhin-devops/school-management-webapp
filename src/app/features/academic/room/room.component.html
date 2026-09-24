@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="roomService.loading()" [error]="roomService.error()"
+  [hasContent]="records.total() > 0" [layout]="'list'" [skeletonColumns]="[24, 12, 20, 16, 10, 8, 10]"
+  (retry)="roomService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search room, code or building" searchLabel="Search rooms"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

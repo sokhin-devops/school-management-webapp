@@ -4,7 +4,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { MultiSelectModule } from 'primeng/multiselect';
 import { FormDialogComponent, FormFieldComponent } from '../../../../share/components';
 import { FormValidationService } from '../../../../share/forms';
-import { RoleRecord } from '../../../../core/services/user.service';
+import { RoleRecord } from '../../../../core/services/role.service';
 import { PermissionAction } from '../../../../core/models';
 import { humanize } from '../../../../share/data/format';
 
@@ -91,7 +91,7 @@ export class RoleFormComponent {
   private reset(record: RoleRecord | null): void {
     this.form.reset({
       name: record?.name ?? '',
-      modules: (record?.permissions ?? []).map((permission) => permission.module),
+      modules: (record?.permissions ?? []).map((permission: { module: string }) => permission.module),
       branchNames: [...(record?.branchNames ?? [])],
     });
   }
@@ -102,7 +102,9 @@ export class RoleFormComponent {
 
     return {
       ...existing,
-      id: existing?.id ?? `rol-${Date.now().toString(36)}`,
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
       name: value.name.trim(),
       // Only the five seeded roles are default; anything made here is custom.
       isDefault: existing?.isDefault ?? false,

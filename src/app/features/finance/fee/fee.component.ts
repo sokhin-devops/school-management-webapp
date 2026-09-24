@@ -18,6 +18,7 @@ import { FeeService } from '../../../core/services/fee.service';
 import { Fee, Status } from '../../../core/models';
 import { FeeFormComponent } from './fee-form/fee-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 /** 41-fees.md — configurable charges: tuition, registration, transportation, materials. */
 @Component({
@@ -40,7 +41,7 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
   styleUrl: './fee.component.scss',
 })
 export class FeeComponent {
-  private readonly feeService = inject(FeeService);
+  protected readonly feeService = inject(FeeService);
 
   protected readonly categoryFilter = new RecordFilter<Fee, string>((fee, value) => fee.category === value);
   protected readonly statusFilter = new RecordFilter<Fee, Status>((fee, value) => fee.status === value);
@@ -72,6 +73,9 @@ export class FeeComponent {
   );
 
   protected readonly money = money;
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<Fee | null>(null);
@@ -91,6 +95,10 @@ export class FeeComponent {
   }
 
   protected onSaved(fee: Fee): void {
-    this.feeService.upsert(fee);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.feeService.save(fee).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

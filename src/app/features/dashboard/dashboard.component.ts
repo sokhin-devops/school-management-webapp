@@ -2,6 +2,8 @@ import { Component, computed, inject } from '@angular/core';
 import type { ChartData, ChartOptions, ScriptableContext, TooltipItem } from 'chart.js';
 import { KShareModule } from '../../share/k-share.module';
 import { ChartThemeService, withAlpha, type ChartTheme } from '../../core/services/chart-theme.service';
+import { DashboardService } from '../../core/services/dashboard.service';
+import { ApiDashboardSummary } from '../../core/api/api.models';
 
 type Tone = 'info' | 'success' | 'warning';
 type Severity = 'ok' | 'warning' | 'critical';
@@ -156,6 +158,7 @@ const CURRENCY = new Intl.NumberFormat('en-US', {
 })
 export class DashboardComponent {
   private readonly chartTheme = inject(ChartThemeService);
+  protected readonly dashboard = inject(DashboardService);
 
   protected readonly notifications = NOTIFICATIONS;
   protected readonly recentActivity = RECENT_ACTIVITY;
@@ -168,8 +171,9 @@ export class DashboardComponent {
    */
   protected readonly tiles = computed(() => {
     const theme = this.chartTheme.theme();
+    const summary = this.dashboard.summary();
 
-    return STAT_TILES.map((tile) => ({
+    return this.headlineTiles(summary).map((tile) => ({
       ...tile,
       rising: (tile.delta?.percent ?? 0) >= 0,
       deltaGood: tile.delta ? tile.delta.percent >= 0 === tile.delta.upIsGood : false,
@@ -177,20 +181,106 @@ export class DashboardComponent {
     }));
   });
 
+  /**
+   * The six headline figures, from the server's one summary call.
+   *
+   * The shapes STAT_TILES describes are kept for the ones the API has nothing
+   * to say about — a trend against last term, and the outstanding-fee total —
+   * so the layout stays whole while those are still unanswered. The counts and
+   * the money are real.
+   */
+  private headlineTiles(summary: ApiDashboardSummary | null): StatTile[] {
+    const attendance = summary?.attendanceToday;
+
+    return [
+      {
+        key: 'students',
+        label: 'Students',
+        value: format(summary?.students),
+        icon: 'pi-graduation-cap',
+        note: 'On the roster',
+      },
+      {
+        key: 'staff',
+        label: 'Teachers & staff',
+        value: format(summary?.teachers),
+        icon: 'pi-id-card',
+        note: 'Teaching staff',
+      },
+      {
+        key: 'classes',
+        label: 'Classes',
+        value: format(summary?.classes),
+        icon: 'pi-th-large',
+        note: 'Running this year',
+      },
+      {
+        key: 'attendance',
+        label: 'Attendance today',
+        value: attendance?.percent == null ? '—' : `${attendance.percent}%`,
+        icon: 'pi-calendar-clock',
+        // Nothing marked is not the same as nobody present, so it says so.
+        note: attendance?.marked ? `${attendance.present} of ${attendance.marked} marked` : 'Not taken yet',
+      },
+      {
+        key: 'collected',
+        label: 'Collected this month',
+        value: money(summary?.collectedThisMonth ?? 0),
+        icon: 'pi-wallet',
+        note: 'Payments received',
+      },
+      {
+        key: 'spent',
+        label: 'Spent this month',
+        value: money(summary?.spentThisMonth ?? 0),
+        icon: 'pi-receipt',
+        note: 'Expenses paid',
+      },
+    ];
+  }
+
+  /**
+   * The two series the summary carries, as the charts want them.
+   *
+   * Days with no register are absent from the API's answer rather than reported
+   * as zero percent — a weekend nobody marked is not a day everybody missed — so
+   * the labels come from the rows that exist rather than from a fixed window.
+   */
+  private readonly attendanceSeries = computed(() => {
+    const trend = this.dashboard.summary()?.attendanceTrend ?? [];
+    return {
+      labels: trend.map((point) => shortDay(point.date)),
+      values: trend.map((point) => point.percent ?? 0),
+    };
+  });
+
+  private readonly collectionSeries = computed(() => {
+    const trend = this.dashboard.summary()?.collectionTrend ?? [];
+    return {
+      labels: trend.map((point) => shortMonth(point.month)),
+      collected: trend.map((point) => point.collected),
+      spent: trend.map((point) => point.spent),
+    };
+  });
+
   // --- Attendance --------------------------------------------------------
 
-  protected readonly attendanceLatest = ATTENDANCE_RATE[ATTENDANCE_RATE.length - 1];
+  protected readonly attendanceLatest = computed(() => {
+    const values = this.attendanceSeries().values;
+    return values.length ? values[values.length - 1] : null;
+  });
 
   protected readonly attendanceData = computed<ChartData<'line'>>(() => {
     const theme = this.chartTheme.theme();
-    const latest = ATTENDANCE_RATE.length - 1;
+    const series = this.attendanceSeries();
+    const latest = series.values.length - 1;
 
     return {
-      labels: ATTENDANCE_DAYS,
+      labels: series.labels,
       datasets: [
         {
           label: 'Attendance',
-          data: [...ATTENDANCE_RATE],
+          data: [...series.values],
           borderColor: theme.primary,
           backgroundColor: withAlpha(theme.primary, 0.1),
           borderWidth: 2,
@@ -210,7 +300,7 @@ export class DashboardComponent {
         },
         {
           label: `Target ${ATTENDANCE_TARGET}%`,
-          data: ATTENDANCE_RATE.map(() => ATTENDANCE_TARGET),
+          data: series.values.map(() => ATTENDANCE_TARGET),
           borderColor: theme.muted,
           borderWidth: 1.5,
           borderDash: [4, 4],
@@ -329,29 +419,38 @@ export class DashboardComponent {
 
   // --- Fee collection -----------------------------------------------------
 
-  protected readonly feeSummary = (() => {
-    const last = FEE_COLLECTED.length - 1;
-    const collected = FEE_COLLECTED[last];
-    const outstanding = FEE_OUTSTANDING[last];
-    const billed = collected + outstanding;
+  /**
+   * Collected against spent, for the month on the right of the chart.
+   *
+   * It used to read billed / collected / outstanding. The server counts money
+   * received and money paid out; what was *billed* would need the fees due
+   * across every student, which nothing computes yet — so the panel says what
+   * is known rather than dividing by a number that was invented.
+   */
+  protected readonly feeSummary = computed(() => {
+    const series = this.collectionSeries();
+    const last = series.collected.length - 1;
+    const collected = last >= 0 ? series.collected[last] : 0;
+    const spent = last >= 0 ? series.spent[last] : 0;
 
     return {
       collected: CURRENCY.format(collected),
-      outstanding: CURRENCY.format(outstanding),
-      billed: CURRENCY.format(billed),
-      rate: Math.round((collected / billed) * 100),
+      spent: CURRENCY.format(spent),
+      net: CURRENCY.format(collected - spent),
+      positive: collected - spent >= 0,
     };
-  })();
+  });
 
   protected readonly feeData = computed<ChartData<'bar'>>(() => {
     const theme = this.chartTheme.theme();
+    const series = this.collectionSeries();
 
     return {
-      labels: FEE_MONTHS,
+      labels: series.labels,
       datasets: [
         {
           label: 'Collected',
-          data: [...FEE_COLLECTED],
+          data: [...series.collected],
           backgroundColor: theme.categorical[0],
           maxBarThickness: 24,
           borderSkipped: false,
@@ -492,4 +591,23 @@ function sparkline(trend: readonly number[], theme: ChartTheme) {
   };
 
   return { data, options };
+}
+
+/** A count that has not arrived yet is a dash, not a zero. */
+function format(value: number | undefined): string {
+  return value === undefined ? '—' : value.toLocaleString();
+}
+
+function money(value: number): string {
+  return value.toLocaleString(undefined, { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+}
+
+/** 2026-09-24 as "Sep 24", which is all the axis has room for. */
+function shortDay(date: string): string {
+  return new Date(`${date}T00:00:00`).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
+}
+
+/** The API sends a YearMonth, "2026-09"; the axis shows "Sep". */
+function shortMonth(month: string): string {
+  return new Date(`${month}-01T00:00:00`).toLocaleDateString(undefined, { month: 'short' });
 }

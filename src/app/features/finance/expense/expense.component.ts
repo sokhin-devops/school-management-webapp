@@ -19,6 +19,7 @@ import { ExpenseService } from '../../../core/services/expense.service';
 import { Expense, ExpenseStatus } from '../../../core/models';
 import { ExpenseFormComponent } from './expense-form/expense-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 type Severity = 'success' | 'info' | 'warn' | 'danger';
 
@@ -44,7 +45,7 @@ type Severity = 'success' | 'info' | 'warn' | 'danger';
   styleUrl: './expense.component.scss',
 })
 export class ExpenseComponent {
-  private readonly expenseService = inject(ExpenseService);
+  protected readonly expenseService = inject(ExpenseService);
 
   protected readonly categoryFilter = new RecordFilter<Expense, string>(
     (expense, value) => expense.category === value,
@@ -104,6 +105,9 @@ export class ExpenseComponent {
         return 'danger';
     }
   }
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<Expense | null>(null);
@@ -119,6 +123,10 @@ export class ExpenseComponent {
   }
 
   protected onSaved(expense: Expense): void {
-    this.expenseService.upsert(expense);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.expenseService.save(expense).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

@@ -21,6 +21,8 @@ import { Status } from '../../../core/models';
 import { StudentCardComponent } from './student-card/student-card.component';
 import { StudentFormComponent } from './student-form/student-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
+import { ClassGroupService } from '../../../core/services/class-group.service';
 
 @Component({
   selector: 'app-student',
@@ -46,7 +48,8 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 })
 export class StudentComponent {
   protected readonly layoutUi = inject(LayoutUiService);
-  private readonly studentService = inject(StudentService);
+  protected readonly studentService = inject(StudentService);
+  private readonly classGroupService = inject(ClassGroupService);
 
   protected readonly classFilter = new RecordFilter<StudentRecord, string>(
     (student, value) => student.className === value,
@@ -56,8 +59,17 @@ export class StudentComponent {
     (student, value) => student.status === value,
   );
 
+  /** The API stores classGroupId; the roster shows the class name. */
+  private readonly named = computed<StudentRecord[]>(() => {
+    const classes = new Map(this.classGroupService.classes().map((group) => [group.id, group.name]));
+    return this.studentService.students().map((student) => ({
+      ...student,
+      className: student.classGroupId ? (classes.get(student.classGroupId) ?? '') : '',
+    }));
+  });
+
   protected readonly records = createRecordList<StudentRecord>({
-    source: this.studentService.students,
+    source: this.named,
     searchKeys: [
       (student) => student.firstName,
       (student) => student.lastName,
@@ -91,6 +103,9 @@ export class StudentComponent {
       .map((className) => ({ label: className, value: className })),
   );
 
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<StudentRecord | null>(null);
@@ -110,7 +125,11 @@ export class StudentComponent {
   }
 
   protected onSaved(student: StudentRecord): void {
-    this.studentService.upsert(student);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.studentService.save(student).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 
   protected fullName(student: StudentRecord): string {

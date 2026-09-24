@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="paymentService.loading()" [error]="paymentService.error()"
+  [hasContent]="records.total() > 0" [layout]="'list'" [skeletonColumns]="[16, 18, 20, 11, 12, 11, 12]"
+  (retry)="paymentService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search reference, student or fee" searchLabel="Search payments"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

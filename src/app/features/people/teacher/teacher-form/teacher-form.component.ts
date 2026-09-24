@@ -107,8 +107,10 @@ export class TeacherFormComponent {
 
     return {
       ...existing,
-      id: existing?.id ?? employeeNumber.toLowerCase(),
-      branchIds: existing?.branchIds ?? [this.branchContext.selectedBranch().id],
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
+      branchIds: existing?.branchIds ?? [this.branchContext.selectedBranch()?.id ?? ''],
       type: PersonType.Teacher,
       firstName: value.firstName.trim(),
       lastName: value.lastName.trim(),

@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="assessmentService.loading()" [error]="assessmentService.error()"
+  [hasContent]="records.total() > 0" [layout]="'list'" [skeletonColumns]="[26, 16, 14, 11, 12, 12, 9]"
+  (retry)="assessmentService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search assessment, subject or class" searchLabel="Search assessments"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

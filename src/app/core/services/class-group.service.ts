@@ -1,78 +1,91 @@
-import { Injectable, signal } from '@angular/core';
-import { ClassGroup, Status } from '../models';
-import { removeById, upsertById } from '../utils/collection';
+import { Injectable, computed } from '@angular/core';
+import { Observable } from 'rxjs';
+import { ClassGroup } from '../models';
 
-/**
- * 23-classes.md: the same shape must express Grade 1 to 1-A, Program to Year 2 to
- * Section A, and Course to Intermediate to Batch 03 — so nothing here hard-codes
- * the word Grade. The level and program names are denormalized for display.
- */
+/** A class with the names the list shows resolved; the API sends ids only. */
 export interface ClassGroupRecord extends ClassGroup {
   levelName: string;
   programName: string;
   academicYearName: string;
+  /** The id is what is stored; the name beside it is for the table. */
+  homeroomTeacherId?: string;
   teacherName: string;
   enrolled: number;
 }
+import { ApiClassGroup } from '../api/api.models';
+import { fromStatus, toStatus } from '../api/api-mappers';
+import { createBranchResource } from '../api/branch-resource';
 
-function classGroup(
-  id: string,
-  name: string,
-  code: string,
-  levelName: string,
-  programName: string,
-  teacherName: string,
-  enrolled: number,
-  capacity: number,
-  status = Status.Active,
-): ClassGroupRecord {
-  return {
-    id,
-    branchId: 'branch-1',
-    academicYearId: 'ay-2026',
-    academicYearName: '2026 - 2027',
-    name,
-    code,
-    levelName,
-    programName,
-    teacherName,
-    enrolled,
-    capacity,
-    status,
-  };
+/** The body POST and PUT api/v1/classes accept. */
+interface ClassGroupWrite {
+  branchId?: string;
+  academicYearId: string;
+  programId: string | null;
+  levelId: string | null;
+  parentClassId: string | null;
+  homeroomTeacherId: string | null;
+  name: string;
+  code: string;
+  capacity: number | null;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 @Injectable({ providedIn: 'root' })
 export class ClassGroupService {
-  private readonly _classes = signal<ClassGroupRecord[]>([
-    classGroup('cls-01', 'Grade 1 - A', '1A', 'Grade 1', 'Primary Education', 'Rachel Owusu', 32, 35),
-    classGroup('cls-02', 'Grade 1 - B', '1B', 'Grade 1', 'Primary Education', 'Priya Raman', 30, 35),
-    classGroup('cls-03', 'Grade 2 - A', '2A', 'Grade 2', 'Primary Education', 'Amara Diallo', 28, 35),
-    classGroup('cls-04', 'Grade 2 - B', '2B', 'Grade 2', 'Primary Education', 'Marcus Bennett', 26, 35),
-    classGroup('cls-05', 'Grade 3 - A', '3A', 'Grade 3', 'Primary Education', 'Chen Wei', 31, 35),
-    classGroup('cls-06', 'Grade 3 - B', '3B', 'Grade 3', 'Primary Education', 'Nadia Haddad', 29, 35),
-    classGroup('cls-07', 'Grade 4 - A', '4A', 'Grade 4', 'Primary Education', 'Daniel Ferreira', 33, 35),
-    classGroup('cls-08', 'Grade 4 - B', '4B', 'Grade 4', 'Primary Education', 'Helen Castillo', 27, 35),
-    classGroup('cls-09', 'Grade 5 - A', '5A', 'Grade 5', 'Primary Education', 'Tomas Novak', 30, 35),
-    classGroup('cls-10', 'Grade 5 - B', '5B', 'Grade 5', 'Primary Education', 'Grace Mwangi', 25, 35),
-    classGroup('cls-11', 'Grade 6 - A', '6A', 'Grade 6', 'Primary Education', 'Peter Lindqvist', 34, 35),
-    classGroup('cls-12', 'Grade 6 - B', '6B', 'Grade 6', 'Primary Education', 'Ibrahim Toure', 28, 35),
-    classGroup('cls-13', 'Grade 7 - A', '7A', 'Grade 7', 'General Secondary', 'Rachel Owusu', 35, 35),
-    classGroup('cls-14', 'Grade 7 - B', '7B', 'Grade 7', 'General Secondary', 'Daniel Ferreira', 31, 35),
-    classGroup('cls-15', 'Grade 8 - A', '8A', 'Grade 8', 'General Secondary', 'Amara Diallo', 24, 30),
-    classGroup('cls-16', 'Grade 8 - B', '8B', 'Grade 8', 'General Secondary', 'Priya Raman', 21, 30),
-    classGroup('cls-17', 'Intermediate - Batch 03', 'INT-03', 'Intermediate', 'English Language', 'Nadia Haddad', 18, 24),
-    classGroup('cls-18', 'Beginner - Batch 01', 'BEG-01', 'Beginner', 'English Language', 'Priya Raman', 14, 24, Status.Inactive),
-  ]);
+  private readonly resource = createBranchResource<ApiClassGroup, ClassGroupWrite>('api/v1/classes');
 
-  readonly classes = this._classes.asReadonly();
+  readonly classes = computed(() => this.resource.items().map(toClassGroup));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
 
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: ClassGroupRecord): void {
-    this._classes.update((current) => upsertById(current, record));
+  reload(): void {
+    this.resource.reload();
   }
 
-  remove(id: string): void {
-    this._classes.update((current) => removeById(current, id));
+  /** One call for both: the page does not have to know which it is doing. */
+  save(record: ClassGroupRecord): Observable<ApiClassGroup> {
+    const body = toWrite(record);
+    return record.id ? this.resource.update(record.id, body) : this.resource.create(body);
   }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toClassGroup(record: ApiClassGroup): ClassGroupRecord {
+  return {
+    id: record.id,
+    branchId: record.branchId,
+    academicYearId: record.academicYearId,
+    programId: record.programId ?? undefined,
+    levelId: record.levelId ?? undefined,
+    parentClassId: record.parentClassId ?? undefined,
+    name: record.name,
+    code: record.code,
+    capacity: record.capacity ?? undefined,
+    status: toStatus(record.status),
+    levelName: '',
+    programName: '',
+    academicYearName: '',
+    homeroomTeacherId: record.homeroomTeacherId ?? undefined,
+    teacherName: '',
+    // Enrolment is a consequence of admissions; the API does not count it yet.
+    enrolled: 0,
+  };
+}
+
+function toWrite(record: ClassGroupRecord): ClassGroupWrite {
+  return {
+    academicYearId: record.academicYearId,
+    programId: record.programId ?? null,
+    levelId: record.levelId ?? null,
+    parentClassId: record.parentClassId ?? null,
+    homeroomTeacherId: record.homeroomTeacherId ?? null,
+    name: record.name,
+    code: record.code ?? '',
+    capacity: record.capacity ?? null,
+    status: fromStatus(record.status),
+  };
 }

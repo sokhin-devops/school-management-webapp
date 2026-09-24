@@ -1,68 +1,78 @@
-import { Injectable, signal } from '@angular/core';
-import { Person, PersonType, Status } from '../models';
-import { removeById, upsertById } from '../utils/collection';
+import { Injectable, computed } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Person, PersonType } from '../models';
 
-/** Parent/guardian row for People > Parents, denormalized with the linked children's names. */
+/** A parent row, with the children's names resolved by the page. */
 export interface ParentRecord extends Person {
   children: string[];
   relationship: string;
 }
+import { ApiParent } from '../api/api.models';
+import { fromStatus, toStatus } from '../api/api-mappers';
+import { createBranchResource } from '../api/branch-resource';
 
-function parent(
-  id: string,
-  firstName: string,
-  lastName: string,
-  relationship: string,
-  children: string[],
-  email: string,
-  phone: string,
-  status: Status = Status.Active,
-): ParentRecord {
-  return {
-    id,
-    branchIds: ['branch-1'],
-    type: PersonType.Parent,
-    firstName,
-    lastName,
-    email,
-    phone,
-    status,
-    relationship,
-    children,
-    parentDetails: {
-      studentPersonIds: children.map((child) => child.toLowerCase().replace(/\s+/g, '-')),
-    },
-  };
-}
-
-function seedParents(): ParentRecord[] {
-  return [
-    parent('par-001', 'Michael', 'Carter', 'Father', ['Aiden Carter'], 'michael.carter@mail.com', '+1 555-030-3001'),
-    parent('par-002', 'Linh', 'Nguyen', 'Mother', ['Sophia Nguyen'], 'linh.nguyen@mail.com', '+1 555-030-3002'),
-    parent('par-003', 'Patricia', 'Johnson', 'Mother', ['Liam Johnson'], 'patricia.johnson@mail.com', '+1 555-030-3003'),
-    parent('par-004', 'Carlos', 'Martinez', 'Father', ['Olivia Martinez'], 'carlos.martinez@mail.com', '+1 555-030-3004'),
-    parent('par-005', 'Sandra', 'Williams', 'Mother', ['Noah Williams'], 'sandra.williams@mail.com', '+1 555-030-3005'),
-    parent('par-006', 'Gregory', 'Brown', 'Father', ['Emma Brown'], 'gregory.brown@mail.com', '+1 555-030-3006', Status.Inactive),
-    parent('par-007', 'Yolanda', 'Davis', 'Guardian', ['Elijah Davis'], 'yolanda.davis@mail.com', '+1 555-030-3007'),
-    parent('par-008', 'Ana', 'Garcia', 'Mother', ['Ava Garcia'], 'ana.garcia@mail.com', '+1 555-030-3008'),
-    parent('par-009', 'Ruben', 'Rodriguez', 'Father', ['Lucas Rodriguez'], 'ruben.rodriguez@mail.com', '+1 555-030-3009'),
-    parent('par-010', 'Elena', 'Hernandez', 'Mother', ['Mia Hernandez'], 'elena.hernandez@mail.com', '+1 555-030-3010'),
-    parent('par-011', 'Victor', 'Lopez', 'Father', ['Mason Lopez', 'Isabella Gonzalez'], 'victor.lopez@mail.com', '+1 555-030-3011'),
-    parent('par-012', 'Beatrice', 'Wilson', 'Mother', ['Ethan Wilson'], 'beatrice.wilson@mail.com', '+1 555-030-3012'),
-  ];
+/** The body POST and PUT api/v1/parents accept. */
+interface ParentWrite {
+  branchId?: string;
+  firstName: string;
+  lastName: string;
+  relationship: string;
+  email: string;
+  phone: string;
+  studentIds: string[];
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 @Injectable({ providedIn: 'root' })
 export class ParentService {
-  private readonly _parents = signal<ParentRecord[]>(seedParents());
-  readonly parents = this._parents.asReadonly();
+  private readonly resource = createBranchResource<ApiParent, ParentWrite>('api/v1/parents');
 
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: ParentRecord): void {
-    this._parents.update((current) => upsertById(current, record));
+  readonly parents = computed(() => this.resource.items().map(toParent));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
+
+  reload(): void {
+    this.resource.reload();
   }
 
-  remove(id: string): void {
-    this._parents.update((current) => removeById(current, id));
+  /** One call for both: the page does not have to know which it is doing. */
+  save(record: ParentRecord): Observable<ApiParent> {
+    const body = toWrite(record);
+    return record.id ? this.resource.update(record.id, body) : this.resource.create(body);
   }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toParent(record: ApiParent): ParentRecord {
+  return {
+    id: record.id,
+    branchIds: [record.branchId],
+    type: PersonType.Parent,
+    firstName: record.firstName,
+    lastName: record.lastName,
+    email: record.email,
+    phone: record.phone,
+    status: toStatus(record.status),
+    relationship: record.relationship,
+    children: [],
+    parentDetails: {
+      studentPersonIds: record.studentIds ?? [],
+    },
+  };
+}
+
+function toWrite(record: ParentRecord): ParentWrite {
+  return {
+    firstName: record.firstName,
+    lastName: record.lastName,
+    relationship: record.relationship,
+    email: record.email ?? '',
+    phone: record.phone ?? '',
+    studentIds: record.parentDetails?.studentPersonIds ?? [],
+    status: fromStatus(record.status),
+  };
 }

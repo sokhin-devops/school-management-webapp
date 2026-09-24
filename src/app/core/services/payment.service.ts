@@ -1,67 +1,83 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Payment, PaymentMethod, PaymentStatus } from '../models';
-import { removeById, upsertById } from '../utils/collection';
 
-/** Payment row for Finance > Payments, denormalized with display-ready names. */
+/** A payment with the names the list shows; the API sends ids only. */
 export interface PaymentRecord extends Payment {
   studentName: string;
   feeName: string;
 }
+import { ApiPayment } from '../api/api.models';
+import { ApiPaymentMethod, ApiPaymentStatus } from '../api/api.models';
+import { createBranchResource } from '../api/branch-resource';
 
-function payment(
-  reference: string,
-  studentName: string,
-  feeName: string,
-  amount: number,
-  date: string,
-  method: PaymentMethod,
-  status: PaymentStatus,
-): PaymentRecord {
-  return {
-    id: reference.toLowerCase(),
-    branchId: 'branch-1',
-    feeId: 'fee-01',
-    personId: studentName.toLowerCase().replace(/\s+/g, '-'),
-    reference,
-    studentName,
-    feeName,
-    payerName: studentName,
-    amount,
-    date,
-    method,
-    status,
-  };
+/** The body POST and PUT api/v1/payments accept. */
+interface PaymentWrite {
+  branchId?: string;
+  reference: string;
+  feeId: string;
+  studentId: string;
+  amount: number;
+  paidOn: string;
+  method: ApiPaymentMethod;
+  status: ApiPaymentStatus;
+  payerName: string | null;
+  notes: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class PaymentService {
-  private readonly _payments = signal<PaymentRecord[]>([
-    payment('PAY-2026-0001', 'Aiden Carter', 'Tuition — Primary', 1200, '2026-09-02', PaymentMethod.BankTransfer, PaymentStatus.Paid),
-    payment('PAY-2026-0002', 'Sophia Nguyen', 'Tuition — Primary', 600, '2026-09-03', PaymentMethod.Card, PaymentStatus.PartiallyPaid),
-    payment('PAY-2026-0003', 'Liam Johnson', 'Tuition — Primary', 1200, '2026-09-04', PaymentMethod.Cash, PaymentStatus.Paid),
-    payment('PAY-2026-0004', 'Olivia Martinez', 'Registration', 150, '2026-09-05', PaymentMethod.MobileMoney, PaymentStatus.Paid),
-    payment('PAY-2026-0005', 'Noah Williams', 'Transportation — Zone A', 300, '2026-09-08', PaymentMethod.Card, PaymentStatus.Pending),
-    payment('PAY-2026-0006', 'Emma Brown', 'Tuition — Primary', 1200, '2026-09-09', PaymentMethod.BankTransfer, PaymentStatus.Paid),
-    payment('PAY-2026-0007', 'Elijah Davis', 'Textbooks', 180, '2026-09-10', PaymentMethod.Cash, PaymentStatus.Paid),
-    payment('PAY-2026-0008', 'Ava Garcia', 'Laboratory', 120, '2026-09-11', PaymentMethod.Online, PaymentStatus.Failed),
-    payment('PAY-2026-0009', 'Lucas Rodriguez', 'Tuition — Primary', 1200, '2026-09-12', PaymentMethod.Cheque, PaymentStatus.Pending),
-    payment('PAY-2026-0010', 'Mia Hernandez', 'Sports & Activities', 110, '2026-09-14', PaymentMethod.Card, PaymentStatus.Paid),
-    payment('PAY-2026-0011', 'Mason Lopez', 'Tuition — Secondary', 800, '2026-09-15', PaymentMethod.BankTransfer, PaymentStatus.PartiallyPaid),
-    payment('PAY-2026-0012', 'Isabella Gonzalez', 'Uniform', 90, '2026-09-15', PaymentMethod.Cash, PaymentStatus.Paid),
-    payment('PAY-2026-0013', 'Ethan Wilson', 'Tuition — Secondary', 1600, '2026-09-16', PaymentMethod.Online, PaymentStatus.Paid),
-    payment('PAY-2026-0014', 'Amelia Anderson', 'Field Trips', 140, '2026-09-17', PaymentMethod.MobileMoney, PaymentStatus.Refunded),
-    payment('PAY-2026-0015', 'Logan Thomas', 'Examination', 60, '2026-09-17', PaymentMethod.Cash, PaymentStatus.Paid),
-    payment('PAY-2026-0016', 'Charlotte Taylor', 'Tuition — Secondary', 1600, '2026-09-18', PaymentMethod.BankTransfer, PaymentStatus.Pending),
-  ]);
+  private readonly resource = createBranchResource<ApiPayment, PaymentWrite>('api/v1/payments');
 
-  readonly payments = this._payments.asReadonly();
+  readonly payments = computed(() => this.resource.items().map(toPayment));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
 
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: PaymentRecord): void {
-    this._payments.update((current) => upsertById(current, record));
+  reload(): void {
+    this.resource.reload();
   }
 
-  remove(id: string): void {
-    this._payments.update((current) => removeById(current, id));
+  /** One call for both: the page does not have to know which it is doing. */
+  save(record: PaymentRecord): Observable<ApiPayment> {
+    const body = toWrite(record);
+    return record.id ? this.resource.update(record.id, body) : this.resource.create(body);
   }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toPayment(record: ApiPayment): PaymentRecord {
+  return {
+    id: record.id,
+    branchId: record.branchId,
+    reference: record.reference,
+    feeId: record.feeId,
+    personId: record.studentId,
+    amount: record.amount,
+    date: record.paidOn,
+    method: record.method.toLowerCase() as PaymentMethod,
+    status: record.status.toLowerCase() as PaymentStatus,
+    payerName: record.payerName ?? undefined,
+    notes: record.notes ?? undefined,
+    // Resolved by the page from the students and fees it already has.
+    studentName: '',
+    feeName: '',
+  };
+}
+
+function toWrite(record: PaymentRecord): PaymentWrite {
+  return {
+    reference: record.reference ?? '',
+    feeId: record.feeId,
+    studentId: record.personId,
+    amount: record.amount,
+    paidOn: record.date,
+    method: record.method.toUpperCase() as ApiPaymentMethod,
+    status: record.status.toUpperCase() as ApiPaymentStatus,
+    payerName: record.payerName ?? null,
+    notes: record.notes ?? null,
+  };
 }

@@ -46,7 +46,7 @@
             <p class="k-card-sub">Last 8 school days</p>
           </div>
           <div class="k-card-lead">
-            {{ attendanceLatest }}%
+            {{ attendanceLatest() ?? '—' }}{{ attendanceLatest() === null ? '' : '%' }}
             <span class="k-card-lead-note">latest</span>
           </div>
         </div>
@@ -102,21 +102,21 @@
 
         <div class="k-chart">
           <p-chart type="bar" [data]="feeData()" [options]="feeOptions()" height="260px"
-            ariaLabel="Fees collected and fees outstanding per month over the last 6 months" />
+            ariaLabel="Money collected and money spent per month over the last 6 months" />
         </div>
 
         <dl class="k-summary">
           <div>
-            <dt>Billed in September</dt>
-            <dd>{{ feeSummary.billed }}</dd>
-          </div>
-          <div>
             <dt>Collected</dt>
-            <dd>{{ feeSummary.collected }} <span class="k-summary-note">({{ feeSummary.rate }}%)</span></dd>
+            <dd>{{ feeSummary().collected }}</dd>
           </div>
           <div>
-            <dt>Outstanding</dt>
-            <dd>{{ feeSummary.outstanding }}</dd>
+            <dt>Spent</dt>
+            <dd>{{ feeSummary().spent }}</dd>
+          </div>
+          <div>
+            <dt>Net</dt>
+            <dd>{{ feeSummary().net }}</dd>
           </div>
         </dl>
       </p-card>

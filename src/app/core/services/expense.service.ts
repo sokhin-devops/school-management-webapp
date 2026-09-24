@@ -1,47 +1,65 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Expense, ExpenseStatus } from '../models';
-import { removeById, upsertById } from '../utils/collection';
+import { ApiExpense } from '../api/api.models';
+import { ApiExpenseStatus } from '../api/api.models';
+import { createBranchResource } from '../api/branch-resource';
 
-function expense(
-  id: string,
-  description: string,
-  category: string,
-  amount: number,
-  date: string,
-  status: ExpenseStatus,
-): Expense {
-  return { id, branchId: 'branch-1', description, category, amount, date, status };
+/** The body POST and PUT api/v1/expenses accept. */
+interface ExpenseWrite {
+  branchId?: string;
+  description: string;
+  category: string;
+  amount: number;
+  spentOn: string;
+  status: ApiExpenseStatus;
+  attachmentUrl: string | null;
 }
 
 @Injectable({ providedIn: 'root' })
 export class ExpenseService {
-  private readonly _expenses = signal<Expense[]>([
-    expense('exp-01', 'Staff salaries — September', 'Payroll', 24800, '2026-09-01', ExpenseStatus.Paid),
-    expense('exp-02', 'Electricity — August', 'Utilities', 1420, '2026-09-03', ExpenseStatus.Paid),
-    expense('exp-03', 'Water — August', 'Utilities', 310, '2026-09-03', ExpenseStatus.Paid),
-    expense('exp-04', 'Science lab consumables', 'Supplies', 860, '2026-09-05', ExpenseStatus.Approved),
-    expense('exp-05', 'Library book order', 'Supplies', 1240, '2026-09-07', ExpenseStatus.Approved),
-    expense('exp-06', 'Bus fuel and servicing', 'Transport', 1980, '2026-09-08', ExpenseStatus.Paid),
-    expense('exp-07', 'Roof repair — Science Wing', 'Maintenance', 3400, '2026-09-10', ExpenseStatus.Pending),
-    expense('exp-08', 'Projector replacement ×4', 'Equipment', 2240, '2026-09-11', ExpenseStatus.Approved),
-    expense('exp-09', 'Cleaning contract — Q3', 'Facilities', 1650, '2026-09-12', ExpenseStatus.Paid),
-    expense('exp-10', 'Internet and phone', 'Utilities', 480, '2026-09-12', ExpenseStatus.Paid),
-    expense('exp-11', 'Sports equipment', 'Equipment', 720, '2026-09-14', ExpenseStatus.Rejected),
-    expense('exp-12', 'Teacher training workshop', 'Professional development', 1100, '2026-09-15', ExpenseStatus.Approved),
-    expense('exp-13', 'Printer toner and stationery', 'Supplies', 390, '2026-09-16', ExpenseStatus.Paid),
-    expense('exp-14', 'Security services — September', 'Facilities', 1500, '2026-09-16', ExpenseStatus.Pending),
-    expense('exp-15', 'Software licences', 'Technology', 2100, '2026-09-17', ExpenseStatus.Approved),
-    expense('exp-16', 'Playground resurfacing', 'Maintenance', 5600, '2026-09-18', ExpenseStatus.Pending),
-  ]);
+  private readonly resource = createBranchResource<ApiExpense, ExpenseWrite>('api/v1/expenses');
 
-  readonly expenses = this._expenses.asReadonly();
+  readonly expenses = computed(() => this.resource.items().map(toExpense));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
 
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: Expense): void {
-    this._expenses.update((current) => upsertById(current, record));
+  reload(): void {
+    this.resource.reload();
   }
 
-  remove(id: string): void {
-    this._expenses.update((current) => removeById(current, id));
+  /** One call for both: the page does not have to know which it is doing. */
+  save(record: Expense): Observable<ApiExpense> {
+    const body = toWrite(record);
+    return record.id ? this.resource.update(record.id, body) : this.resource.create(body);
   }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toExpense(record: ApiExpense): Expense {
+  return {
+    id: record.id,
+    branchId: record.branchId,
+    description: record.description,
+    category: record.category,
+    amount: record.amount,
+    date: record.spentOn,
+    status: record.status.toLowerCase() as ExpenseStatus,
+    attachmentUrl: record.attachmentUrl ?? undefined,
+  };
+}
+
+function toWrite(record: Expense): ExpenseWrite {
+  return {
+    description: record.description ?? '',
+    category: record.category,
+    amount: record.amount,
+    spentOn: record.date,
+    status: record.status.toUpperCase() as ApiExpenseStatus,
+    attachmentUrl: record.attachmentUrl ?? null,
+  };
 }

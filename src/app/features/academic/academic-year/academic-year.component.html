@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="academicYearService.loading()" [error]="academicYearService.error()"
+  [hasContent]="records.total() > 0" [skeletonColumns]="[24, 20, 20, 16, 10, 10]"
+  (retry)="academicYearService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search academic year" searchLabel="Search academic years"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

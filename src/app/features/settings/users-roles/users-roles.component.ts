@@ -12,15 +12,18 @@ import {
   ListShellComponent,
   ListToolbarComponent,
   RowActionsComponent,
+  type RowAction,
   StatusTagComponent,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
-import { RoleRecord, RoleService, UserRecord, UserService } from '../../../core/services/user.service';
+import { UserRecord, UserService } from '../../../core/services/user.service';
+import { RoleRecord, RoleService } from '../../../core/services/role.service';
 import { Status } from '../../../core/models';
 import { BranchContextService } from '../../../core/services/branch-context.service';
 import { RoleFormComponent } from './role-form/role-form.component';
 import { UserFormComponent } from './user-form/user-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 /** 64-users-and-roles.md — Users and Roles, as two tabs of one settings page. */
 @Component({
@@ -46,9 +49,10 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
   styleUrl: './users-roles.component.scss',
 })
 export class UsersRolesComponent {
-  private readonly userService = inject(UserService);
-  private readonly roleService = inject(RoleService);
+  protected readonly userService = inject(UserService);
+  protected readonly roleService = inject(RoleService);
   private readonly branchContext = inject(BranchContextService);
+
 
   // --- Users tab -----------------------------------------------------------
 
@@ -117,6 +121,9 @@ export class UsersRolesComponent {
   /** Bound to the tabs so Quick Add can bring the right list forward. */
   protected readonly activeTab = signal<'users' | 'roles'>('users');
 
+  /** A save the server refused, from either tab. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly userFormVisible = signal(false);
   protected readonly editingUser = signal<UserRecord | null>(null);
 
@@ -124,6 +131,8 @@ export class UsersRolesComponent {
   protected readonly editingRole = signal<RoleRecord | null>(null);
 
   constructor() {
+    // BISECT: roleService.reload() disabled
+
     openOnQuickAdd('user', () => this.openCreateUser());
     openOnQuickAdd('role', () => this.openCreateRole());
   }
@@ -140,7 +149,10 @@ export class UsersRolesComponent {
   }
 
   protected onUserSaved(user: UserRecord): void {
-    this.userService.upsert(user);
+    this.userService.save(user).subscribe({
+      next: () => this.userService.reload(),
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 
   protected openCreateRole(): void {
@@ -157,7 +169,25 @@ export class UsersRolesComponent {
   }
 
   protected onRoleSaved(role: RoleRecord): void {
-    this.roleService.upsert(role);
+    this.roleService.save(role).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
+  }
+
+  /**
+   * Held as two fixed arrays rather than built in the template.
+   *
+   * `actions` is a signal input, so a fresh array literal on every change
+   * detection is a new value every time: the row never settles, Angular keeps
+   * re-running, and the tab eventually runs out of memory and crashes. These two
+   * references never change, so the input stops changing with them.
+   */
+  private static readonly VIEW_ONLY: readonly RowAction[] = ['view'];
+  private static readonly EVERY_ACTION: readonly RowAction[] = ['view', 'edit', 'delete'];
+
+  /** 64-users-and-roles.md: a default role can be looked at but not changed. */
+  protected actionsFor(role: RoleRecord): readonly RowAction[] {
+    return role.isDefault ? UsersRolesComponent.VIEW_ONLY : UsersRolesComponent.EVERY_ACTION;
   }
 
   protected initials(fullName: string): string {

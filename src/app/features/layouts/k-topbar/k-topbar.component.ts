@@ -26,7 +26,7 @@ export class KTopbarComponent {
   private readonly router = inject(Router);
 
   protected readonly branches = this.branchContext.branches;
-  protected readonly selectedBranchId = computed(() => this.branchContext.selectedBranch().id);
+  protected readonly selectedBranchId = computed(() => this.branchContext.selectedBranch()?.id ?? null);
 
   protected readonly userName = this.onboarding.account?.name ?? 'Account Owner';
   protected readonly userEmail = this.onboarding.account?.email ?? 'owner@example.com';

@@ -1,0 +1,106 @@
+// Above the dialogs, because it covers the whole app and nothing should be
+// clickable behind it while it is up.
+.k-app-loader {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  // Backed by the canvas colour rather than plain black, so the overlay belongs
+  // to the theme in both modes instead of dimming it.
+  background: color-mix(in srgb, var(--k-canvas) 72%, transparent);
+  backdrop-filter: blur(2px);
+  animation: k-app-loader-in 0.18s ease-out;
+}
+
+.k-app-loader-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.875rem;
+  padding: 1.75rem 2rem;
+  border-radius: var(--k-panel-radius);
+  background: var(--k-panel-bg);
+  box-shadow: var(--k-panel-shadow);
+}
+
+.k-app-loader-ring {
+  display: block;
+  width: 2.75rem;
+  height: 2.75rem;
+
+  svg {
+    width: 100%;
+    height: 100%;
+    // Two turns of different lengths: the ring sweeps while the arc grows and
+    // shrinks, which reads as progress rather than as a spinning wheel.
+    animation: k-app-loader-spin 1.4s linear infinite;
+  }
+}
+
+.k-app-loader-track,
+.k-app-loader-arc {
+  fill: none;
+  stroke-width: 4;
+  stroke-linecap: round;
+}
+
+.k-app-loader-track {
+  stroke: color-mix(in srgb, var(--p-primary-color) 18%, transparent);
+}
+
+.k-app-loader-arc {
+  stroke: var(--p-primary-color);
+  stroke-dasharray: 126;
+  stroke-dashoffset: 100;
+  transform-origin: center;
+  animation: k-app-loader-arc 1.4s ease-in-out infinite;
+}
+
+.k-app-loader-message {
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}
+
+@keyframes k-app-loader-in {
+  from {
+    opacity: 0;
+  }
+}
+
+@keyframes k-app-loader-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+// The arc lengthens, then shortens from the other end, so the head of the line
+// keeps moving forward instead of pulsing in place.
+@keyframes k-app-loader-arc {
+  0% {
+    stroke-dasharray: 12 114;
+    stroke-dashoffset: 0;
+  }
+  50% {
+    stroke-dasharray: 90 36;
+    stroke-dashoffset: -20;
+  }
+  100% {
+    stroke-dasharray: 12 114;
+    stroke-dashoffset: -125;
+  }
+}
+
+// Someone who has asked for less motion still needs to know the app is busy, so
+// the ring stays and only the spin is dropped.
+@media (prefers-reduced-motion: reduce) {
+  .k-app-loader-ring svg,
+  .k-app-loader-arc {
+    animation-duration: 3s;
+  }
+
+  .k-app-loader {
+    animation: none;
+  }
+}

@@ -18,6 +18,7 @@ import { AcademicYearService } from '../../../core/services/academic-year.servic
 import { AcademicYear, AcademicYearStatus } from '../../../core/models';
 import { AcademicYearFormComponent } from './academic-year-form/academic-year-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 type Severity = 'success' | 'info' | 'secondary';
 
@@ -43,7 +44,7 @@ type Severity = 'success' | 'info' | 'secondary';
   styleUrl: './academic-year.component.scss',
 })
 export class AcademicYearComponent {
-  private readonly academicYearService = inject(AcademicYearService);
+  protected readonly academicYearService = inject(AcademicYearService);
 
   protected readonly statusFilter = new RecordFilter<AcademicYear, AcademicYearStatus>(
     (year, value) => year.status === value,
@@ -90,6 +91,9 @@ export class AcademicYearComponent {
   protected label(status: AcademicYearStatus): string {
     return status.charAt(0).toUpperCase() + status.slice(1);
   }
+  /** A save the server refused. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<AcademicYear | null>(null);
@@ -105,6 +109,8 @@ export class AcademicYearComponent {
   }
 
   protected onSaved(year: AcademicYear): void {
-    this.academicYearService.upsert(year);
+    this.academicYearService.save(year).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

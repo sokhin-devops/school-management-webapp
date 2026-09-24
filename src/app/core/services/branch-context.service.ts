@@ -1,87 +1,128 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
-import { Branch, Status } from '../models';
-import { OnboardingService } from './onboarding.service';
-import { removeById, upsertById } from '../utils/collection';
+import { Branch } from '../models';
+import { ApiBranch } from '../api/api.models';
+import { toStatus } from '../api/api-mappers';
+import { ApiClientService } from './api-client.service';
+import { describeFailure } from '../api/api-failure';
+import { AppLoadingService } from './app-loading.service';
+
+const SELECTED_BRANCH_KEY = 'sm_selected_branch';
 
 /**
- * Holds the global selected-branch state for the topbar (06-topbar.md).
- * Seeds from the branch created during onboarding when available.
+ * The branch every screen is showing (06-topbar.md).
+ *
+ * Loaded from the API rather than seeded, because the branch id is what every
+ * other request is scoped by — an invented one would make every list empty and
+ * every save fail.
+ *
+ * The choice is remembered per device: coming back to a different branch than
+ * you left is disorienting, and the id is not a secret.
  */
 @Injectable({ providedIn: 'root' })
 export class BranchContextService {
-  private readonly onboarding = inject(OnboardingService);
+  private readonly api = inject(ApiClientService);
+  private readonly appLoading = inject(AppLoadingService);
 
-  private readonly _branches = signal<Branch[]>(this.seedBranches());
-  private readonly _selectedBranchId = signal(this._branches()[0].id);
+  private readonly _branches = signal<Branch[]>([]);
+  private readonly _selectedBranchId = signal<string | null>(readRemembered());
+  private readonly _loading = signal(false);
+  private readonly _loaded = signal(false);
+  private readonly _error = signal<string | null>(null);
 
   readonly branches = this._branches.asReadonly();
-  readonly selectedBranch = computed(
-    () => this._branches().find((branch) => branch.id === this._selectedBranchId()) ?? this._branches()[0],
-  );
+  readonly loading = this._loading.asReadonly();
+  readonly loaded = this._loaded.asReadonly();
+  readonly error = this._error.asReadonly();
 
-  /** Adds the branch, or replaces the one already carrying this id. */
-  upsert(branch: Branch): void {
-    this._branches.update((current) => upsertById(current, branch));
-  }
-
-  removeBranch(branchId: string): void {
-    this._branches.update((current) => removeById(current, branchId));
-    if (this._selectedBranchId() === branchId) {
-      this._selectedBranchId.set(this._branches()[0]?.id ?? '');
+  /** Null until the branches are loaded, or if the tenant has none yet. */
+  readonly selectedBranch = computed<Branch | null>(() => {
+    const branches = this._branches();
+    if (branches.length === 0) {
+      return null;
     }
-  }
-
-  selectBranch(branchId: string): void {
-    this._selectedBranchId.set(branchId);
-  }
+    return branches.find((branch) => branch.id === this._selectedBranchId()) ?? branches[0];
+  });
 
   /**
-   * The topbar selector and Settings > Branches read the same list — 62-branches.md
-   * says the selected branch is global, so there is only ever one source for it.
-   * The first entry carries whatever name onboarding captured.
+   * Loads once. Called from the authenticated shell rather than on injection,
+   * because this needs a session and the service is created before there is one.
    */
-  private seedBranches(): Branch[] {
-    return [
-      {
-        id: 'branch-1',
-        schoolId: 'school-1',
-        name: this.onboarding.branch?.name ?? 'Main Branch',
-        address: '128 Riverside Avenue, Phnom Penh',
-        phone: '+1 555-000-1000',
-        status: Status.Active,
+  ensureLoaded(): void {
+    if (this._loaded() || this._loading()) {
+      return;
+    }
+    this.reload();
+  }
+
+  reload(): void {
+    this._loading.set(true);
+    this._error.set(null);
+
+    // Only the very first load takes the whole screen. Every page under the
+    // shell is scoped by the branch, so until this lands there is nothing any of
+    // them could truthfully show. A later refresh happens underneath them.
+    const done = this._loaded() ? () => undefined : this.appLoading.begin('Loading your school');
+
+    this.api.get<ApiBranch[]>('api/v1/branches').subscribe({
+      next: (branches) => {
+        const rows = (branches ?? []).map(toBranch);
+        this._branches.set(rows);
+
+        // A remembered branch that no longer exists silently falls back to the
+        // first one, rather than leaving every list scoped to nothing.
+        const remembered = this._selectedBranchId();
+        if (!remembered || !rows.some((branch) => branch.id === remembered)) {
+          this.selectBranch(rows[0]?.id ?? null);
+        }
+
+        this._loading.set(false);
+        this._loaded.set(true);
+        done();
       },
-      {
-        id: 'branch-2',
-        schoolId: 'school-1',
-        name: 'Riverside North',
-        address: '42 Norodom Boulevard, Phnom Penh',
-        phone: '+1 555-000-1002',
-        status: Status.Active,
+      error: (failure: unknown) => {
+        this._branches.set([]);
+        this._error.set(describeFailure(failure));
+        this._loading.set(false);
+        this._loaded.set(true);
+        done();
       },
-      {
-        id: 'branch-3',
-        schoolId: 'school-1',
-        name: 'Riverside East',
-        address: '9 Sihanouk Street, Phnom Penh',
-        phone: '+1 555-000-1003',
-        status: Status.Active,
-      },
-      {
-        id: 'branch-4',
-        schoolId: 'school-1',
-        name: 'Language Centre',
-        address: '77 Monivong Boulevard, Phnom Penh',
-        phone: '+1 555-000-1004',
-        status: Status.Active,
-      },
-      {
-        id: 'branch-5',
-        schoolId: 'school-1',
-        name: 'Siem Reap Campus',
-        address: '15 Charles de Gaulle, Siem Reap',
-        phone: '+1 555-000-1005',
-        status: Status.Inactive,
-      },
-    ];
+    });
+  }
+
+  selectBranch(branchId: string | null): void {
+    this._selectedBranchId.set(branchId);
+    remember(branchId);
+  }
+}
+
+function toBranch(branch: ApiBranch): Branch {
+  return {
+    id: branch.id,
+    schoolId: branch.schoolId,
+    name: branch.name,
+    address: branch.address,
+    phone: branch.phone ?? undefined,
+    status: toStatus(branch.status),
+  };
+}
+
+/** Both wrapped: storage throws in a private window rather than returning null. */
+function readRemembered(): string | null {
+  try {
+    return localStorage.getItem(SELECTED_BRANCH_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function remember(branchId: string | null): void {
+  try {
+    if (branchId) {
+      localStorage.setItem(SELECTED_BRANCH_KEY, branchId);
+    } else {
+      localStorage.removeItem(SELECTED_BRANCH_KEY);
+    }
+  } catch {
+    // A device that will not remember the choice still works; it just forgets.
   }
 }

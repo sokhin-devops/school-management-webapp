@@ -1,106 +1,113 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
+import { Observable } from 'rxjs';
 import { Person, PersonType, Status } from '../models';
-import { removeById, upsertById } from '../utils/collection';
+import { ApiGender, ApiStudent, ApiStudentStatus } from '../api/api.models';
+import { createTenantResource } from '../api/tenant-resource';
+import { BranchContextService } from './branch-context.service';
 
-/** Student row shown in the People > Students dataview, denormalized with a display-ready class name. */
+/** Student row for the People > Students list, with the class name resolved by the page. */
 export interface StudentRecord extends Person {
   className: string;
+  classGroupId?: string;
+  schoolId?: string;
+  gender?: ApiGender;
+  dateOfBirth?: string;
+  admissionDate?: string;
 }
 
-function student(
-  admissionNumber: string,
-  firstName: string,
-  lastName: string,
-  className: string,
-  email: string,
-  phone: string,
-  status: Status = Status.Active,
-): StudentRecord {
+/** The body POST and PUT /api/v1/students accept. */
+interface StudentWrite {
+  schoolId: string;
+  branchId: string | null;
+  classGroupId: string | null;
+  studentCode: string;
+  firstName: string;
+  lastName: string;
+  gender: ApiGender;
+  dateOfBirth: string;
+  email: string | null;
+  phone: string | null;
+  admissionDate: string;
+  status?: ApiStudentStatus;
+}
+
+/**
+ * Students are keyed by school rather than by branch — they predate the
+ * branch-scoped modules — so this loads the tenant's students rather than one
+ * branch's, and the branch is written onto each record as it is saved.
+ */
+@Injectable({ providedIn: 'root' })
+export class StudentService {
+  private readonly branchContext = inject(BranchContextService);
+  private readonly resource = createTenantResource<ApiStudent, StudentWrite>('api/v1/students', {
+    paged: true,
+  });
+
+  readonly students = computed(() => this.resource.items().map(toStudent));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
+
+  reload(): void {
+    this.resource.reload();
+  }
+
+  save(student: StudentRecord): Observable<ApiStudent> {
+    const branch = this.branchContext.selectedBranch();
+    const body = toWrite(student, branch?.schoolId ?? '', branch?.id ?? null);
+    return student.id ? this.resource.update(student.id, body) : this.resource.create(body);
+  }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toStudent(student: ApiStudent): StudentRecord {
   return {
-    id: admissionNumber.toLowerCase(),
-    branchIds: ['branch-1'],
+    id: student.id,
+    // The screens model a person as belonging to several branches; the API keys
+    // each record to one, and a student placed before this existed has none.
+    branchIds: student.branchId ? [student.branchId] : [],
     type: PersonType.Student,
-    firstName,
-    lastName,
-    email,
-    phone,
-    status,
-    className,
+    firstName: student.firstName,
+    lastName: student.lastName,
+    email: student.email ?? undefined,
+    phone: student.phone ?? undefined,
+    photoUrl: student.photoUrl ?? undefined,
+    // Only ACTIVE reads as active: the screens offer two states and the API has
+    // six, so graduated, transferred and the rest show as inactive rather than
+    // being silently promoted to active.
+    status: student.status === 'ACTIVE' ? Status.Active : Status.Inactive,
+    schoolId: student.schoolId,
+    classGroupId: student.classGroupId ?? undefined,
+    gender: student.gender,
+    dateOfBirth: student.dateOfBirth,
+    admissionDate: student.admissionDate,
+    // Resolved by the page from the classes it already has.
+    className: '',
     studentDetails: {
-      admissionNumber,
-      classId: className.toLowerCase().replace(/\s+/g, '-'),
+      admissionNumber: student.studentCode,
+      classId: student.classGroupId ?? undefined,
     },
   };
 }
 
-function seedStudents(): StudentRecord[] {
-  return [
-    student('STU-2024-0001', 'Aiden', 'Carter', 'Grade 1 - A', 'aiden.carter@school.edu', '+1 555-010-1001'),
-    student('STU-2024-0002', 'Sophia', 'Nguyen', 'Grade 1 - B', 'sophia.nguyen@school.edu', '+1 555-010-1002'),
-    student('STU-2024-0003', 'Liam', 'Johnson', 'Grade 2 - A', 'liam.johnson@school.edu', '+1 555-010-1003'),
-    student(
-      'STU-2024-0004',
-      'Olivia',
-      'Martinez',
-      'Grade 2 - B',
-      'olivia.martinez@school.edu',
-      '+1 555-010-1004',
-      Status.Inactive,
-    ),
-    student('STU-2024-0005', 'Noah', 'Williams', 'Grade 3 - A', 'noah.williams@school.edu', '+1 555-010-1005'),
-    student('STU-2024-0006', 'Emma', 'Brown', 'Grade 3 - B', 'emma.brown@school.edu', '+1 555-010-1006'),
-    student('STU-2024-0007', 'Elijah', 'Davis', 'Grade 4 - A', 'elijah.davis@school.edu', '+1 555-010-1007'),
-    student('STU-2024-0008', 'Ava', 'Garcia', 'Grade 4 - B', 'ava.garcia@school.edu', '+1 555-010-1008'),
-    student(
-      'STU-2024-0009',
-      'Lucas',
-      'Rodriguez',
-      'Grade 5 - A',
-      'lucas.rodriguez@school.edu',
-      '+1 555-010-1009',
-      Status.Inactive,
-    ),
-    student('STU-2024-0010', 'Mia', 'Hernandez', 'Grade 5 - B', 'mia.hernandez@school.edu', '+1 555-010-1010'),
-    student('STU-2024-0011', 'Mason', 'Lopez', 'Grade 6 - A', 'mason.lopez@school.edu', '+1 555-010-1011'),
-    student('STU-2024-0012', 'Isabella', 'Gonzalez', 'Grade 6 - B', 'isabella.gonzalez@school.edu', '+1 555-010-1012'),
-    student('STU-2024-0013', 'Ethan', 'Wilson', 'Grade 7 - A', 'ethan.wilson@school.edu', '+1 555-010-1013'),
-    student('STU-2024-0014', 'Amelia', 'Anderson', 'Grade 7 - B', 'amelia.anderson@school.edu', '+1 555-010-1014'),
-    student('STU-2024-0015', 'Logan', 'Thomas', 'Grade 8 - A', 'logan.thomas@school.edu', '+1 555-010-1015'),
-    student('STU-2024-0016', 'Charlotte', 'Taylor', 'Grade 8 - B', 'charlotte.taylor@school.edu', '+1 555-010-1016'),
-    student('STU-2024-0017', 'Zara', 'Ahmed', 'Grade 1 - A', 'zara.ahmed@school.edu', '+1 555-010-1017'),
-    student('STU-2024-0018', 'Oscar', 'Bergman', 'Grade 1 - A', 'oscar.bergman@school.edu', '+1 555-010-1018'),
-    student('STU-2024-0019', 'Nina', 'Petrova', 'Grade 1 - A', 'nina.petrova@school.edu', '+1 555-010-1019'),
-    student('STU-2024-0020', 'Kofi', 'Mensah', 'Grade 1 - A', 'kofi.mensah@school.edu', '+1 555-010-1020'),
-    student('STU-2024-0021', 'Leila', 'Haddad', 'Grade 1 - A', 'leila.haddad@school.edu', '+1 555-010-1021'),
-    student('STU-2024-0022', 'Diego', 'Silva', 'Grade 1 - A', 'diego.silva@school.edu', '+1 555-010-1022', Status.Inactive),
-    student('STU-2024-0023', 'Hana', 'Suzuki', 'Grade 1 - B', 'hana.suzuki@school.edu', '+1 555-010-1023'),
-    student('STU-2024-0024', 'Tomas', 'Varga', 'Grade 1 - B', 'tomas.varga@school.edu', '+1 555-010-1024'),
-    student('STU-2024-0025', 'Aisha', 'Bello', 'Grade 1 - B', 'aisha.bello@school.edu', '+1 555-010-1025'),
-    student('STU-2024-0026', 'Marco', 'Rossi', 'Grade 1 - B', 'marco.rossi@school.edu', '+1 555-010-1026'),
-    student('STU-2024-0027', 'Freya', 'Lindholm', 'Grade 1 - B', 'freya.lindholm@school.edu', '+1 555-010-1027'),
-    student('STU-2024-0028', 'Ravi', 'Sharma', 'Grade 2 - A', 'ravi.sharma@school.edu', '+1 555-010-1028'),
-    student('STU-2024-0029', 'Clara', 'Dubois', 'Grade 2 - A', 'clara.dubois@school.edu', '+1 555-010-1029'),
-    student('STU-2024-0030', 'Yusuf', 'Karim', 'Grade 2 - A', 'yusuf.karim@school.edu', '+1 555-010-1030'),
-    student('STU-2024-0031', 'Maya', 'Goldberg', 'Grade 2 - A', 'maya.goldberg@school.edu', '+1 555-010-1031'),
-    student('STU-2024-0032', 'Sebastian', 'Vogel', 'Grade 2 - A', 'sebastian.vogel@school.edu', '+1 555-010-1032'),
-    student('STU-2024-0033', 'Amina', 'Diop', 'Grade 2 - B', 'amina.diop@school.edu', '+1 555-010-1033'),
-    student('STU-2024-0034', 'Henrik', 'Dahl', 'Grade 2 - B', 'henrik.dahl@school.edu', '+1 555-010-1034'),
-  ];
-}
-
-@Injectable({
-  providedIn: 'root',
-})
-export class StudentService {
-  private readonly _students = signal<StudentRecord[]>(seedStudents());
-  readonly students = this._students.asReadonly();
-
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: StudentRecord): void {
-    this._students.update((current) => upsertById(current, record));
-  }
-
-  remove(id: string): void {
-    this._students.update((current) => removeById(current, id));
-  }
+function toWrite(student: StudentRecord, schoolId: string, branchId: string | null): StudentWrite {
+  return {
+    schoolId: student.schoolId ?? schoolId,
+    branchId,
+    classGroupId: student.classGroupId ?? student.studentDetails?.classId ?? null,
+    studentCode: student.studentDetails?.admissionNumber ?? '',
+    firstName: student.firstName,
+    lastName: student.lastName,
+    // The form does not ask for either yet, so a sendable value goes rather than
+    // a null the API would refuse outright.
+    gender: student.gender ?? 'OTHER',
+    dateOfBirth: student.dateOfBirth ?? '2000-01-01',
+    email: student.email ?? null,
+    phone: student.phone ?? null,
+    admissionDate: student.admissionDate ?? new Date().toISOString().slice(0, 10),
+    status: student.status === Status.Inactive ? 'INACTIVE' : 'ACTIVE',
+  };
 }

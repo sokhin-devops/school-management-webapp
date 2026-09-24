@@ -1,0 +1,17 @@
+@if (loading.busy()) {
+  <div class="k-app-loader" role="alertdialog" aria-busy="true" aria-live="assertive"
+    [attr.aria-label]="loading.message() || 'Loading'">
+    <div class="k-app-loader-card">
+      <span class="k-app-loader-ring" aria-hidden="true">
+        <svg viewBox="0 0 48 48">
+          <circle class="k-app-loader-track" cx="24" cy="24" r="20" />
+          <circle class="k-app-loader-arc" cx="24" cy="24" r="20" />
+        </svg>
+      </span>
+
+      @if (loading.message()) {
+        <p class="k-app-loader-message">{{ loading.message() }}</p>
+      }
+    </div>
+  </div>
+}

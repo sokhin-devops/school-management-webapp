@@ -66,7 +66,7 @@ export class BranchComponent {
   ];
 
   protected isSelected(branch: Branch): boolean {
-    return this.branchContext.selectedBranch().id === branch.id;
+    return this.branchContext.selectedBranch()?.id === branch.id;
   }
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -87,6 +87,8 @@ export class BranchComponent {
   }
 
   protected onSaved(branch: Branch): void {
-    this.branchContext.upsert(branch);
+    // Branches come from the API now, so a save is a reload rather than a
+    // local insert into a list this service no longer owns.
+    this.branchContext.reload();
   }
 }

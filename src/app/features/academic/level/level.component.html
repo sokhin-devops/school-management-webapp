@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="levelService.loading()" [error]="levelService.error()"
+  [hasContent]="records.total() > 0" [layout]="'list'" [skeletonColumns]="[8, 26, 16, 28, 10, 12]"
+  (retry)="levelService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search level or program" searchLabel="Search levels"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

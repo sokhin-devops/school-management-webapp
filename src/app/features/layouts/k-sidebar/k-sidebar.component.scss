@@ -34,7 +34,7 @@
 
     // Centres the mark in the rail rather than leaving it at the full-width inset.
     .k-sidebar-brand {
-      padding-left: calc((var(--k-rail-width) - var(--k-brand-size)) / 2);
+      padding-left: var(--k-brand-inset);
     }
 
     // The label is not just invisible in the rail, it is out of the way: left in

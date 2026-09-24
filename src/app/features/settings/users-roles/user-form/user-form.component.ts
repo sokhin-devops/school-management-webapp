@@ -99,7 +99,9 @@ export class UserFormComponent {
 
     return {
       ...existing,
-      id: existing?.id ?? `usr-${Date.now().toString(36)}`,
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
       fullName: value.fullName.trim(),
       email,
       roleId: value.roleName.toLowerCase().replace(/\s+/g, '-'),

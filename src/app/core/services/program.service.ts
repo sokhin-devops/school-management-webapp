@@ -1,34 +1,62 @@
-import { Injectable, signal } from '@angular/core';
-import { Program, Status } from '../models';
-import { removeById, upsertById } from '../utils/collection';
+import { Injectable, computed } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Program } from '../models';
+import { ApiProgram } from '../api/api.models';
+import { fromStatus, toStatus } from '../api/api-mappers';
+import { createBranchResource } from '../api/branch-resource';
 
-function program(id: string, name: string, code: string, description: string, status = Status.Active): Program {
-  return { id, branchId: 'branch-1', name, code, description, status };
+/** The body POST and PUT /api/v1/programs accept. */
+interface ProgramWrite {
+  branchId?: string;
+  name: string;
+  code: string;
+  description: string | null;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 @Injectable({ providedIn: 'root' })
 export class ProgramService {
-  private readonly _programs = signal<Program[]>([
-    program('prg-01', 'General Secondary', 'GEN-SEC', 'Standard secondary curriculum, grades 7 to 12.'),
-    program('prg-02', 'Primary Education', 'PRI', 'Foundation years, grades 1 to 6.'),
-    program('prg-03', 'English Language', 'ELP', 'Four-level general English programme.'),
-    program('prg-04', 'Business Foundation', 'BUS-F', 'One-year preparatory business programme.'),
-    program('prg-05', 'Computer Science', 'CS', 'Applied computing and software development.'),
-    program('prg-06', 'Vocational Trades', 'VOC', 'Practical trades certification.', Status.Inactive),
-    program('prg-07', 'Early Years', 'EY', 'Kindergarten and pre-primary.'),
-    program('prg-08', 'Exam Preparation', 'PREP', 'IELTS and university entrance preparation.'),
-    program('prg-09', 'Teacher Training', 'TT', 'Professional development for teaching staff.', Status.Inactive),
-    program('prg-10', 'Summer School', 'SUM', 'Short intensive courses over the summer break.'),
-  ]);
+  private readonly resource = createBranchResource<ApiProgram, ProgramWrite>('api/v1/programs');
 
-  readonly programs = this._programs.asReadonly();
+  readonly programs = computed(() => this.resource.items().map(toProgram));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
 
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: Program): void {
-    this._programs.update((current) => upsertById(current, record));
+  reload(): void {
+    this.resource.reload();
   }
 
-  remove(id: string): void {
-    this._programs.update((current) => removeById(current, id));
+  /** One call for both: the page does not have to know which it is doing. */
+  save(program: Program): Observable<ApiProgram> {
+    const body = toWrite(program);
+    return program.id ? this.resource.update(program.id, body) : this.resource.create(body);
   }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toProgram(program: ApiProgram): Program {
+  return {
+    id: program.id,
+    branchId: program.branchId,
+    name: program.name,
+    code: program.code,
+    description: program.description ?? undefined,
+    status: toStatus(program.status),
+  };
+}
+
+function toWrite(program: Program): ProgramWrite {
+  return {
+    name: program.name,
+    // Optional on the screen's model, required by the API. Sent as written
+    // rather than defaulted, so a blank one is refused with a message about the
+    // field instead of being quietly saved as an empty code.
+    code: program.code ?? '',
+    description: program.description ?? null,
+    status: fromStatus(program.status),
+  };
 }

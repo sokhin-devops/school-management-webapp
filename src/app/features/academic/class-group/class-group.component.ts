@@ -19,6 +19,9 @@ import { ClassGroupFormComponent } from './class-group-form/class-group-form.com
 import { ProgramService } from '../../../core/services/program.service';
 import { TeacherService } from '../../../core/services/teacher.service';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
+import { AcademicYearService } from '../../../core/services/academic-year.service';
+import { LevelService } from '../../../core/services/level.service';
 
 type Fill = 'ok' | 'warning' | 'critical';
 
@@ -46,7 +49,9 @@ type Fill = 'ok' | 'warning' | 'critical';
   styleUrl: './class-group.component.scss',
 })
 export class ClassGroupComponent {
-  private readonly classGroupService = inject(ClassGroupService);
+  protected readonly classGroupService = inject(ClassGroupService);
+  private readonly levelService = inject(LevelService);
+  private readonly academicYearService = inject(AcademicYearService);
   private readonly programService = inject(ProgramService);
   private readonly teacherService = inject(TeacherService);
 
@@ -58,8 +63,28 @@ export class ClassGroupComponent {
     (group, value) => group.status === value,
   );
 
+  /** Four ids on the record, four names in the table. */
+  private readonly named = computed<ClassGroupRecord[]>(() => {
+    const levels = new Map(this.levelService.levels().map((level) => [level.id, level.name]));
+    const programs = new Map(this.programService.programs().map((program) => [program.id, program.name]));
+    const years = new Map(this.academicYearService.years().map((year) => [year.id, year.name]));
+    const teachers = new Map(
+      this.teacherService.teachers().map((teacher) => [teacher.id, `${teacher.firstName} ${teacher.lastName}`]),
+    );
+
+    return this.classGroupService.classes().map((group) => ({
+      ...group,
+      levelName: group.levelId ? (levels.get(group.levelId) ?? '') : '',
+      programName: group.programId ? (programs.get(group.programId) ?? '') : '',
+      academicYearName: years.get(group.academicYearId) ?? '',
+      // Looked up by id. Keying this by the name it was trying to produce
+      // meant it could only ever resolve to nothing.
+      teacherName: group.homeroomTeacherId ? (teachers.get(group.homeroomTeacherId) ?? '') : '',
+    }));
+  });
+
   protected readonly records = createRecordList<ClassGroupRecord>({
-    source: this.classGroupService.classes,
+    source: this.named,
     searchKeys: [
       (group) => group.name,
       (group) => group.code,
@@ -114,6 +139,9 @@ export class ClassGroupComponent {
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<ClassGroupRecord | null>(null);
@@ -133,6 +161,10 @@ export class ClassGroupComponent {
   }
 
   protected onSaved(group: ClassGroupRecord): void {
-    this.classGroupService.upsert(group);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.classGroupService.save(group).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

@@ -19,6 +19,8 @@ import { AssessmentRecord, AssessmentService, AssessmentType } from '../../core/
 import { AssessmentFormComponent } from './assessment-form/assessment-form.component';
 import { ClassGroupService } from '../../core/services/class-group.service';
 import { openOnQuickAdd } from '../../core/services/quick-add.service';
+import { SubjectService } from '../../core/services/subject.service';
+import { describeFailure } from '../../core/api/api-failure';
 
 /** 31-exams-and-grades.md — assessments, scores and results. */
 @Component({
@@ -42,7 +44,8 @@ import { openOnQuickAdd } from '../../core/services/quick-add.service';
   styleUrl: './exam.component.scss',
 })
 export class ExamComponent {
-  private readonly assessmentService = inject(AssessmentService);
+  protected readonly assessmentService = inject(AssessmentService);
+  private readonly subjectService = inject(SubjectService);
   private readonly classGroupService = inject(ClassGroupService);
 
   protected readonly subjectFilter = new RecordFilter<AssessmentRecord, string>(
@@ -53,8 +56,23 @@ export class ExamComponent {
     (assessment, value) => assessment.type === value,
   );
 
+  /**
+   * The API stores ids; the table shows names. Resolved here rather than by the
+   * service, because this is the page that already has both lists.
+   */
+  private readonly named = computed<AssessmentRecord[]>(() => {
+    const subjects = new Map(this.subjectService.subjects().map((subject) => [subject.id, subject.name]));
+    const classes = new Map(this.classGroupService.classes().map((group) => [group.id, group.name]));
+
+    return this.assessmentService.assessments().map((assessment) => ({
+      ...assessment,
+      subject: subjects.get(assessment.subjectId) ?? '',
+      className: classes.get(assessment.classGroupId) ?? '',
+    }));
+  });
+
   protected readonly records = createRecordList<AssessmentRecord>({
-    source: this.assessmentService.assessments,
+    source: this.named,
     searchKeys: [
       (assessment) => assessment.name,
       (assessment) => assessment.subject,
@@ -79,11 +97,14 @@ export class ExamComponent {
     { label: 'Assignment', value: 'Assignment' },
   ];
 
+  /** Real subjects, keyed by id, because that is what an assessment stores. */
   protected readonly subjectOptions = computed(() =>
-    Array.from(new Set(this.assessmentService.assessments().map((assessment) => assessment.subject)))
-      .sort((a, b) => a.localeCompare(b))
-      .map((subject) => ({ label: subject, value: subject })),
+    this.subjectService
+      .subjects()
+      .map((subject) => ({ label: subject.name, value: subject.id }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
   );
+
 
   constructor() {
     openOnQuickAdd('assessment', () => this.openCreate());
@@ -106,6 +127,9 @@ export class ExamComponent {
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<AssessmentRecord | null>(null);
@@ -121,6 +145,10 @@ export class ExamComponent {
   }
 
   protected onSaved(assessment: AssessmentRecord): void {
-    this.assessmentService.upsert(assessment);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.assessmentService.save(assessment).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

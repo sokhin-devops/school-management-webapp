@@ -8,15 +8,15 @@
         <input pInputText id="assessment-name" formControlName="name" autocomplete="off" placeholder="Term 1 Midterm" />
       </k-form-field>
 
-      <k-form-field [label]="labels.subject" inputId="assessment-subject" [control]="form.controls.subject">
-        <p-select inputId="assessment-subject" formControlName="subject" [options]="subjectChoices()" optionLabel="label"
+      <k-form-field [label]="labels.subjectId" inputId="assessment-subject" [control]="form.controls.subjectId">
+        <p-select inputId="assessment-subject" formControlName="subjectId" [options]="subjectChoices()" optionLabel="label"
           optionValue="value" placeholder="Select a subject" [filter]="true" filterBy="label" />
       </k-form-field>
     </div>
 
     <div class="k-form-row">
-      <k-form-field [label]="labels.className" inputId="assessment-classname" [control]="form.controls.className">
-        <p-select inputId="assessment-classname" formControlName="className" [options]="classChoices()" optionLabel="label"
+      <k-form-field [label]="labels.classGroupId" inputId="assessment-classname" [control]="form.controls.classGroupId">
+        <p-select inputId="assessment-classname" formControlName="classGroupId" [options]="classChoices()" optionLabel="label"
           optionValue="value" placeholder="Select a class" [filter]="true" filterBy="label" />
       </k-form-field>
 

@@ -22,6 +22,7 @@ import { Status } from '../../../core/models';
 import { TeacherCardComponent } from './teacher-card/teacher-card.component';
 import { TeacherFormComponent } from './teacher-form/teacher-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 @Component({
   selector: 'app-teacher',
@@ -47,7 +48,7 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 })
 export class TeacherComponent {
   protected readonly layoutUi = inject(LayoutUiService);
-  private readonly teacherService = inject(TeacherService);
+  protected readonly teacherService = inject(TeacherService);
   private readonly subjectService = inject(SubjectService);
 
   protected readonly departmentFilter = new RecordFilter<TeacherRecord, string>(
@@ -58,8 +59,19 @@ export class TeacherComponent {
     (teacher, value) => teacher.status === value,
   );
 
+  /** The API stores subjectIds; the card and the table show the names. */
+  private readonly named = computed<TeacherRecord[]>(() => {
+    const subjects = new Map(this.subjectService.subjects().map((subject) => [subject.id, subject.name]));
+    return this.teacherService.teachers().map((teacher) => ({
+      ...teacher,
+      subjects: (teacher.teacherDetails?.subjectIds ?? [])
+        .map((id) => subjects.get(id) ?? '')
+        .filter((name) => name !== ''),
+    }));
+  });
+
   protected readonly records = createRecordList<TeacherRecord>({
-    source: this.teacherService.teachers,
+    source: this.named,
     searchKeys: [
       (teacher) => teacher.firstName,
       (teacher) => teacher.lastName,
@@ -109,6 +121,9 @@ export class TeacherComponent {
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<TeacherRecord | null>(null);
@@ -128,6 +143,10 @@ export class TeacherComponent {
   }
 
   protected onSaved(teacher: TeacherRecord): void {
-    this.teacherService.upsert(teacher);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.teacherService.save(teacher).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

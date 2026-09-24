@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="studentService.loading()" [error]="studentService.error()"
+  [hasContent]="records.total() > 0" [layout]="layoutUi.layout()" [skeletonColumns]="[30, 16, 14, 18, 10, 12]"
+  (retry)="studentService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search name, admission no. or class" searchLabel="Search students"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

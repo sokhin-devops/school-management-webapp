@@ -9,6 +9,7 @@ import { LayoutUiService } from '../../../core/services/layout-ui.service';
 import { KShareModule } from '../../../share/k-share.module';
 import { FormErrorDialogComponent } from '../../../share/components';
 import { KQuickAddComponent } from '../k-quick-add/k-quick-add.component';
+import { BranchContextService } from '../../../core/services/branch-context.service';
 
 @Component({
   selector: 'app-layout',
@@ -18,8 +19,15 @@ import { KQuickAddComponent } from '../k-quick-add/k-quick-add.component';
 })
 export class LayoutComponent {
   protected readonly breadcrumb = inject(BreadcrumbService);
+  private readonly branchContext = inject(BranchContextService);
   protected readonly layoutUi = inject(LayoutUiService);
   private readonly router = inject(Router);
+
+  constructor() {
+    // Every branch-scoped request needs a branch id, so the shell fetches the
+    // branches before the first page under it asks for anything.
+    this.branchContext.ensureLoaded();
+  }
 
   private readonly routeData = toSignal(
     this.router.events.pipe(

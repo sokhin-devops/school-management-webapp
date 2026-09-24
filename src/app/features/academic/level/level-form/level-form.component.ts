@@ -104,8 +104,10 @@ export class LevelFormComponent {
       ...existing,
       // A level carries no code of its own, so a new one is keyed by the clock
       // rather than by a field someone has to invent.
-      id: existing?.id ?? `lvl-${Date.now().toString(36)}`,
-      branchId: existing?.branchId ?? this.branchContext.selectedBranch().id,
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
+      branchId: existing?.branchId ?? this.branchContext.selectedBranch()?.id ?? '',
       name: value.name.trim(),
       displayLabel: value.displayLabel,
       order: value.order,

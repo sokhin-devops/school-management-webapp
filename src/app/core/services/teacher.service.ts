@@ -1,69 +1,83 @@
-import { Injectable, signal } from '@angular/core';
-import { Person, PersonType, Status } from '../models';
-import { removeById, upsertById } from '../utils/collection';
+import { Injectable, computed } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Person, PersonType } from '../models';
 
-/** Teacher row for People > Teachers, denormalized with display-ready subjects. */
+/** A teacher row, with the subject names the list shows resolved by the page. */
 export interface TeacherRecord extends Person {
   subjects: string[];
   department: string;
 }
+import { ApiTeacher } from '../api/api.models';
+import { fromStatus, toStatus } from '../api/api-mappers';
+import { createBranchResource } from '../api/branch-resource';
 
-function teacher(
-  employeeNumber: string,
-  firstName: string,
-  lastName: string,
-  department: string,
-  subjects: string[],
-  email: string,
-  phone: string,
-  status: Status = Status.Active,
-): TeacherRecord {
-  return {
-    id: employeeNumber.toLowerCase(),
-    branchIds: ['branch-1'],
-    type: PersonType.Teacher,
-    firstName,
-    lastName,
-    email,
-    phone,
-    status,
-    department,
-    subjects,
-    teacherDetails: {
-      employeeNumber,
-      subjectIds: subjects.map((subject) => subject.toLowerCase().replace(/\s+/g, '-')),
-    },
-  };
-}
-
-function seedTeachers(): TeacherRecord[] {
-  return [
-    teacher('EMP-2024-001', 'Rachel', 'Owusu', 'Mathematics', ['Mathematics', 'Statistics'], 'rachel.owusu@school.edu', '+1 555-020-2001'),
-    teacher('EMP-2024-002', 'Daniel', 'Ferreira', 'Science', ['Physics', 'Chemistry'], 'daniel.ferreira@school.edu', '+1 555-020-2002'),
-    teacher('EMP-2024-003', 'Priya', 'Raman', 'Languages', ['English', 'Literature'], 'priya.raman@school.edu', '+1 555-020-2003'),
-    teacher('EMP-2024-004', 'Marcus', 'Bennett', 'Humanities', ['History', 'Geography'], 'marcus.bennett@school.edu', '+1 555-020-2004'),
-    teacher('EMP-2024-005', 'Chen', 'Wei', 'Science', ['Biology'], 'chen.wei@school.edu', '+1 555-020-2005'),
-    teacher('EMP-2024-006', 'Amara', 'Diallo', 'Mathematics', ['Algebra', 'Geometry'], 'amara.diallo@school.edu', '+1 555-020-2006'),
-    teacher('EMP-2024-007', 'Tomas', 'Novak', 'Technology', ['Computer Science'], 'tomas.novak@school.edu', '+1 555-020-2007'),
-    teacher('EMP-2024-008', 'Helen', 'Castillo', 'Arts', ['Music', 'Drama'], 'helen.castillo@school.edu', '+1 555-020-2008', Status.Inactive),
-    teacher('EMP-2024-009', 'Ibrahim', 'Toure', 'Physical Education', ['Sports'], 'ibrahim.toure@school.edu', '+1 555-020-2009'),
-    teacher('EMP-2024-010', 'Nadia', 'Haddad', 'Languages', ['French', 'Spanish'], 'nadia.haddad@school.edu', '+1 555-020-2010'),
-    teacher('EMP-2024-011', 'Peter', 'Lindqvist', 'Humanities', ['Economics'], 'peter.lindqvist@school.edu', '+1 555-020-2011'),
-    teacher('EMP-2024-012', 'Grace', 'Mwangi', 'Arts', ['Visual Arts'], 'grace.mwangi@school.edu', '+1 555-020-2012', Status.Inactive),
-  ];
+/** The body POST and PUT api/v1/teachers accept. */
+interface TeacherWrite {
+  branchId?: string;
+  employeeNumber: string;
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string | null;
+  department: string;
+  subjectIds: string[];
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 @Injectable({ providedIn: 'root' })
 export class TeacherService {
-  private readonly _teachers = signal<TeacherRecord[]>(seedTeachers());
-  readonly teachers = this._teachers.asReadonly();
+  private readonly resource = createBranchResource<ApiTeacher, TeacherWrite>('api/v1/teachers');
 
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: TeacherRecord): void {
-    this._teachers.update((current) => upsertById(current, record));
+  readonly teachers = computed(() => this.resource.items().map(toTeacher));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
+
+  reload(): void {
+    this.resource.reload();
   }
 
-  remove(id: string): void {
-    this._teachers.update((current) => removeById(current, id));
+  /** One call for both: the page does not have to know which it is doing. */
+  save(record: TeacherRecord): Observable<ApiTeacher> {
+    const body = toWrite(record);
+    return record.id ? this.resource.update(record.id, body) : this.resource.create(body);
   }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toTeacher(record: ApiTeacher): TeacherRecord {
+  return {
+    id: record.id,
+    // The screens model a person as belonging to several branches; the API keys
+    // each record to one. The list of one is the honest translation.
+    branchIds: [record.branchId],
+    type: PersonType.Teacher,
+    firstName: record.firstName,
+    lastName: record.lastName,
+    email: record.email,
+    phone: record.phone ?? undefined,
+    status: toStatus(record.status),
+    department: record.department,
+    subjects: [],
+    teacherDetails: {
+      employeeNumber: record.employeeNumber,
+      subjectIds: record.subjectIds ?? [],
+    },
+  };
+}
+
+function toWrite(record: TeacherRecord): TeacherWrite {
+  return {
+    employeeNumber: record.teacherDetails?.employeeNumber ?? '',
+    firstName: record.firstName,
+    lastName: record.lastName,
+    email: record.email ?? '',
+    phone: record.phone ?? null,
+    department: record.department,
+    subjectIds: record.teacherDetails?.subjectIds ?? [],
+    status: fromStatus(record.status),
+  };
 }

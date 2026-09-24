@@ -21,6 +21,8 @@ import { Status } from '../../../core/models';
 import { ParentCardComponent } from './parent-card/parent-card.component';
 import { ParentFormComponent } from './parent-form/parent-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
+import { StudentService } from '../../../core/services/student.service';
 
 @Component({
   selector: 'app-parent',
@@ -46,7 +48,8 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
 })
 export class ParentComponent {
   protected readonly layoutUi = inject(LayoutUiService);
-  private readonly parentService = inject(ParentService);
+  protected readonly parentService = inject(ParentService);
+  private readonly studentService = inject(StudentService);
 
   protected readonly relationshipFilter = new RecordFilter<ParentRecord, string>(
     (parent, value) => parent.relationship === value,
@@ -56,8 +59,21 @@ export class ParentComponent {
     (parent, value) => parent.status === value,
   );
 
+  /** The API stores studentIds; the card lists the children by name. */
+  private readonly named = computed<ParentRecord[]>(() => {
+    const students = new Map(
+      this.studentService.students().map((student) => [student.id, `${student.firstName} ${student.lastName}`]),
+    );
+    return this.parentService.parents().map((parent) => ({
+      ...parent,
+      children: (parent.parentDetails?.studentPersonIds ?? [])
+        .map((id) => students.get(id) ?? '')
+        .filter((name) => name !== ''),
+    }));
+  });
+
   protected readonly records = createRecordList<ParentRecord>({
-    source: this.parentService.parents,
+    source: this.named,
     searchKeys: [
       (parent) => parent.firstName,
       (parent) => parent.lastName,
@@ -96,6 +112,9 @@ export class ParentComponent {
   protected initials(parent: ParentRecord): string {
     return `${parent.firstName.charAt(0)}${parent.lastName.charAt(0)}`.toUpperCase();
   }
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<ParentRecord | null>(null);
@@ -115,6 +134,10 @@ export class ParentComponent {
   }
 
   protected onSaved(parent: ParentRecord): void {
-    this.parentService.upsert(parent);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.parentService.save(parent).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

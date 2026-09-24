@@ -5,14 +5,34 @@ import { map } from 'rxjs/operators';
 import { EMethod } from '../models/enums';
 import { environment } from '../../environment/environment';
 
-export type ApiParams = Record<string, string | number | boolean>;
+export type ApiParams = Record<string, string | number | boolean | null | undefined>;
 
-/** Shape of com.school_management_webapi.dto.response.ApiResponse<T>, returned by every endpoint. */
+/** Shape of com.school_management_webapi.dto.response.ApiResponse<T>. */
 export interface ApiEnvelope<T> {
   success: boolean;
   message: string;
   data: T;
   timestamp: string;
+}
+
+/**
+ * The API is not consistent about the envelope: auth, onboarding, schools,
+ * branches, academic years, plans and subscriptions wrap their body in one,
+ * while students and every module added after them return the DTO directly.
+ *
+ * Rather than have each caller know which is which, the shape is recognised
+ * here. Worth settling on the API side eventually - this is the seam, not the
+ * fix.
+ */
+function unwrap<T>(body: T | ApiEnvelope<T>): T {
+  const envelope = body as ApiEnvelope<T>;
+  const isEnvelope =
+    envelope !== null &&
+    typeof envelope === 'object' &&
+    typeof envelope.success === 'boolean' &&
+    'data' in envelope;
+
+  return isEnvelope ? envelope.data : (body as T);
 }
 
 /** Thin HttpClient wrapper that resolves paths against environment.apiUrl and unwraps the ApiResponse envelope. */
@@ -43,11 +63,11 @@ export class ApiClientService {
 
   private request<T>(method: EMethod, path: string, options: { body?: unknown; params?: ApiParams }): Observable<T> {
     return this.http
-      .request<ApiEnvelope<T>>(method, this.url(path), {
+      .request<T | ApiEnvelope<T>>(method, this.url(path), {
         body: options.body,
         params: this.toHttpParams(options.params),
       })
-      .pipe(map((envelope) => envelope.data));
+      .pipe(map(unwrap));
   }
 
   private url(path: string): string {
@@ -60,6 +80,11 @@ export class ApiClientService {
     }
     let httpParams = new HttpParams();
     for (const [key, value] of Object.entries(params)) {
+      // A filter that is off is left out entirely; sending "undefined" as a
+      // value would be read by the server as a filter that is on.
+      if (value === undefined || value === null || value === '') {
+        continue;
+      }
       httpParams = httpParams.set(key, value);
     }
     return httpParams;

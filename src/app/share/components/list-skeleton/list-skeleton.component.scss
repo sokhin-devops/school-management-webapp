@@ -1,0 +1,82 @@
+:host {
+  display: block;
+}
+
+// --- Table ------------------------------------------------------------------
+//
+// Deliberately the same background, padding and rule as .k-table-wrap, so the
+// panel is already the right shape when the rows arrive and only the bars are
+// swapped for text.
+
+.k-skeleton-table {
+  background: var(--k-panel-bg);
+  box-shadow: var(--k-panel-shadow);
+}
+
+.k-skeleton-head,
+.k-skeleton-row {
+  display: flex;
+  align-items: center;
+  padding: 0 0.75rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.k-skeleton-head {
+  height: 2.75rem;
+  background: var(--k-table-header);
+}
+
+.k-skeleton-row {
+  height: 3rem;
+
+  &:last-child {
+    border-bottom: 0;
+  }
+}
+
+// The widths are the real column percentages, so the separation has to come
+// from padding inside each cell: a gap between them would push the last column
+// past the edge of the panel.
+.k-skeleton-cell {
+  flex: none;
+  min-width: 0;
+  padding-right: 1rem;
+
+  &:last-child {
+    padding-right: 0;
+  }
+}
+
+// --- Cards ------------------------------------------------------------------
+
+.k-skeleton-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+  padding: 1rem;
+  border-radius: var(--k-panel-radius);
+  background: var(--k-panel-bg);
+  box-shadow: var(--k-panel-shadow);
+}
+
+.k-skeleton-card-head {
+  display: flex;
+  align-items: center;
+  gap: 0.625rem;
+}
+
+.k-skeleton-card-identity {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 0.375rem;
+  min-width: 0;
+}
+
+.k-skeleton-card-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding-top: 0.875rem;
+  border-top: 1px solid var(--p-content-border-color);
+}

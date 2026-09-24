@@ -1,0 +1,47 @@
+@if (layout() === 'list') {
+  <div class="k-skeleton-table" role="status" aria-live="polite" aria-busy="true">
+    <span class="k-visually-hidden">Loading records</span>
+
+    <div class="k-skeleton-head">
+      @for (cell of cells(); track $index) {
+        <div class="k-skeleton-cell" [style.width.%]="cell">
+          <p-skeleton height="0.75rem" [width]="width(0, $index)" borderRadius="3px" />
+        </div>
+      }
+    </div>
+
+    @for (row of placeholders(); track $index) {
+      <div class="k-skeleton-row">
+        @for (cell of cells(); track $index) {
+          <div class="k-skeleton-cell" [style.width.%]="cell">
+            <p-skeleton height="0.875rem" [width]="width($index + 1, $index)" borderRadius="4px" />
+          </div>
+        }
+      </div>
+    }
+  </div>
+} @else {
+  <div class="grid" role="status" aria-live="polite" aria-busy="true">
+    <span class="k-visually-hidden">Loading records</span>
+
+    @for (card of placeholders(); track $index) {
+      <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
+        <div class="k-skeleton-card">
+          <div class="k-skeleton-card-head">
+            <p-skeleton shape="circle" size="2.5rem" />
+            <div class="k-skeleton-card-identity">
+              <p-skeleton height="0.875rem" width="70%" borderRadius="4px" />
+              <p-skeleton height="0.6875rem" width="45%" borderRadius="4px" />
+            </div>
+          </div>
+
+          <div class="k-skeleton-card-meta">
+            <p-skeleton height="0.75rem" width="85%" borderRadius="4px" />
+            <p-skeleton height="0.75rem" width="65%" borderRadius="4px" />
+            <p-skeleton height="0.75rem" width="75%" borderRadius="4px" />
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}

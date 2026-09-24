@@ -1,48 +1,69 @@
-import { Injectable, signal } from '@angular/core';
-import { Level, Status } from '../models';
-import { removeById, upsertById } from '../utils/collection';
+import { Injectable, computed } from '@angular/core';
+import { Observable } from 'rxjs';
+import { Level } from '../models';
 
-/** 22-levels.md: `displayLabel` carries the per-school terminology (Grade / Level / Year). */
+/** A level with the programme's name resolved, which is what the list shows. */
 export interface LevelRecord extends Level {
   programName: string;
 }
+import { ApiLevel } from '../api/api.models';
+import { fromStatus, toStatus } from '../api/api-mappers';
+import { createBranchResource } from '../api/branch-resource';
 
-function level(
-  id: string,
-  order: number,
-  name: string,
-  displayLabel: string,
-  programName: string,
-  status = Status.Active,
-): LevelRecord {
-  return { id, branchId: 'branch-1', name, displayLabel, order, programName, status };
+/** The body POST and PUT api/v1/levels accept. */
+interface LevelWrite {
+  branchId?: string;
+  programId: string | null;
+  name: string;
+  displayLabel: string | null;
+  order: number | null;
+  status: 'ACTIVE' | 'INACTIVE';
 }
 
 @Injectable({ providedIn: 'root' })
 export class LevelService {
-  private readonly _levels = signal<LevelRecord[]>([
-    level('lvl-01', 1, 'Grade 1', 'Grade', 'Primary Education'),
-    level('lvl-02', 2, 'Grade 2', 'Grade', 'Primary Education'),
-    level('lvl-03', 3, 'Grade 3', 'Grade', 'Primary Education'),
-    level('lvl-04', 4, 'Grade 4', 'Grade', 'Primary Education'),
-    level('lvl-05', 5, 'Grade 5', 'Grade', 'Primary Education'),
-    level('lvl-06', 6, 'Grade 6', 'Grade', 'Primary Education'),
-    level('lvl-07', 7, 'Grade 7', 'Grade', 'General Secondary'),
-    level('lvl-08', 8, 'Grade 8', 'Grade', 'General Secondary'),
-    level('lvl-09', 9, 'Beginner', 'Level', 'English Language'),
-    level('lvl-10', 10, 'Elementary', 'Level', 'English Language'),
-    level('lvl-11', 11, 'Intermediate', 'Level', 'English Language'),
-    level('lvl-12', 12, 'Advanced', 'Level', 'English Language', Status.Inactive),
-  ]);
+  private readonly resource = createBranchResource<ApiLevel, LevelWrite>('api/v1/levels');
 
-  readonly levels = this._levels.asReadonly();
+  readonly levels = computed(() => this.resource.items().map(toLevel));
+  readonly loading = this.resource.loading;
+  readonly loaded = this.resource.loaded;
+  readonly error = this.resource.error;
 
-  /** Adds the record, or replaces the one already carrying this id. */
-  upsert(record: LevelRecord): void {
-    this._levels.update((current) => upsertById(current, record));
+  reload(): void {
+    this.resource.reload();
   }
 
-  remove(id: string): void {
-    this._levels.update((current) => removeById(current, id));
+  /** One call for both: the page does not have to know which it is doing. */
+  save(record: LevelRecord): Observable<ApiLevel> {
+    const body = toWrite(record);
+    return record.id ? this.resource.update(record.id, body) : this.resource.create(body);
   }
+
+  remove(id: string): Observable<void> {
+    return this.resource.remove(id);
+  }
+}
+
+function toLevel(record: ApiLevel): LevelRecord {
+  return {
+    id: record.id,
+    branchId: record.branchId,
+    programId: record.programId ?? undefined,
+    // Resolved by the page, which has the programmes; the API sends the id only.
+    programName: '',
+    name: record.name,
+    displayLabel: record.displayLabel ?? undefined,
+    order: record.order ?? undefined,
+    status: toStatus(record.status),
+  };
+}
+
+function toWrite(record: LevelRecord): LevelWrite {
+  return {
+    programId: record.programId ?? null,
+    name: record.name,
+    displayLabel: record.displayLabel ?? null,
+    order: record.order ?? null,
+    status: fromStatus(record.status),
+  };
 }

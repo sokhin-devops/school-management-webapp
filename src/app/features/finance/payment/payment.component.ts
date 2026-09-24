@@ -20,6 +20,7 @@ import { PaymentFormComponent } from './payment-form/payment-form.component';
 import { FeeService } from '../../../core/services/fee.service';
 import { StudentService } from '../../../core/services/student.service';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 type Severity = 'success' | 'warn' | 'info' | 'danger' | 'secondary';
 
@@ -44,7 +45,7 @@ type Severity = 'success' | 'warn' | 'info' | 'danger' | 'secondary';
   styleUrl: './payment.component.scss',
 })
 export class PaymentComponent {
-  private readonly paymentService = inject(PaymentService);
+  protected readonly paymentService = inject(PaymentService);
   private readonly studentService = inject(StudentService);
   private readonly feeService = inject(FeeService);
 
@@ -56,8 +57,22 @@ export class PaymentComponent {
     (payment, value) => payment.status === value,
   );
 
+  /** The API stores studentId and feeId; the table shows both by name. */
+  private readonly named = computed<PaymentRecord[]>(() => {
+    const students = new Map(
+      this.studentService.students().map((student) => [student.id, `${student.firstName} ${student.lastName}`]),
+    );
+    const fees = new Map(this.feeService.fees().map((fee) => [fee.id, fee.name]));
+
+    return this.paymentService.payments().map((payment) => ({
+      ...payment,
+      studentName: students.get(payment.personId) ?? '',
+      feeName: fees.get(payment.feeId) ?? '',
+    }));
+  });
+
   protected readonly records = createRecordList<PaymentRecord>({
-    source: this.paymentService.payments,
+    source: this.named,
     searchKeys: [
       (payment) => payment.reference,
       (payment) => payment.studentName,
@@ -126,6 +141,9 @@ export class PaymentComponent {
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<PaymentRecord | null>(null);
@@ -141,6 +159,10 @@ export class PaymentComponent {
   }
 
   protected onSaved(payment: PaymentRecord): void {
-    this.paymentService.upsert(payment);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.paymentService.save(payment).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

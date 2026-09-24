@@ -107,8 +107,10 @@ export class ClassGroupFormComponent {
 
     return {
       ...existing,
-      id: existing?.id ?? `cls-${Date.now().toString(36)}`,
-      branchId: existing?.branchId ?? this.branchContext.selectedBranch().id,
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
+      branchId: existing?.branchId ?? this.branchContext.selectedBranch()?.id ?? '',
       academicYearId: existing?.academicYearId ?? 'ay-2026',
       academicYearName: existing?.academicYearName ?? '2026 - 2027',
       name: value.name.trim(),

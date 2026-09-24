@@ -89,8 +89,10 @@ export class BranchFormComponent {
 
     return {
       ...existing,
-      id: existing?.id ?? `branch-${Date.now().toString(36)}`,
-      schoolId: existing?.schoolId ?? this.branchContext.selectedBranch().schoolId,
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
+      schoolId: existing?.schoolId ?? this.branchContext.selectedBranch()?.schoolId ?? '',
       name: value.name.trim(),
       address: value.address.trim(),
       phone: value.phone.trim(),

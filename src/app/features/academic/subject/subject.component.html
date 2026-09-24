@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="subjectService.loading()" [error]="subjectService.error()"
+  [hasContent]="records.total() > 0" [layout]="'list'" [skeletonColumns]="[26, 14, 40, 10, 10]"
+  (retry)="subjectService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search subject name or code" searchLabel="Search subjects"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

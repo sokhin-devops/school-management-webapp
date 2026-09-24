@@ -17,6 +17,7 @@ import { RoomRecord, RoomService } from '../../../core/services/room.service';
 import { Status } from '../../../core/models';
 import { RoomFormComponent } from './room-form/room-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 /** 26-rooms.md — rooms are independent resources, never a permanent child of a class. */
 @Component({
@@ -39,7 +40,7 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
   styleUrl: './room.component.scss',
 })
 export class RoomComponent {
-  private readonly roomService = inject(RoomService);
+  protected readonly roomService = inject(RoomService);
 
   protected readonly kindFilter = new RecordFilter<RoomRecord, string>((room, value) => room.kind === value);
   protected readonly statusFilter = new RecordFilter<RoomRecord, Status>((room, value) => room.status === value);
@@ -74,6 +75,9 @@ export class RoomComponent {
       .sort((a, b) => a.localeCompare(b))
       .map((kind) => ({ label: kind, value: kind })),
   );
+  /** A save the server refused. Cleared the next time the form opens. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<RoomRecord | null>(null);
@@ -93,6 +97,10 @@ export class RoomComponent {
   }
 
   protected onSaved(room: RoomRecord): void {
-    this.roomService.upsert(room);
+    // The list reloads from the server once the record is stored, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.roomService.save(room).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

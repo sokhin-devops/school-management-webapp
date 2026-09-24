@@ -1,4 +1,6 @@
-<k-list-shell>
+<k-list-shell [loading]="feeService.loading()" [error]="feeService.error()"
+  [hasContent]="records.total() > 0" [layout]="'list'" [skeletonColumns]="[26, 16, 12, 26, 10, 10]"
+  (retry)="feeService.reload()">
   <k-list-toolbar k-toolbar searchPlaceholder="Search fee name or category" searchLabel="Search fees"
     [search]="records.search()" (searchChange)="records.onSearch($event)">
     <ng-container k-filters>

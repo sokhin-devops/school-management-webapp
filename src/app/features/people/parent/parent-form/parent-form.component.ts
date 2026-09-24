@@ -112,8 +112,10 @@ export class ParentFormComponent {
       ...existing,
       // Parents carry no external reference number, so a new one gets an id
       // from the name and the clock rather than a field the user has to invent.
-      id: existing?.id ?? `par-${Date.now().toString(36)}`,
-      branchIds: existing?.branchIds ?? [this.branchContext.selectedBranch().id],
+      id: existing?.id ?? '',
+      // Empty on create: the server assigns the id, and inventing one here
+      // made every create look like an update of a record that never existed.
+      branchIds: existing?.branchIds ?? [this.branchContext.selectedBranch()?.id ?? ''],
       type: PersonType.Parent,
       firstName: value.firstName.trim(),
       lastName: value.lastName.trim(),

@@ -17,6 +17,7 @@ import { ProgramService } from '../../../core/services/program.service';
 import { Program, Status } from '../../../core/models';
 import { ProgramFormComponent } from './program-form/program-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
 /** 21-programs.md — programs suit universities, colleges and training centers. */
 @Component({
@@ -39,7 +40,7 @@ import { openOnQuickAdd } from '../../../core/services/quick-add.service';
   styleUrl: './program.component.scss',
 })
 export class ProgramComponent {
-  private readonly programService = inject(ProgramService);
+  protected readonly programService = inject(ProgramService);
 
   protected readonly statusFilter = new RecordFilter<Program, Status>(
     (program, value) => program.status === value,
@@ -62,6 +63,9 @@ export class ProgramComponent {
     { label: 'Active', value: Status.Active },
     { label: 'Inactive', value: Status.Inactive },
   ];
+  /** A save that the server refused, shown above the list until the next try. */
+  protected readonly saveError = signal<string | null>(null);
+
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
   protected readonly editing = signal<Program | null>(null);
@@ -81,6 +85,10 @@ export class ProgramComponent {
   }
 
   protected onSaved(program: Program): void {
-    this.programService.upsert(program);
+    // The list reloads itself once the server has the record, so what is on
+    // screen is what was actually saved rather than what was sent.
+    this.programService.save(program).subscribe({
+      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    });
   }
 }

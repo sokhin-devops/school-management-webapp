@@ -16,7 +16,7 @@
       <ng-template #selectedItem>
         <span class="k-branch-trigger">
           <i class="pi pi-building"></i>
-          <span class="k-branch-name">{{ branchContext.selectedBranch().name }}</span>
+          <span class="k-branch-name">{{ branchContext.selectedBranch()?.name ?? 'No branch' }}</span>
         </span>
       </ng-template>
 
@@ -34,7 +34,7 @@
       </ng-template>
     </p-select>
 
-    <p-button text [rounded]="true" icon="pi pi-bell" pTooltip="Notifications" tooltipPosition="bottom"
+    <p-button text [rounded]="true"  icon="pi pi-bell" pTooltip="Notifications" tooltipPosition="bottom"
       ariaLabel="Notifications">
     </p-button>
 
