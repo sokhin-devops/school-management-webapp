@@ -21,7 +21,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Level" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+      <p-button *kCan="'create'" label="Add Level" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -48,7 +48,7 @@
             <td><p-tag [value]="level.displayLabel" severity="secondary" [rounded]="true" /></td>
             <td>{{ level.programName }}</td>
             <td><k-status-tag [status]="level.status" /></td>
-            <td class="text-right"><k-row-actions [label]="level.name" (edit)="openEdit(level)" /></td>
+            <td class="text-right"><k-row-actions [label]="level.name" (view)="openView(level)" (edit)="openEdit(level)" (remove)="confirmRemove(level, level.name)" /></td>
           </tr>
         </ng-template>
       </p-table>
@@ -62,7 +62,7 @@
         <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
           (onClick)="records.clear()" />
       } @else {
-        <p-button label="Add Level" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+        <p-button *kCan="'create'" label="Add Level" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
       }
     </k-empty-state>
   }
@@ -73,5 +73,9 @@
     (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
 
-<app-level-form [(visible)]="formVisible" [level]="editing()" [programOptions]="programOptions()"
+<app-level-form [(visible)]="formVisible" [level]="editing()"
   (saved)="onSaved($event)" />
+
+<!-- Read-only side of a row: what the eye icon opens. -->
+<k-record-drawer [(visible)]="viewVisible" [detail]="viewDetail()"
+  (edit)="openEdit(viewing()!)" (remove)="confirmRemove(viewing()!, viewDetail()!.title)" />

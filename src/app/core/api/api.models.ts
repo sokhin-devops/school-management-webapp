@@ -195,6 +195,7 @@ export interface ApiAcademicYear {
   startDate: string;
   endDate: string;
   current: boolean;
+  terms?: { name: string; startDate: string; endDate: string }[];
   createdAt: string;
   updatedAt: string;
 }
@@ -242,6 +243,7 @@ export interface ApiTenantUser {
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   lastLoginAt: string | null;
   createdAt: string;
+  twoFactorEnabled?: boolean;
 }
 
 export interface ApiDashboardSummary {

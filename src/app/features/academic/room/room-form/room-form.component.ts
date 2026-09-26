@@ -5,6 +5,7 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { FormDialogComponent, FormFieldComponent } from '../../../../share/components';
 import { FormValidationService } from '../../../../share/forms';
+import { ROOM_KINDS, categoryChoices } from '../../../../share/data/categories';
 import { BranchContextService } from '../../../../core/services/branch-context.service';
 import { RoomRecord, RoomService } from '../../../../core/services/room.service';
 import { Status } from '../../../../core/models';
@@ -39,8 +40,10 @@ export class RoomFormComponent {
   protected readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(40)]],
     code: ['', [Validators.required, (control: AbstractControl) => this.uniqueCode(control)]],
-    building: ['', Validators.required],
-    kind: ['', Validators.required],
+    // Both optional, as the API has them: a school in one building has no
+    // building to name.
+    building: ['', Validators.maxLength(80)],
+    kind: ['', Validators.maxLength(40)],
     capacity: [30, [Validators.required, Validators.min(1), Validators.max(500)]],
     status: [Status.Active, Validators.required],
   });
@@ -50,7 +53,8 @@ export class RoomFormComponent {
     { label: 'Inactive', value: Status.Inactive },
   ];
 
-  protected readonly kindChoices = computed(() => [...this.kindOptions()]);
+  /** Starting kinds plus the school's own - the page offered only kinds other rooms already had. */
+  protected readonly kindChoices = computed(() => categoryChoices(ROOM_KINDS, this.kindOptions()));
 
   protected readonly isEdit = computed(() => this.room() !== null);
   /** One source for the field names, shared by the labels and the alert. */
@@ -81,7 +85,6 @@ export class RoomFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: RoomRecord | null): void {

@@ -12,7 +12,12 @@ export function describeFailure(failure: unknown): string {
     if (failure.status === 0) {
       return 'Cannot reach the server. Check that the API is running.';
     }
-    const body = failure.error as { message?: string } | null;
+    const body = failure.error as { message?: string; fieldErrors?: Record<string, string> | null } | null;
+    // "Validation failed" alone tells nobody what to fix; the field messages do.
+    const fields = Object.values(body?.fieldErrors ?? {});
+    if (fields.length) {
+      return fields.map((message) => message.charAt(0).toUpperCase() + message.slice(1)).join('. ') + '.';
+    }
     if (body?.message) {
       return body.message;
     }

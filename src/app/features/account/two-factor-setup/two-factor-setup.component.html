@@ -1,0 +1,55 @@
+@switch (stage()) {
+  @case ('loading') {
+    <div class="flex gap-3">
+      <p-skeleton width="184px" height="184px" />
+      <div class="flex flex-column gap-2 flex-1">
+        <p-skeleton height="1rem" />
+        <p-skeleton height="1rem" width="80%" />
+        <p-skeleton height="1rem" width="60%" />
+      </div>
+    </div>
+  }
+  @case ('failed') {
+    <p-message severity="error" size="small" icon="pi pi-times-circle" [text]="error() ?? ''" />
+    <p-button label="Try again" icon="pi pi-replay" size="small" severity="secondary" [text]="true" class="mt-2"
+      (onClick)="start()" />
+  }
+  @case ('scan') {
+    <ol class="k-2fa-steps">
+      <li>Open an authenticator app on your phone - Google Authenticator, Microsoft Authenticator, 1Password or
+        similar.</li>
+      <li>Scan this code with it, or type the key in by hand.</li>
+      <li>Enter the six-digit code it shows.</li>
+    </ol>
+
+    <div class="k-2fa-scan">
+      @if (qr(); as image) {
+        <img class="k-2fa-qr" [src]="image" width="184" height="184" alt="QR code to add this account to your authenticator app" />
+      } @else {
+        <p-skeleton width="184px" height="184px" />
+      }
+      <div class="flex flex-column gap-1">
+        <span class="k-2fa-label">Key</span>
+        <code class="k-2fa-secret" aria-label="Setup key">{{ groupedSecret() }}</code>
+        <span class="k-2fa-hint">Time-based, six digits.</span>
+      </div>
+    </div>
+
+    <form class="flex flex-column gap-2 mt-3" (ngSubmit)="confirm()">
+      <label for="two-factor-code" class="font-medium">Code from the app</label>
+      <div class="flex flex-wrap gap-2 align-items-start">
+        <input pInputText id="two-factor-code" name="code" [(ngModel)]="code" inputmode="numeric"
+          autocomplete="one-time-code" maxlength="7" placeholder="123456" class="k-2fa-code-input" />
+        <p-button type="submit" label="Turn on" icon="pi pi-shield" [loading]="busy()" />
+      </div>
+      @if (error(); as failure) {
+        <small class="text-red-500">{{ failure }}</small>
+      }
+    </form>
+  }
+  @case ('codes') {
+    <p-message severity="success" size="small" icon="pi pi-check-circle"
+      text="Two-factor sign-in is on. Next time you sign in, you will be asked for a code." class="mb-3" />
+    <app-recovery-codes [codes]="codes()" (saved)="done.emit()" />
+  }
+}

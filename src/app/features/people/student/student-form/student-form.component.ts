@@ -1,12 +1,16 @@
 import { Component, computed, effect, inject, input, model, output, untracked } from '@angular/core';
 import { AbstractControl, FormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
 import { InputTextModule } from 'primeng/inputtext';
+import { DatePickerModule } from 'primeng/datepicker';
 import { SelectModule } from 'primeng/select';
 import { FormDialogComponent, FormFieldComponent } from '../../../../share/components';
 import { FormValidationService } from '../../../../share/forms';
+import { ClassGroupService } from '../../../../core/services/class-group.service';
 import { BranchContextService } from '../../../../core/services/branch-context.service';
 import { StudentRecord, StudentService } from '../../../../core/services/student.service';
 import { PersonType, Status } from '../../../../core/models';
+import { ApiGender } from '../../../../core/api/api.models';
+import { fromDate, toDate } from '../../../../core/api/api-mappers';
 
 /**
  * Create / edit a student.
@@ -16,20 +20,27 @@ import { PersonType, Status } from '../../../../core/models';
  */
 @Component({
   selector: 'app-student-form',
-  imports: [ReactiveFormsModule, InputTextModule, SelectModule, FormDialogComponent, FormFieldComponent],
+  imports: [
+    ReactiveFormsModule,
+    DatePickerModule,
+    InputTextModule,
+    SelectModule,
+    FormDialogComponent,
+    FormFieldComponent,
+  ],
   templateUrl: './student-form.component.html',
   host: { class: 'k-form-host' },
 })
 export class StudentFormComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly validation = inject(FormValidationService);
+  private readonly classGroups = inject(ClassGroupService);
   private readonly studentService = inject(StudentService);
   private readonly branchContext = inject(BranchContextService);
 
   readonly visible = model<boolean>(false);
   /** The record being edited, or null to create a new one. */
   readonly student = input<StudentRecord | null>(null);
-  readonly classOptions = input<readonly { label: string; value: string }[]>([]);
 
   readonly saved = output<StudentRecord>();
 
@@ -37,11 +48,28 @@ export class StudentFormComponent {
     firstName: ['', [Validators.required, Validators.maxLength(40)]],
     lastName: ['', [Validators.required, Validators.maxLength(40)]],
     admissionNumber: ['', [Validators.required, (control: AbstractControl) => this.uniqueAdmissionNumber(control)]],
-    className: ['', Validators.required],
+    // By id, and optional: a student can be admitted before being placed.
+    classGroupId: [''],
+    // All three are required by the API. They used to be absent from the form,
+    // so the service sent placeholders and every student was saved with the
+    // same invented date of birth.
+    gender: ['OTHER' as ApiGender, Validators.required],
+    dateOfBirth: [null as Date | null, Validators.required],
+    admissionDate: [null as Date | null, Validators.required],
     status: [Status.Active, Validators.required],
-    email: ['', [Validators.required, Validators.email]],
+    // Optional, as the API has it: plenty of students have no address of their own.
+    email: ['', Validators.email],
     phone: [''],
   });
+
+  /** Nobody was born tomorrow, and nobody joined the school tomorrow either. */
+  protected readonly today = new Date();
+
+  protected readonly genderOptions: { label: string; value: ApiGender }[] = [
+    { label: 'Male', value: 'MALE' },
+    { label: 'Female', value: 'FEMALE' },
+    { label: 'Other', value: 'OTHER' },
+  ];
 
   protected readonly statusOptions = [
     { label: 'Active', value: Status.Active },
@@ -49,7 +77,13 @@ export class StudentFormComponent {
   ];
 
   /** p-select needs a mutable array; the page hands over a readonly one. */
-  protected readonly classChoices = computed(() => [...this.classOptions()]);
+  /** Real classes, by id. The page used to offer only classes other students were already in. */
+  protected readonly classChoices = computed(() =>
+    this.classGroups
+      .classes()
+      .map((group) => ({ label: group.name, value: group.id }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
 
   protected readonly isEdit = computed(() => this.student() !== null);
   /** One source for the field names, shared by the labels and the alert. */
@@ -57,7 +91,10 @@ export class StudentFormComponent {
     firstName: 'First name',
     lastName: 'Last name',
     admissionNumber: 'Admission no.',
-    className: 'Class',
+    classGroupId: 'Class',
+    gender: 'Gender',
+    dateOfBirth: 'Date of birth',
+    admissionDate: 'Admission date',
     status: 'Status',
     email: 'Email',
     phone: 'Phone',
@@ -81,7 +118,6 @@ export class StudentFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: StudentRecord | null): void {
@@ -89,7 +125,10 @@ export class StudentFormComponent {
       firstName: record?.firstName ?? '',
       lastName: record?.lastName ?? '',
       admissionNumber: record?.studentDetails?.admissionNumber ?? '',
-      className: record?.className ?? '',
+      classGroupId: record?.classGroupId ?? '',
+      gender: record?.gender ?? 'OTHER',
+      dateOfBirth: toDate(record?.dateOfBirth),
+      admissionDate: toDate(record?.admissionDate) ?? new Date(),
       status: record?.status ?? Status.Active,
       email: record?.email ?? '',
       phone: record?.phone ?? '',
@@ -110,14 +149,18 @@ export class StudentFormComponent {
       type: PersonType.Student,
       firstName: value.firstName.trim(),
       lastName: value.lastName.trim(),
-      email: value.email.trim(),
+      email: value.email.trim() || undefined,
       phone: value.phone.trim(),
       status: value.status,
-      className: value.className,
+      classGroupId: value.classGroupId || undefined,
+      className: this.classChoices().find((choice) => choice.value === value.classGroupId)?.label ?? '',
+      gender: value.gender,
+      dateOfBirth: fromDate(value.dateOfBirth) ?? undefined,
+      admissionDate: fromDate(value.admissionDate) ?? undefined,
       studentDetails: {
         ...existing?.studentDetails,
         admissionNumber,
-        classId: value.className.toLowerCase().replace(/\s+/g, '-'),
+        classId: value.classGroupId || undefined,
       },
     };
   }

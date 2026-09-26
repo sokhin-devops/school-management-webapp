@@ -21,7 +21,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Parent" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+      <p-button *kCan="'create'" label="Add Parent" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -35,7 +35,7 @@
           <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
             (onClick)="records.clear()" />
         } @else {
-          <p-button label="Add Parent" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+          <p-button *kCan="'create'" label="Add Parent" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
         }
       </k-empty-state>
     </ng-template>
@@ -75,7 +75,7 @@
               <td>{{ parent.phone }}</td>
               <td><k-status-tag [status]="parent.status" /></td>
               <td class="text-right">
-                <k-row-actions [label]="fullName(parent)" (edit)="openEdit(parent)" />
+                <k-row-actions [label]="fullName(parent)" (view)="openView(parent)" (edit)="openEdit(parent)" (remove)="confirmRemove(parent, fullName(parent))" />
               </td>
             </tr>
           </ng-template>
@@ -89,7 +89,7 @@
         <div class="grid">
           @for (parent of items; track parent.id) {
             <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
-              <app-parent-card [parent]="parent" (edit)="openEdit($event)" />
+              <app-parent-card [parent]="parent" (view)="openView($event)" (edit)="openEdit($event)" (remove)="confirmRemove($event, fullName($event))" />
             </div>
           }
         </div>
@@ -105,3 +105,7 @@
 
 <app-parent-form [(visible)]="formVisible" [parent]="editing()"
   (saved)="onSaved($event)" />
+
+<!-- Read-only side of a row: what the eye icon opens. -->
+<k-record-drawer [(visible)]="viewVisible" [detail]="viewDetail()"
+  (edit)="openEdit(viewing()!)" (remove)="confirmRemove(viewing()!, viewDetail()!.title)" />

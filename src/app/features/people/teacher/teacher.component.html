@@ -21,7 +21,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Teacher" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+      <p-button *kCan="'create'" label="Add Teacher" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -35,7 +35,7 @@
           <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
             (onClick)="records.clear()" />
         } @else {
-          <p-button label="Add Teacher" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+          <p-button *kCan="'create'" label="Add Teacher" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
         }
       </k-empty-state>
     </ng-template>
@@ -77,7 +77,7 @@
               <td>{{ teacher.phone }}</td>
               <td><k-status-tag [status]="teacher.status" /></td>
               <td class="text-right">
-                <k-row-actions [label]="fullName(teacher)" (edit)="openEdit(teacher)" />
+                <k-row-actions [label]="fullName(teacher)" (view)="openView(teacher)" (edit)="openEdit(teacher)" (remove)="confirmRemove(teacher, fullName(teacher))" />
               </td>
             </tr>
           </ng-template>
@@ -91,7 +91,7 @@
         <div class="grid">
           @for (teacher of items; track teacher.id) {
             <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
-              <app-teacher-card [teacher]="teacher" (edit)="openEdit($event)" />
+              <app-teacher-card [teacher]="teacher" (view)="openView($event)" (edit)="openEdit($event)" (remove)="confirmRemove($event, fullName($event))" />
             </div>
           }
         </div>
@@ -105,5 +105,9 @@
     (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
 
-<app-teacher-form [(visible)]="formVisible" [teacher]="editing()" [departmentOptions]="departmentOptions()" [subjectOptions]="subjectOptions()"
+<app-teacher-form [(visible)]="formVisible" [teacher]="editing()" [departmentOptions]="departmentOptions()"
   (saved)="onSaved($event)" />
+
+<!-- Read-only side of a row: what the eye icon opens. -->
+<k-record-drawer [(visible)]="viewVisible" [detail]="viewDetail()"
+  (edit)="openEdit(viewing()!)" (remove)="confirmRemove(viewing()!, viewDetail()!.title)" />

@@ -20,7 +20,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Room" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+      <p-button *kCan="'create'" label="Add Room" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -49,7 +49,7 @@
             <td>{{ room.kind }}</td>
             <td class="k-numeric">{{ room.capacity }}</td>
             <td><k-status-tag [status]="room.status" /></td>
-            <td class="text-right"><k-row-actions [label]="room.name" (edit)="openEdit(room)" /></td>
+            <td class="text-right"><k-row-actions [label]="room.name" (view)="openView(room)" (edit)="openEdit(room)" (remove)="confirmRemove(room, room.name)" /></td>
           </tr>
         </ng-template>
       </p-table>
@@ -63,7 +63,7 @@
         <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
           (onClick)="records.clear()" />
       } @else {
-        <p-button label="Add Room" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+        <p-button *kCan="'create'" label="Add Room" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
       }
     </k-empty-state>
   }
@@ -76,3 +76,7 @@
 
 <app-room-form [(visible)]="formVisible" [room]="editing()" [kindOptions]="kindOptions()"
   (saved)="onSaved($event)" />
+
+<!-- Read-only side of a row: what the eye icon opens. -->
+<k-record-drawer [(visible)]="viewVisible" [detail]="viewDetail()"
+  (edit)="openEdit(viewing()!)" (remove)="confirmRemove(viewing()!, viewDetail()!.title)" />

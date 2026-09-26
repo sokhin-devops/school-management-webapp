@@ -1,82 +1,92 @@
-import { Component, signal, type WritableSignal } from '@angular/core';
+import { Component, inject, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { CheckboxModule } from 'primeng/checkbox';
+import { SkeletonModule } from 'primeng/skeleton';
 import { TagModule } from 'primeng/tag';
+import { MessageService } from 'primeng/api';
 import { SettingsSectionComponent } from '../../../share/components';
+import {
+  NotificationPreference,
+  NotificationPreferenceGroup,
+  NotificationService,
+} from '../../../core/services/notification.service';
+import { describeFailure } from '../../../core/api/api-failure';
 
-/** One event a user can subscribe to, with a switch per delivery channel. */
-export interface NotificationPreference {
-  key: string;
-  title: string;
-  note: string;
-  inApp: WritableSignal<boolean>;
-  email: WritableSignal<boolean>;
-  push: WritableSignal<boolean>;
-}
-
-export interface NotificationGroup {
-  key: string;
-  title: string;
-  description: string;
-  preferences: NotificationPreference[];
-}
-
-function preference(key: string, title: string, note: string, inApp: boolean, email: boolean): NotificationPreference {
-  return { key, title, note, inApp: signal(inApp), email: signal(email), push: signal(false) };
-}
-
-/** 65-notifications.md — what each person is told about, and where it reaches them. */
+/**
+ * 65-notifications.md — what each person is told about, and where it reaches
+ * them. The events come from the server, so every switch on this page is for
+ * something the system actually raises.
+ *
+ * These are the signed-in person's own choices; nobody sets them for anyone
+ * else, so there is no permission to check beyond being signed in.
+ */
 @Component({
   selector: 'app-notification-settings',
-  imports: [FormsModule, ButtonModule, CheckboxModule, TagModule, SettingsSectionComponent],
+  imports: [FormsModule, ButtonModule, CheckboxModule, SkeletonModule, TagModule, SettingsSectionComponent],
   templateUrl: './notification-settings.component.html',
   styleUrl: './notification-settings.component.scss',
 })
 export class NotificationSettingsComponent {
-  protected readonly groups: NotificationGroup[] = [
-    {
-      key: 'academic',
-      title: 'Academic',
-      description: 'Classes, attendance and results.',
-      preferences: [
-        preference('timetable', 'Timetable changed', 'A class is moved, cancelled or given a different room.', true, true),
-        preference('attendance', 'Attendance submitted', 'A register is completed for a class you follow.', true, false),
-        preference('grades', 'Grades published', 'Results are released for an assessment or a reporting period.', true, true),
-        preference('rollover', 'Academic year rolled over', 'The active year changes and classes carry forward.', true, true),
-      ],
-    },
-    {
-      key: 'finance',
-      title: 'Finance',
-      description: 'Invoices, payments and spending.',
-      preferences: [
-        preference('invoice', 'Invoice issued', 'A fee invoice is raised for a student.', true, true),
-        preference('payment', 'Payment received', 'A payment is recorded against an invoice.', true, false),
-        preference('overdue', 'Payment overdue', 'An invoice passes its due date unpaid.', true, true),
-        preference('expense', 'Expense awaiting approval', 'Someone submits an expense that needs a decision.', true, true),
-      ],
-    },
-    {
-      key: 'people',
-      title: 'People',
-      description: 'Students, staff and families.',
-      preferences: [
-        preference('enrolment', 'Student enrolled', 'A student record is created and placed in a class.', true, false),
-        preference('staff', 'Staff record changed', 'A teacher joins, leaves or moves department.', true, false),
-        preference('portal', 'Message from a parent', 'A parent replies through the portal.', true, true),
-      ],
-    },
-    {
-      key: 'system',
-      title: 'System',
-      description: 'Accounts, access and service notices.',
-      preferences: [
-        preference('invite', 'User invited', 'Someone is invited to the workspace, or accepts an invitation.', true, false),
-        preference('permissions', 'Role or permissions changed', 'A role is edited, or a user is moved between roles.', true, true),
-        preference('signin', 'Sign-in from a new device', 'An account is used from a device it has not been seen on.', true, true),
-        preference('maintenance', 'Scheduled maintenance', 'Planned downtime is announced in advance.', true, true),
-      ],
-    },
-  ];
+  private readonly notifications = inject(NotificationService);
+  private readonly messages = inject(MessageService);
+
+  protected readonly groups = signal<NotificationPreferenceGroup[]>([]);
+  protected readonly emailAvailable = signal(false);
+  protected readonly loaded = signal(false);
+  protected readonly loadError = signal<string | null>(null);
+  /** The group whose Save is in flight, so only its button spins. */
+  protected readonly savingGroup = signal<string | null>(null);
+
+  constructor() {
+    this.load();
+  }
+
+  protected load(): void {
+    this.loadError.set(null);
+    this.notifications.preferences().subscribe({
+      next: (preferences) => this.accept(preferences.groups, preferences.emailAvailable),
+      error: (failure: unknown) => this.loadError.set(describeFailure(failure)),
+    });
+  }
+
+  protected toggle(group: NotificationPreferenceGroup, preference: NotificationPreference, channel: 'inApp' | 'email',
+    value: boolean): void {
+    this.groups.update((groups) =>
+      groups.map((g) =>
+        g.key !== group.key
+          ? g
+          : { ...g, preferences: g.preferences.map((p) => (p.key === preference.key ? { ...p, [channel]: value } : p)) },
+      ),
+    );
+  }
+
+  /**
+   * Saves every group, not only the one whose button was pressed: the server
+   * takes the whole set, and saving a part would read as undoing the rest.
+   */
+  protected save(group: NotificationPreferenceGroup): void {
+    if (this.savingGroup()) {
+      return;
+    }
+    this.savingGroup.set(group.key);
+    const all = this.groups().flatMap((g) => g.preferences);
+    this.notifications.savePreferences(all).subscribe({
+      next: (saved) => {
+        this.accept(saved.groups, saved.emailAvailable);
+        this.savingGroup.set(null);
+        this.messages.add({ severity: 'success', summary: 'Notification preferences saved', life: 3000 });
+      },
+      error: (failure: unknown) => {
+        this.savingGroup.set(null);
+        this.messages.add({ severity: 'error', summary: 'Could not save', detail: describeFailure(failure), life: 6000 });
+      },
+    });
+  }
+
+  private accept(groups: NotificationPreferenceGroup[], emailAvailable: boolean): void {
+    this.groups.set(groups ?? []);
+    this.emailAvailable.set(emailAvailable);
+    this.loaded.set(true);
+  }
 }

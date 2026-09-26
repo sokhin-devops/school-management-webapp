@@ -21,7 +21,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Assessment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+      <p-button *kCan="'create'" label="Add Assessment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -52,12 +52,22 @@
             <td>
               @if (assessment.graded) {
                 <span class="k-amount">{{ score(assessment) }}</span>
-                <span class="k-score-share">{{ sharePercent(assessment) }}</span>
+                <span class="k-score-share">{{ shareResult(assessment) }}</span>
               } @else {
                 <p-tag value="Not graded" severity="secondary" [rounded]="true" />
               }
             </td>
-            <td class="text-right"><k-row-actions [label]="assessment.name" (edit)="openEdit(assessment)" /></td>
+            <td class="text-right">
+              <div class="k-exam-actions">
+                @if (canMark()) {
+                  <p-button icon="pi pi-list-check" [text]="true" [rounded]="true" size="small" severity="secondary"
+                    pTooltip="Enter marks" tooltipPosition="top" [ariaLabel]="'Enter marks for ' + assessment.name"
+                    (onClick)="openMarks(assessment)" />
+                }
+                <k-row-actions [label]="assessment.name" (view)="openView(assessment)" (edit)="openEdit(assessment)"
+                  (remove)="confirmRemove(assessment, assessment.name)" />
+              </div>
+            </td>
           </tr>
         </ng-template>
       </p-table>
@@ -71,7 +81,7 @@
         <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
           (onClick)="records.clear()" />
       } @else {
-        <p-button label="Add Assessment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+        <p-button *kCan="'create'" label="Add Assessment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
       }
     </k-empty-state>
   }
@@ -84,3 +94,9 @@
 
 <app-assessment-form [(visible)]="formVisible" [assessment]="editing()" [subjectOptions]="subjectOptions()" [classOptions]="classOptions()"
   (saved)="onSaved($event)" />
+
+<app-mark-sheet [(visible)]="marksVisible" [assessment]="marking()" />
+
+<!-- Read-only side of a row: what the eye icon opens. -->
+<k-record-drawer [(visible)]="viewVisible" [detail]="viewDetail()"
+  (edit)="openEdit(viewing()!)" (remove)="confirmRemove(viewing()!, viewDetail()!.title)" />

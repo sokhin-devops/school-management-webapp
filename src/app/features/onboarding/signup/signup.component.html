@@ -19,7 +19,7 @@
     <div class="flex flex-column gap-2">
       <label for="password">Password</label>
       <p-fluid>
-      <p-password id="password" fluid formControlName="password" [toggleMask]="true" placeholder="Password"
+      <p-password inputId="password" fluid formControlName="password" [toggleMask]="true" placeholder="Password"
         class="w-full" inputStyleClass="w-full" />
       @if (submitted && form.controls.password.invalid) {
       <small class="text-red-500">Must be at least 8 characters and include upper, lower, and a number.</small>
@@ -30,7 +30,7 @@
     <div class="flex flex-column gap-2">
       <label for="confirmPassword">Confirm Password</label>
       <p-fluid>
-        <p-password id="confirmPassword" formControlName="confirmPassword" [toggleMask]="true" [feedback]="false"
+        <p-password inputId="confirmPassword" formControlName="confirmPassword" [toggleMask]="true" [feedback]="false"
           placeholder="Confirm Password" class="w-full" inputStyleClass="w-full" />
         @if (submitted && form.errors?.['passwordsMismatch']) {
         <small class="text-red-500">Passwords do not match.</small>

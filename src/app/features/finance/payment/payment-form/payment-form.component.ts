@@ -11,6 +11,8 @@ import { BranchContextService } from '../../../../core/services/branch-context.s
 import { PaymentRecord, PaymentService } from '../../../../core/services/payment.service';
 import { PaymentMethod, PaymentStatus } from '../../../../core/models';
 import { humanize, isoDate } from '../../../../share/data/format';
+import { FeeService } from '../../../../core/services/fee.service';
+import { SchoolService } from '../../../../core/services/school.service';
 
 /** Create / edit a payment. */
 @Component({
@@ -33,6 +35,8 @@ export class PaymentFormComponent {
   private readonly validation = inject(FormValidationService);
   private readonly paymentService = inject(PaymentService);
   private readonly branchContext = inject(BranchContextService);
+  private readonly fees = inject(FeeService);
+  private readonly school = inject(SchoolService);
 
   readonly visible = model<boolean>(false);
   /** The record being edited, or null to create a new one. */
@@ -44,8 +48,11 @@ export class PaymentFormComponent {
 
   protected readonly form = this.formBuilder.nonNullable.group({
     reference: ['', [Validators.required, (control: AbstractControl) => this.uniqueReference(control)]],
-    studentName: ['', Validators.required],
-    feeName: ['', Validators.required],
+    // Chosen by id: a payment is booked against the student and fee records
+    // themselves, not against their names.
+    studentId: ['', Validators.required],
+    feeId: ['', Validators.required],
+    payerName: ['', Validators.maxLength(150)],
     amount: [0, [Validators.required, Validators.min(1)]],
     date: [null as Date | null, Validators.required],
     method: [PaymentMethod.Cash, Validators.required],
@@ -67,11 +74,26 @@ export class PaymentFormComponent {
   protected readonly feeChoices = computed(() => [...this.feeOptions()]);
 
   protected readonly isEdit = computed(() => this.payment() !== null);
+
+  /** Amounts are entered in the school's currency (61-school-settings.md). */
+  protected readonly currency = computed(() => this.school.school()?.currency ?? 'USD');
+
+  /**
+   * Choosing a fee fills in what it charges, which is what most payments are.
+   * Only an empty amount is filled: an instalment someone has typed stays.
+   */
+  protected onFeeChosen(feeId: string): void {
+    const fee = this.fees.fees().find((candidate) => candidate.id === feeId);
+    if (fee && !this.form.controls.amount.value) {
+      this.form.controls.amount.setValue(fee.amount);
+    }
+  }
   /** One source for the field names, shared by the labels and the alert. */
   protected readonly labels = {
     reference: 'Reference',
-    studentName: 'Student',
-    feeName: 'Fee',
+    studentId: 'Student',
+    feeId: 'Fee',
+    payerName: 'Paid by',
     amount: 'Amount',
     date: 'Date',
     method: 'Method',
@@ -97,14 +119,14 @@ export class PaymentFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: PaymentRecord | null): void {
     this.form.reset({
       reference: record?.reference ?? '',
-      studentName: record?.studentName ?? '',
-      feeName: record?.feeName ?? '',
+      studentId: record?.personId ?? '',
+      feeId: record?.feeId ?? '',
+      payerName: record?.payerName ?? '',
       amount: record?.amount ?? 0,
       date: record?.date ? new Date(record.date) : new Date(),
       method: record?.method ?? PaymentMethod.Cash,
@@ -117,19 +139,19 @@ export class PaymentFormComponent {
     const value = this.form.getRawValue();
     const existing = this.payment();
     const reference = value.reference.trim().toUpperCase();
+    const label = (choices: readonly { label: string; value: string }[], id: string) =>
+      choices.find((choice) => choice.value === id)?.label ?? '';
 
     return {
       ...existing,
       id: existing?.id ?? '',
-      // Empty on create: the server assigns the id, and inventing one here
-      // made every create look like an update of a record that never existed.
       branchId: existing?.branchId ?? this.branchContext.selectedBranch()?.id ?? '',
-      feeId: existing?.feeId ?? 'fee-01',
-      personId: value.studentName.toLowerCase().replace(/\s+/g, '-'),
+      feeId: value.feeId,
+      personId: value.studentId,
       reference,
-      studentName: value.studentName,
-      payerName: value.studentName,
-      feeName: value.feeName,
+      studentName: label(this.studentChoices(), value.studentId),
+      feeName: label(this.feeChoices(), value.feeId),
+      payerName: value.payerName.trim() || undefined,
       amount: value.amount,
       date: isoDate(value.date),
       method: value.method,
@@ -137,6 +159,7 @@ export class PaymentFormComponent {
       notes: value.notes.trim(),
     };
   }
+
 
   /** The reference is what a receipt is looked up by, so it cannot repeat. */
   private uniqueReference(control: AbstractControl): ValidationErrors | null {

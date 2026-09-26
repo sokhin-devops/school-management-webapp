@@ -20,6 +20,15 @@ function stickyHeaderHeight(scroller: HTMLElement): number {
   return sticky ? header.offsetHeight : 0;
 }
 
+/** A mutation that added or removed nothing but floating-scroll thumbs. */
+function isOwnThumbs(record: MutationRecord): boolean {
+  const nodes = [...Array.from(record.addedNodes), ...Array.from(record.removedNodes)];
+  return (
+    nodes.length > 0 &&
+    nodes.every((node) => node instanceof HTMLElement && node.classList.contains('k-fscroll-thumb'))
+  );
+}
+
 interface Managed {
   readonly scroller: HTMLElement;
   readonly track: HTMLElement;
@@ -51,6 +60,7 @@ export class FloatingScrollDirective implements OnDestroy {
 
   private readonly managed = new Map<HTMLElement, Managed>();
   private mutations?: MutationObserver;
+  private hostSize?: ResizeObserver;
 
   constructor() {
     afterNextRender(() => {
@@ -58,24 +68,47 @@ export class FloatingScrollDirective implements OnDestroy {
         this.scan();
         // PrimeNG creates and destroys the scroll container as the view switches
         // between table and card layouts, and as pages come and go.
-        this.mutations = new MutationObserver(() => this.scan());
+        // Mutations that are only this directive adding or removing its own
+        // thumbs change nothing worth scanning for, and reacting to them is
+        // how a scan ends up triggering itself.
+        this.mutations = new MutationObserver((records) => {
+          if (records.some((record) => !isOwnThumbs(record))) {
+            this.scan();
+          }
+        });
         this.mutations.observe(this.host, { childList: true, subtree: true });
+        // A tab brought back puts the host on the page again without a single
+        // mutation inside it; its size changing from nothing is the signal.
+        this.hostSize = new ResizeObserver(() => this.scan());
+        this.hostSize.observe(this.host);
       });
     });
   }
 
   ngOnDestroy(): void {
     this.mutations?.disconnect();
+    this.hostSize?.disconnect();
     this.managed.forEach((entry) => entry.dispose());
     this.managed.clear();
   }
 
   private scan(): void {
+    // A host taken out of the document - the view of an inactive tab stays alive
+    // but loses its place on the page - has nothing to measure. Scanning it used
+    // to be an infinite loop: off the page every element reads as disconnected,
+    // so each scan disposed its scroller and attached it again, and attaching
+    // is itself a mutation that fires the next scan. That is what froze Users &
+    // Roles, the one page with a list shell in each of two tabs. The entries are
+    // kept, so everything is in place when the tab comes back.
+    if (!this.host.isConnected) {
+      return;
+    }
+
     const selector = this.within();
     const found = selector ? Array.from(this.host.querySelectorAll<HTMLElement>(selector)) : [this.host];
 
     for (const [element, entry] of this.managed) {
-      if (!element.isConnected || !found.includes(element)) {
+      if (!this.host.contains(element) || !found.includes(element)) {
         entry.dispose();
         this.managed.delete(element);
       }

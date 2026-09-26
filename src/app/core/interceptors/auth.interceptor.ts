@@ -1,5 +1,6 @@
 import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
 import { inject } from '@angular/core';
+import { Router } from '@angular/router';
 import { catchError, switchMap, throwError } from 'rxjs';
 import { AuthenticationService } from '../services/authentication.service';
 import { TokenStorageService } from '../services/token-storage.service';
@@ -19,6 +20,7 @@ const isPublicAuthRequest = (url: string): boolean => PUBLIC_AUTH_PATHS.some((pa
 export const authInterceptor: HttpInterceptorFn = (req, next) => {
   const tokenStorage = inject(TokenStorageService);
   const authService = inject(AuthenticationService);
+  const router = inject(Router);
 
   const isPublic = isPublicAuthRequest(req.url);
   const accessToken = tokenStorage.getAccessToken();
@@ -29,6 +31,12 @@ export const authInterceptor: HttpInterceptorFn = (req, next) => {
 
   return next(authorizedReq).pipe(
     catchError((error: unknown) => {
+      // The school started requiring two-factor while this session was open.
+      if (error instanceof HttpErrorResponse && error.status === 403
+          && error.error?.errorCode === 'TWO_FACTOR_SETUP_REQUIRED') {
+        router.navigateByUrl('/two-factor-setup');
+        return throwError(() => error);
+      }
       if (isPublic || !(error instanceof HttpErrorResponse) || error.status !== 401) {
         return throwError(() => error);
       }

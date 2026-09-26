@@ -1,4 +1,4 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { DatePipe } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
@@ -12,20 +12,26 @@ import {
   ListShellComponent,
   ListToolbarComponent,
   RowActionsComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { AcademicYear, AcademicYearStatus } from '../../../core/models';
 import { AcademicYearFormComponent } from './academic-year-form/academic-year-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
+import { humanize, readableDate } from '../../../share/data/format';
 
 type Severity = 'success' | 'info' | 'secondary';
 
 /** 25-academic-years.md — name, start, end, status, and optional terms/semesters. */
 @Component({
   selector: 'app-academic-year',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     DatePipe,
     FormsModule,
     ButtonModule,
@@ -39,6 +45,7 @@ type Severity = 'success' | 'info' | 'secondary';
     EmptyStateComponent,
     RowActionsComponent,
     AcademicYearFormComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './academic-year.component.html',
   styleUrl: './academic-year.component.scss',
@@ -91,8 +98,8 @@ export class AcademicYearComponent {
   protected label(status: AcademicYearStatus): string {
     return status.charAt(0).toUpperCase() + status.slice(1);
   }
-  /** A save the server refused. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -109,8 +116,42 @@ export class AcademicYearComponent {
   }
 
   protected onSaved(year: AcademicYear): void {
-    this.academicYearService.save(year).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.academicYearService.save(year), {
+      success: 'Academic year saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<AcademicYear | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: AcademicYear): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: AcademicYear): RecordDetail {
+    return {
+      title: r.name,
+      badge: { label: humanize(r.status), severity: this.severity(r.status) },
+      facts: [
+        { label: 'Starts', value: readableDate(r.startDate) },
+        { label: 'Ends', value: readableDate(r.endDate) },
+        { label: 'Terms', value: (r.terms ?? []).map((term) => term.name).join(', '), wide: true },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: AcademicYear, name: string): void {
+    this.removal.confirm({
+      noun: 'academic year',
+      name,
+      remove: () => this.academicYearService.remove(record.id),
     });
   }
 }

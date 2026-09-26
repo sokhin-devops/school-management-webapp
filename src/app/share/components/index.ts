@@ -13,5 +13,12 @@ export { SettingsSectionComponent } from './settings-section/settings-section.co
 export { FormFieldComponent } from './form-field/form-field.component';
 export { FormDialogComponent } from './form-dialog/form-dialog.component';
 export { FormErrorDialogComponent } from './form-error-dialog/form-error-dialog.component';
+export { ConfirmDeleteDialogComponent } from './confirm-delete-dialog/confirm-delete-dialog.component';
+export {
+  RecordDrawerComponent,
+  type RecordDetail,
+  type RecordFact,
+  type RecordBadgeSeverity,
+} from './record-drawer/record-drawer.component';
 export { ListSkeletonComponent } from './list-skeleton/list-skeleton.component';
 export { AppLoaderComponent } from './app-loader/app-loader.component';

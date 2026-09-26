@@ -2,3 +2,11 @@
   display: block;
   height: 100%;
 }
+
+// The specifics under an audit event: which role, which device, what changed.
+.k-audit-detail {
+  display: block;
+  margin-top: 0.125rem;
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}

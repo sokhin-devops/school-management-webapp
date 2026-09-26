@@ -7,7 +7,8 @@ import { SelectModule } from 'primeng/select';
 import { TableModule } from 'primeng/table';
 import { SharedModule } from 'primeng/api';
 import { ListShellComponent } from '../../../share/components';
-import { percent } from '../../../share/data/format';
+import { formatResult, percent } from '../../../share/data/format';
+import { AcademicSettingsService } from '../../../core/services/academic-settings.service';
 import { ReportService } from '../../../core/services/report.service';
 
 /** 50-reports.md — assessment outcomes by subject. */
@@ -28,6 +29,7 @@ import { ReportService } from '../../../core/services/report.service';
 })
 export class AcademicReportComponent {
   private readonly reportService = inject(ReportService);
+  private readonly academicSettings = inject(AcademicSettingsService);
 
   protected readonly range = signal<Date[] | null>(null);
   protected readonly scope = signal<string | null>(null);
@@ -52,11 +54,17 @@ export class AcademicReportComponent {
 
     return [
       { label: 'Assessments held', value: String(assessments) },
-      { label: 'Average score', value: percent(average) },
+      { label: 'Average score', value: this.result(average) },
       { label: 'Pass rate', value: percent(passRate) },
       { label: 'Strongest subject', value: top?.subject ?? '—' },
     ];
   });
 
   protected readonly percent = percent;
+
+  /** A result in the school's grading scale; the pass rate stays a percentage. */
+  protected result(share: number): string {
+    const settings = this.academicSettings.settings();
+    return formatResult(share, settings.gradingScale, settings.passMark);
+  }
 }

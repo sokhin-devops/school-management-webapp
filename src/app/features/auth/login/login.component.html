@@ -1,3 +1,24 @@
+@if (challenge()) {
+<app-auth-card title="Two-factor sign-in" subtitle="Enter the six-digit code from your authenticator app.">
+  <form (ngSubmit)="onVerify()" class="flex flex-column gap-3">
+    <div class="flex flex-column gap-2">
+      <label for="two-factor-login-code">Code</label>
+      <input pInputText id="two-factor-login-code" name="code" [(ngModel)]="code" inputmode="numeric"
+        autocomplete="one-time-code" maxlength="12" placeholder="123456" class="w-full" autofocus />
+      <small class="text-color-secondary">Lost your phone? Enter one of your recovery codes instead.</small>
+      @if (codeError(); as failure) {
+      <small class="text-red-500">{{ failure }}</small>
+      }
+    </div>
+
+    <p-button type="submit" label="Verify" styleClass="w-full mt-2" [loading]="submitting()" [disabled]="submitting()" />
+  </form>
+
+  <div class="flex justify-content-center mt-3">
+    <p-button label="Back to password" icon="pi pi-arrow-left" size="small" [link]="true" (onClick)="backToPassword()" />
+  </div>
+</app-auth-card>
+} @else {
 <app-auth-card title="Welcome back" subtitle="Log in to manage your school.">
   <form [formGroup]="form" (ngSubmit)="onSubmit()" class="flex flex-column gap-3">
     <div class="flex flex-column gap-2">
@@ -14,7 +35,7 @@
         <a routerLink="/forgot-password" class="text-sm text-primary cursor-pointer">Forgot Password?</a>
       </div>
       <p-fluid>
-        <p-password id="password" formControlName="password" [feedback]="false" [toggleMask]="true"
+        <p-password inputId="password" formControlName="password" [feedback]="false" [toggleMask]="true"
           placeholder="Password" class="w-full" inputStyleClass="w-full" />
         @if (submitted && form.controls.password.invalid) {
         <small class="text-red-500">Password is required.</small>
@@ -30,3 +51,4 @@
     Don't have an account? <a routerLink="/signup" class="text-primary font-medium cursor-pointer">Sign Up</a>
   </p>
 </app-auth-card>
+}

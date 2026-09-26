@@ -1,6 +1,6 @@
 <k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
   [title]="isEdit() ? 'Edit class' : 'Add class'"
-  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a class to the current academic year.'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a class to an academic year.'"
   [saveLabel]="isEdit() ? 'Save changes' : 'Add class'" width="40rem" (save)="onSave()">
   <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
     <div class="k-form-row">
@@ -9,27 +9,52 @@
       </k-form-field>
 
       <k-form-field [label]="labels.code" inputId="class-group-code" [control]="form.controls.code"
-        hint="Optional short code, e.g. G1A.">
+        hint="A short code, e.g. G1A.">
         <input pInputText id="class-group-code" formControlName="code" autocomplete="off" />
       </k-form-field>
     </div>
 
-    <div class="k-form-row">
-      <k-form-field [label]="labels.levelName" inputId="class-group-levelname" [control]="form.controls.levelName">
-        <p-select inputId="class-group-levelname" formControlName="levelName" [options]="levelChoices()" optionLabel="label"
-          optionValue="value" placeholder="Select a level" [filter]="true" filterBy="label" />
-      </k-form-field>
+    <k-form-field [label]="labels.academicYearId" inputId="class-group-year" [control]="form.controls.academicYearId"
+      [hint]="yearChoices().length ? '' : 'Add an academic year first, under Academic › Academic Years.'">
+      <p-select inputId="class-group-year" formControlName="academicYearId" [options]="yearChoices()"
+        optionLabel="label" optionValue="value" placeholder="Select a year" />
+    </k-form-field>
 
-      <k-form-field [label]="labels.programName" inputId="class-group-programname" [control]="form.controls.programName">
-        <p-select inputId="class-group-programname" formControlName="programName" [options]="programChoices()" optionLabel="label"
-          optionValue="value" placeholder="Select a programme" [filter]="true" filterBy="label" />
+    @if (academic.settings().useLevels || academic.settings().usePrograms) {
+      <div class="k-form-row">
+        @if (academic.settings().useLevels) {
+          <k-form-field [label]="academic.settings().levelLabel" inputId="class-group-level" [control]="form.controls.levelId"
+            hint="Optional.">
+            <p-select inputId="class-group-level" formControlName="levelId" [options]="levelChoices()" optionLabel="label"
+              optionValue="value" placeholder="None" [showClear]="true" [filter]="true" filterBy="label" />
+          </k-form-field>
+        }
+
+        @if (academic.settings().usePrograms) {
+          <k-form-field [label]="labels.programId" inputId="class-group-program" [control]="form.controls.programId"
+            hint="Optional.">
+            <p-select inputId="class-group-program" formControlName="programId" [options]="programChoices()"
+              optionLabel="label" optionValue="value" placeholder="None" [showClear]="true" [filter]="true"
+              filterBy="label" />
+          </k-form-field>
+        }
+      </div>
+    }
+
+    @if (academic.settings().useSections) {
+      <k-form-field [label]="labels.parentClassId" inputId="class-group-parent" [control]="form.controls.parentClassId"
+        hint="Make this a section of another class, such as 1-A within Grade 1. Optional.">
+        <p-select inputId="class-group-parent" formControlName="parentClassId" [options]="parentChoices()"
+          optionLabel="label" optionValue="value" placeholder="Not a section" [showClear]="true" [filter]="true"
+          filterBy="label" />
       </k-form-field>
-    </div>
+    }
 
     <div class="k-form-row">
-      <k-form-field [label]="labels.teacherName" inputId="class-group-teachername" [control]="form.controls.teacherName">
-        <p-select inputId="class-group-teachername" formControlName="teacherName" [options]="teacherChoices()" optionLabel="label"
-          optionValue="value" placeholder="Select a teacher" [filter]="true" filterBy="label" />
+      <k-form-field [label]="labels.homeroomTeacherId" inputId="class-group-teacher"
+        [control]="form.controls.homeroomTeacherId" hint="Optional.">
+        <p-select inputId="class-group-teacher" formControlName="homeroomTeacherId" [options]="teacherChoices()"
+          optionLabel="label" optionValue="value" placeholder="None" [showClear]="true" [filter]="true" filterBy="label" />
       </k-form-field>
 
       <k-form-field [label]="labels.capacity" inputId="class-group-capacity" [control]="form.controls.capacity"

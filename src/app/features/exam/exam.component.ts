@@ -12,20 +12,30 @@ import {
   ListShellComponent,
   ListToolbarComponent,
   RowActionsComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../share/components';
 import { RecordFilter, createRecordList } from '../../share/data/record-list';
-import { percent } from '../../share/data/format';
+import { formatResult, humanize, readableDate } from '../../share/data/format';
+import { AcademicSettingsService } from '../../core/services/academic-settings.service';
 import { AssessmentRecord, AssessmentService, AssessmentType } from '../../core/services/assessment.service';
 import { AssessmentFormComponent } from './assessment-form/assessment-form.component';
 import { ClassGroupService } from '../../core/services/class-group.service';
 import { openOnQuickAdd } from '../../core/services/quick-add.service';
 import { SubjectService } from '../../core/services/subject.service';
-import { describeFailure } from '../../core/api/api-failure';
+import { CanDirective } from '../../share/directives/can.directive';
+import { SaveState } from '../../share/data/save-state';
+import { RecordRemovalService } from '../../share/data/record-removal.service';
+import { PermissionService } from '../../core/services/permission.service';
+import { PermissionAction } from '../../core/models';
+import { TooltipModule } from 'primeng/tooltip';
+import { MarkSheetComponent } from './mark-sheet/mark-sheet.component';
 
 /** 31-exams-and-grades.md — assessments, scores and results. */
 @Component({
   selector: 'app-exam',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     DatePipe,
     FormsModule,
     ButtonModule,
@@ -39,12 +49,16 @@ import { describeFailure } from '../../core/api/api-failure';
     EmptyStateComponent,
     RowActionsComponent,
     AssessmentFormComponent,
+    RecordDrawerComponent,
+    TooltipModule,
+    MarkSheetComponent,
   ],
   templateUrl: './exam.component.html',
   styleUrl: './exam.component.scss',
 })
 export class ExamComponent {
   protected readonly assessmentService = inject(AssessmentService);
+  private readonly academicSettings = inject(AcademicSettingsService);
   private readonly subjectService = inject(SubjectService);
   private readonly classGroupService = inject(ClassGroupService);
 
@@ -116,19 +130,37 @@ export class ExamComponent {
     return `${assessment.averageScore} / ${assessment.maxScore}`;
   }
 
-  protected sharePercent(assessment: AssessmentRecord): string {
-    return percent(assessment.maxScore ? (assessment.averageScore / assessment.maxScore) * 100 : 0, 0);
+  /** The class average in the school's grading scale (63-academic-settings.md). */
+  protected shareResult(assessment: AssessmentRecord): string {
+    const settings = this.academicSettings.settings();
+    const share = assessment.maxScore ? (assessment.averageScore / assessment.maxScore) * 100 : 0;
+    return formatResult(share, settings.gradingScale, settings.passMark);
   }
-  /** An assessment is set for a class that actually runs. */
+  /** An assessment is set for a class that actually runs - chosen by id, which is what it stores. */
   protected readonly classOptions = computed(() =>
     this.classGroupService
       .classes()
-      .map((group) => ({ label: group.name, value: group.name }))
+      .map((group) => ({ label: group.name, value: group.id }))
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
+  private readonly permissions = inject(PermissionService);
+
+  /** Marking is editing the assessment, and marks are the Grades feature, not Exams. */
+  protected readonly canMark = computed(
+    () =>
+      this.permissions.can(this.permissions.currentModule(), PermissionAction.Edit) &&
+      this.permissions.planIncludes('GRADES'),
+  );
+  protected readonly marksVisible = signal(false);
+  protected readonly marking = signal<AssessmentRecord | null>(null);
+
+  protected openMarks(assessment: AssessmentRecord): void {
+    this.marking.set(assessment);
+    this.marksVisible.set(true);
+  }
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -147,8 +179,47 @@ export class ExamComponent {
   protected onSaved(assessment: AssessmentRecord): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.assessmentService.save(assessment).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.assessmentService.save(assessment), {
+      success: 'Assessment saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<AssessmentRecord | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: AssessmentRecord): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: AssessmentRecord): RecordDetail {
+    return {
+      title: r.name,
+      subtitle: [r.subject, r.className].filter(Boolean).join(' · '),
+      badge: r.graded ? { label: 'Graded', severity: 'success' } : { label: 'Not graded', severity: 'secondary' },
+      facts: [
+        { label: 'Type', value: humanize(String(r.type)) },
+        { label: 'Date', value: readableDate(r.date) },
+        { label: 'Subject', value: r.subject },
+        { label: 'Class', value: r.className },
+        { label: 'Out of', value: r.maxScore },
+        // An average over nothing marked would read as a real zero.
+        { label: 'Class average', value: r.graded ? r.averageScore : null },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: AssessmentRecord, name: string): void {
+    this.removal.confirm({
+      noun: 'assessment',
+      name,
+      remove: () => this.assessmentService.remove(record.id),
     });
   }
 }

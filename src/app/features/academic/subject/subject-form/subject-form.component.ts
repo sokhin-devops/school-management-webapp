@@ -75,7 +75,6 @@ export class SubjectFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: Subject | null): void {

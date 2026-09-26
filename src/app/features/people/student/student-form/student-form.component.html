@@ -20,14 +20,15 @@
           placeholder="STU-2024-0001" />
       </k-form-field>
 
-      <k-form-field [label]="labels.className" inputId="student-class" [control]="form.controls.className">
-        <p-select inputId="student-class" formControlName="className" [options]="classChoices()" optionLabel="label"
-          optionValue="value" placeholder="Select a class" [filter]="true" filterBy="label" />
+      <k-form-field [label]="labels.classGroupId" inputId="student-class" [control]="form.controls.classGroupId"
+        hint="Optional - a student can be placed later.">
+        <p-select inputId="student-class" formControlName="classGroupId" [options]="classChoices()" optionLabel="label"
+          optionValue="value" placeholder="Not placed yet" [showClear]="true" [filter]="true" filterBy="label" />
       </k-form-field>
     </div>
 
     <div class="k-form-row">
-      <k-form-field [label]="labels.email" inputId="student-email" [control]="form.controls.email">
+      <k-form-field [label]="labels.email" inputId="student-email" [control]="form.controls.email" hint="Optional.">
         <input pInputText id="student-email" type="email" formControlName="email" autocomplete="off" />
       </k-form-field>
 
@@ -36,9 +37,29 @@
       </k-form-field>
     </div>
 
-    <k-form-field [label]="labels.status" inputId="student-status" [control]="form.controls.status">
-      <p-select inputId="student-status" formControlName="status" [options]="statusOptions" optionLabel="label"
-        optionValue="value" />
-    </k-form-field>
+    <div class="k-form-row">
+      <k-form-field [label]="labels.gender" inputId="student-gender" [control]="form.controls.gender">
+        <p-select inputId="student-gender" formControlName="gender" [options]="genderOptions" optionLabel="label"
+          optionValue="value" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.dateOfBirth" inputId="student-dob" [control]="form.controls.dateOfBirth">
+        <p-datepicker inputId="student-dob" formControlName="dateOfBirth" dateFormat="dd M yy" [showIcon]="true"
+          [maxDate]="today" />
+      </k-form-field>
+    </div>
+
+    <div class="k-form-row">
+      <k-form-field [label]="labels.admissionDate" inputId="student-admission-date"
+        [control]="form.controls.admissionDate" hint="When they joined the school.">
+        <p-datepicker inputId="student-admission-date" formControlName="admissionDate" dateFormat="dd M yy"
+          [showIcon]="true" [maxDate]="today" />
+      </k-form-field>
+
+      <k-form-field [label]="labels.status" inputId="student-status" [control]="form.controls.status">
+        <p-select inputId="student-status" formControlName="status" [options]="statusOptions" optionLabel="label"
+          optionValue="value" />
+      </k-form-field>
+    </div>
   </form>
 </k-form-dialog>

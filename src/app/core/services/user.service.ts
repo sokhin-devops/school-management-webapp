@@ -9,6 +9,8 @@ import { createTenantResource } from '../api/tenant-resource';
 export interface UserRecord extends User {
   roleName: string;
   branchNames: string[];
+  /** 67-security.md: signs in with a code from an authenticator app too. */
+  twoFactorEnabled?: boolean;
 }
 
 /** POST /api/v1/users is an invitation; PUT is an edit. They differ. */
@@ -83,5 +85,6 @@ function toUser(user: ApiTenantUser): UserRecord {
     roleName: user.roleName ?? '',
     // Resolved by the page, which already has the branches.
     branchNames: [],
+    twoFactorEnabled: user.twoFactorEnabled ?? false,
   };
 }

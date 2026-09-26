@@ -11,23 +11,29 @@ import {
   EmptyStateComponent,
   ListShellComponent,
   ListToolbarComponent,
+  RowActionsComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
-import { humanize, money } from '../../../share/data/format';
+import { humanize, money, readableDate } from '../../../share/data/format';
 import { PaymentRecord, PaymentService } from '../../../core/services/payment.service';
 import { PaymentMethod, PaymentStatus } from '../../../core/models';
 import { PaymentFormComponent } from './payment-form/payment-form.component';
 import { FeeService } from '../../../core/services/fee.service';
 import { StudentService } from '../../../core/services/student.service';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
 
 type Severity = 'success' | 'warn' | 'info' | 'danger' | 'secondary';
 
 /** 42-payments.md — payments against configured fees. */
 @Component({
   selector: 'app-payment',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     DatePipe,
     FormsModule,
     ButtonModule,
@@ -40,6 +46,8 @@ type Severity = 'success' | 'warn' | 'info' | 'danger' | 'secondary';
     ListToolbarComponent,
     EmptyStateComponent,
     PaymentFormComponent,
+    RowActionsComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './payment.component.html',
   styleUrl: './payment.component.scss',
@@ -127,22 +135,19 @@ export class PaymentComponent {
   protected readonly studentOptions = computed(() =>
     this.studentService
       .students()
-      .map((student) => ({
-        label: `${student.firstName} ${student.lastName}`,
-        value: `${student.firstName} ${student.lastName}`,
-      }))
+      .map((student) => ({ label: `${student.firstName} ${student.lastName}`, value: student.id }))
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
   protected readonly feeOptions = computed(() =>
     this.feeService
       .fees()
-      .map((fee) => ({ label: fee.name, value: fee.name }))
+      .map((fee) => ({ label: fee.name, value: fee.id }))
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -161,8 +166,50 @@ export class PaymentComponent {
   protected onSaved(payment: PaymentRecord): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.paymentService.save(payment).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.paymentService.save(payment), {
+      success: 'Payment saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<PaymentRecord | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: PaymentRecord): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: PaymentRecord): RecordDetail {
+    return {
+      title: r.reference || 'Payment',
+      subtitle: [r.studentName, r.feeName].filter(Boolean).join(' · '),
+      badge: { label: humanize(r.status), severity: this.severity(r.status) },
+      facts: [
+        { label: 'Amount', value: money(r.amount) },
+        { label: 'Paid on', value: readableDate(r.date) },
+        { label: 'Method', value: humanize(r.method) },
+        { label: 'Paid by', value: r.payerName },
+        { label: 'Student', value: r.studentName },
+        { label: 'Fee', value: r.feeName },
+        { label: 'Notes', value: r.notes, wide: true },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: PaymentRecord, name: string): void {
+    this.removal.confirm({
+      noun: 'payment',
+      name,
+      // Said because it is the thing a finance reader will check: deleting is
+      // for an entry made by mistake. Money that came back is a refund.
+      consequence: 'It will no longer count toward collected totals. To record money returned, edit it to Refunded instead.',
+      remove: () => this.paymentService.remove(record.id),
     });
   }
 }

@@ -55,3 +55,56 @@
 :host-context(.app-dark) .k-usage-bar.is-warning {
   background: #fab219;
 }
+
+// --- The plan picker in Change plan -------------------------------------------
+//
+// Scoped styles do reach here: the dialog's content is projected from this
+// template, so these elements carry this component's attribute.
+
+.k-plan-choices {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.k-plan-choice {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--p-content-border-color);
+  border-radius: 10px;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    border-color: var(--p-primary-color);
+  }
+
+  &.is-chosen {
+    border-color: var(--p-primary-color);
+    box-shadow: 0 0 0 1px var(--p-primary-color);
+  }
+}
+
+.k-plan-name {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 600;
+}
+
+.k-plan-price {
+  font-size: 0.875rem;
+  font-weight: 600;
+  color: var(--p-primary-color);
+}
+
+.k-plan-limits {
+  font-size: 0.75rem;
+  color: var(--p-text-muted-color);
+}

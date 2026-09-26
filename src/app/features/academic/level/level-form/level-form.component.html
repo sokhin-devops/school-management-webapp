@@ -16,10 +16,13 @@
     </div>
 
     <div class="k-form-row">
-      <k-form-field [label]="labels.programName" inputId="level-programname" [control]="form.controls.programName">
-        <p-select inputId="level-programname" formControlName="programName" [options]="programChoices()" optionLabel="label"
-          optionValue="value" placeholder="Select a programme" [filter]="true" filterBy="label" />
-      </k-form-field>
+      @if (academic.settings().usePrograms) {
+        <k-form-field [label]="labels.programId" inputId="level-program" [control]="form.controls.programId"
+          hint="Optional.">
+          <p-select inputId="level-program" formControlName="programId" [options]="programChoices()" optionLabel="label"
+            optionValue="value" placeholder="None" [showClear]="true" [filter]="true" filterBy="label" />
+        </k-form-field>
+      }
 
       <k-form-field [label]="labels.order" inputId="level-order" [control]="form.controls.order"
         hint="Where this level sits in the sequence.">

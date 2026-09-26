@@ -1,6 +1,6 @@
 <k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
   [title]="isEdit() ? 'Edit fee' : 'Add fee'"
-  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a fee to the current academic year.'"
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add a fee this branch charges.'"
   [saveLabel]="isEdit() ? 'Save changes' : 'Add fee'" width="38rem" (save)="onSave()">
   <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
     <div class="k-form-row">
@@ -17,7 +17,7 @@
 
     <div class="k-form-row">
       <k-form-field [label]="labels.amount" inputId="fee-amount" [control]="form.controls.amount">
-        <p-inputnumber inputId="fee-amount" formControlName="amount" mode="currency" currency="USD" locale="en-US"
+        <p-inputnumber inputId="fee-amount" formControlName="amount" mode="currency" [currency]="currency()" locale="en-US"
           [min]="0" />
       </k-form-field>
 
@@ -26,6 +26,12 @@
           optionValue="value" />
       </k-form-field>
     </div>
+
+    <k-form-field [label]="labels.academicYearId" inputId="fee-year" [control]="form.controls.academicYearId"
+      hint="Optional. Leave empty for a fee that is not tied to one year.">
+      <p-select inputId="fee-year" formControlName="academicYearId" [options]="yearChoices()" optionLabel="label"
+        optionValue="value" placeholder="Any year" [showClear]="true" />
+    </k-form-field>
 
     <k-form-field [label]="labels.description" inputId="fee-description" [control]="form.controls.description"
       hint="Optional. What the fee covers.">

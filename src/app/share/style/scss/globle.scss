@@ -422,3 +422,207 @@ body {
   line-height: 1.4;
   text-align: center;
 }
+
+// --- Topbar panels: Help and Notifications -----------------------------------
+//
+// Global for the same reason as the branch panel: PrimeNG appends popovers to
+// <body>, out of reach of the topbar's scoped styles.
+
+.k-topbar-panel {
+  width: min(22rem, calc(100vw - 2rem));
+
+  .p-popover-content {
+    padding: 0;
+  }
+}
+
+.k-panel-title {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: var(--p-text-muted-color);
+}
+
+.k-help {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 1rem;
+
+  section {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+}
+
+.k-help-steps {
+  display: flex;
+  flex-direction: column;
+  gap: 0.375rem;
+  padding-inline-start: 1.25rem;
+  font-size: 0.8125rem;
+
+  a {
+    color: var(--p-primary-color);
+    text-decoration: none;
+  }
+
+  a:hover,
+  a:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+.k-help-keys {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 0.375rem 0.75rem;
+  align-items: baseline;
+  margin: 0;
+  font-size: 0.8125rem;
+
+  dt {
+    white-space: nowrap;
+  }
+
+  dd {
+    margin: 0;
+    color: var(--p-text-muted-color);
+  }
+}
+
+kbd {
+  display: inline-block;
+  min-width: 1.5rem;
+  padding: 0.0625rem 0.375rem;
+  border: 1px solid var(--p-content-border-color);
+  border-bottom-width: 2px;
+  border-radius: 4px;
+  font-family: inherit;
+  font-size: 0.6875rem;
+  text-align: center;
+  background: var(--p-content-background);
+}
+
+.k-help-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  color: var(--p-primary-color);
+  text-decoration: none;
+
+  .pi {
+    font-size: 0.6875rem;
+  }
+}
+
+.k-bell {
+  display: flex;
+  flex-direction: column;
+}
+
+.k-bell-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.5rem 0.5rem 0.5rem 1rem;
+  border-bottom: 1px solid var(--p-content-border-color);
+}
+
+.k-bell-list {
+  max-height: 22rem;
+  overflow-y: auto;
+  margin: 0;
+  padding: 0.25rem;
+  list-style: none;
+}
+
+.k-bell-item {
+  display: flex;
+  gap: 0.625rem;
+  width: 100%;
+  padding: 0.625rem 0.75rem;
+  border: 0;
+  border-radius: 8px;
+  text-align: start;
+  font: inherit;
+  color: inherit;
+  background: transparent;
+  cursor: pointer;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--p-content-hover-background);
+  }
+}
+
+// Read items keep their place but step back; the dot says which are new.
+.k-bell-dot {
+  flex-shrink: 0;
+  width: 0.5rem;
+  height: 0.5rem;
+  margin-top: 0.375rem;
+  border-radius: 50%;
+  background: transparent;
+}
+
+.k-bell-item.is-unread .k-bell-dot {
+  background: var(--p-primary-color);
+}
+
+.k-bell-text {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.k-bell-title {
+  font-size: 0.8125rem;
+  font-weight: 600;
+}
+
+.k-bell-item:not(.is-unread) .k-bell-title {
+  font-weight: 500;
+  color: var(--p-text-muted-color);
+}
+
+.k-bell-message {
+  font-size: 0.75rem;
+  line-height: 1.4;
+  color: var(--p-text-muted-color);
+  overflow-wrap: anywhere;
+}
+
+.k-bell-time {
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+}
+
+.k-bell-empty {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 1.5rem 1rem;
+  font-size: 0.8125rem;
+  color: var(--p-text-muted-color);
+}
+
+.k-bell-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.625rem 1rem;
+  border-top: 1px solid var(--p-content-border-color);
+  font-size: 0.8125rem;
+  color: var(--p-primary-color);
+  text-decoration: none;
+
+  &:hover,
+  &:focus-visible {
+    background: var(--p-content-hover-background);
+  }
+}

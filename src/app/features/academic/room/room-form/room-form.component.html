@@ -15,13 +15,13 @@
     </div>
 
     <div class="k-form-row">
-      <k-form-field [label]="labels.building" inputId="room-building" [control]="form.controls.building">
+      <k-form-field [label]="labels.building" inputId="room-building" [control]="form.controls.building" hint="Optional.">
         <input pInputText id="room-building" formControlName="building" autocomplete="off" placeholder="Main Block" />
       </k-form-field>
 
-      <k-form-field [label]="labels.kind" inputId="room-kind" [control]="form.controls.kind">
+      <k-form-field [label]="labels.kind" inputId="room-kind" [control]="form.controls.kind" hint="Optional.">
         <p-select inputId="room-kind" formControlName="kind" [options]="kindChoices()" optionLabel="label"
-          optionValue="value" placeholder="Select a kind" [editable]="true" />
+          optionValue="value" placeholder="Choose or type a kind" [editable]="true" [showClear]="true" />
       </k-form-field>
     </div>
 

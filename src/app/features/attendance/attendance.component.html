@@ -3,8 +3,8 @@
     <p-datepicker [(ngModel)]="date" [showIcon]="true" size="small" dateFormat="d M yy" inputId="attendance-date"
       ariaLabel="Attendance date" styleClass="k-attendance-date" />
 
-    <p-select styleClass="k-list-filter" [options]="classOptions()" [ngModel]="className()"
-      (ngModelChange)="className.set($event)" optionLabel="label" optionValue="value" placeholder="Select class"
+    <p-select styleClass="k-list-filter" [options]="classOptions()" [ngModel]="classGroupId()"
+      (ngModelChange)="classGroupId.set($event)" optionLabel="label" optionValue="value" placeholder="Select class"
       size="small" [filter]="true" filterBy="label" ariaLabel="Class" />
 
     <p-selectbutton [options]="sessionOptions" [ngModel]="session()" (ngModelChange)="session.set($event)"
@@ -19,7 +19,14 @@
 
     <p-button label="Reset" icon="pi pi-replay" size="small" severity="secondary" [text]="true"
       (onClick)="markAllPresent()" />
-    <p-button label="Save attendance" icon="pi pi-check" size="small" />
+    <p-button label="Save attendance" icon="pi pi-check" size="small" [loading]="saving()"
+      [disabled]="!classGroupId()" (onClick)="saveRegister()" />
+    @if (savedAt(); as note) {
+      <span class="k-list-count">{{ note }}</span>
+    }
+    @if (registerError(); as failure) {
+      <span class="k-list-count">{{ failure }}</span>
+    }
   </div>
 
   @if (roster().length) {
@@ -41,7 +48,7 @@
                 <p-avatar [label]="initials(row.student)" shape="circle" styleClass="k-person-cell-avatar" />
                 <div class="k-person-cell-identity">
                   <span class="k-person-cell-name">{{ fullName(row.student) }}</span>
-                  <span class="k-person-cell-sub">{{ row.student.className }}</span>
+                  <span class="k-person-cell-sub">{{ row.student.studentDetails?.admissionNumber }}</span>
                 </div>
               </div>
             </td>

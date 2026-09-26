@@ -1,30 +1,36 @@
 <div class="k-page-scroll">
   <k-settings-section title="Environment" description="What this installation is running. Read-only.">
-    <dl class="k-facts">
-      @for (fact of environment; track fact.label) {
+    @if (info(); as info) {
+      <dl class="k-facts">
         <div>
-          <dt class="k-fact-label">{{ fact.label }}</dt>
-          <dd class="k-fact-value">{{ fact.value }}</dd>
+          <dt class="k-fact-label">Version</dt>
+          <dd class="k-fact-value">{{ info.version }}</dd>
         </div>
-      }
-    </dl>
+        <div>
+          <dt class="k-fact-label">Environment</dt>
+          <dd class="k-fact-value">{{ info.environment }}</dd>
+        </div>
+        <div>
+          <dt class="k-fact-label">Database</dt>
+          <dd class="k-fact-value">{{ info.database }}</dd>
+        </div>
+        <div>
+          <dt class="k-fact-label">Running since</dt>
+          <dd class="k-fact-value">{{ info.startedAt | date: 'd MMM y, HH:mm' }}</dd>
+        </div>
+      </dl>
+    } @else {
+      <p-skeleton height="3rem" />
+    }
   </k-settings-section>
 
-  <k-settings-section title="Data" description="Exporting, importing and how long records are kept.">
-    <div class="grid">
-      <div class="col-12 md:col-5">
-        <div class="k-field">
-          <label class="k-field-label" for="retention">Data retention</label>
-          <p-select inputId="retention" [options]="retentionOptions" [(ngModel)]="retention" optionLabel="label"
-            optionValue="value" size="small" />
-          <span class="k-field-hint">How long archived records are kept before deletion.</span>
-        </div>
-      </div>
-    </div>
+  <k-settings-section title="Data" description="Take a copy of everything the school has entered.">
+    <p class="k-pref-note">One JSON file with every school, branch, year, class, person, fee, payment, expense,
+      assessment and attendance record. Keep it somewhere safe: it contains personal data.</p>
 
     <ng-container k-actions>
-      <p-button label="Import data" icon="pi pi-upload" size="small" severity="secondary" [outlined]="true" />
-      <p-button label="Export all data" icon="pi pi-download" size="small" />
+      <p-button label="Export all data" icon="pi pi-download" size="small" [loading]="exporting()"
+        (onClick)="exportAll()" />
     </ng-container>
   </k-settings-section>
 
@@ -33,38 +39,72 @@
       <div>
         <div class="k-pref-title">Maintenance mode</div>
         <div class="k-pref-note">
-          Everyone except owners is signed out and shown a maintenance notice until this is turned off.
+          Everyone except owners is signed out at their next request and cannot sign in until this is turned off.
         </div>
       </div>
       <p-toggleswitch [(ngModel)]="maintenanceMode" ariaLabel="Maintenance mode" />
     </div>
 
     @if (maintenanceMode()) {
-      <p-message severity="warn" text="Maintenance mode is on. Staff and families cannot sign in." />
+      <p-message severity="warn" text="While this is on, staff and families cannot sign in." />
     }
 
     <ng-container k-actions>
-      <p-button label="Clear cache" icon="pi pi-refresh" size="small" severity="secondary" [outlined]="true" />
+      <p-button *kCan="'edit'" label="Save changes" icon="pi pi-check" size="small" [loading]="savingMaintenance()"
+        [disabled]="!maintenanceChanged()" (onClick)="saveMaintenance()" />
     </ng-container>
   </k-settings-section>
 
-  <k-settings-section title="Danger zone" description="These actions cannot be undone.">
-    <div class="k-danger">
-      <div class="k-pref-row">
-        <div>
-          <div class="k-pref-title">Delete all school data</div>
-          <div class="k-pref-note">Removes every student, staff, academic and finance record. Irreversible.</div>
+  @if (permissions.owner()) {
+    <k-settings-section title="Danger zone" description="These actions cannot be undone from the app.">
+      <div class="k-danger">
+        <div class="k-pref-row">
+          <div>
+            <div class="k-pref-title">Delete all school data</div>
+            <div class="k-pref-note">Removes every student, parent, teacher, class, program, level, subject, room, fee,
+              payment, expense, assessment and attendance record. The school, its branches, its academic years, its
+              users and its subscription stay. Only the owner can do this.</div>
+          </div>
+          <p-button label="Delete data" icon="pi pi-trash" size="small" severity="danger" [outlined]="true"
+            (onClick)="openDelete()" />
         </div>
-        <p-button label="Delete data" icon="pi pi-trash" size="small" severity="danger" [outlined]="true" />
       </div>
-
-      <div class="k-pref-row">
-        <div>
-          <div class="k-pref-title">Close this account</div>
-          <div class="k-pref-note">Ends the subscription and schedules the workspace for deletion.</div>
-        </div>
-        <p-button label="Close account" icon="pi pi-power-off" size="small" severity="danger" />
-      </div>
-    </div>
-  </k-settings-section>
+    </k-settings-section>
+  }
 </div>
+
+<p-dialog [visible]="deleteVisible()" (visibleChange)="deleteVisible.set($event)" [modal]="true" [draggable]="false"
+  [resizable]="false" [closable]="!deleting() && deleteResult() === null" [style]="{ width: '28rem' }"
+  [breakpoints]="{ '640px': '92vw' }" styleClass="k-form-dialog">
+  <ng-template #header>
+    <div class="k-form-dialog-head">
+      <h2 class="k-form-dialog-title">Delete all school data?</h2>
+      <p class="k-form-dialog-sub">This cannot be undone from the app.</p>
+    </div>
+  </ng-template>
+
+  <div class="k-form-dialog-body">
+    @if (deleteResult() === null) {
+      <p class="k-confirm-delete-message">Every student, staff, academic and finance record of
+        <strong>{{ schoolName() }}</strong> will be deleted. Export the data first if you may need it.</p>
+      <div class="k-field">
+        <label class="k-field-label" for="delete-confirm">Type the school's name to confirm</label>
+        <input pInputText pSize="small" id="delete-confirm" autocomplete="off" [ngModel]="deleteTyped()"
+          (ngModelChange)="deleteTyped.set($event)" [placeholder]="schoolName()" />
+      </div>
+    } @else {
+      <p-message severity="success" [text]="deleteResult() + ' records were deleted. The school is ready to be filled in again.'" />
+    }
+  </div>
+
+  <ng-template #footer>
+    @if (deleteResult() === null) {
+      <p-button label="Cancel" size="small" severity="secondary" [text]="true" [disabled]="deleting()"
+        (onClick)="deleteVisible.set(false)" />
+      <p-button label="Delete everything" icon="pi pi-trash" size="small" severity="danger" [loading]="deleting()"
+        [disabled]="!deleteConfirmed()" (onClick)="confirmDelete()" />
+    } @else {
+      <p-button label="Done" icon="pi pi-check" size="small" (onClick)="finishDelete()" />
+    }
+  </ng-template>
+</p-dialog>

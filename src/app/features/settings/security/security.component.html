@@ -1,135 +1,198 @@
 <div class="k-page-scroll">
-  <p-message severity="warn" text="These settings apply to every user in the school. Only owners and administrators can change them." />
+  <p-message severity="warn"
+    text="These settings apply to every user in the school. Only roles that can edit Settings can change them." />
 
-  <k-settings-section title="Password policy" description="Rules new and changed passwords must satisfy.">
-    <div class="grid">
-      <div class="col-12 md:col-4">
-        <div class="k-field">
-          <label class="k-field-label" for="min-length">Minimum length</label>
-          <p-inputnumber inputId="min-length" [(ngModel)]="minimumLength" [min]="6" [max]="32" [showButtons]="true"
-            size="small" />
+  @if (policyError(); as error) {
+    <k-settings-section title="Password policy" [description]="error">
+      <ng-container k-actions>
+        <p-button label="Try again" icon="pi pi-refresh" size="small" severity="secondary" [outlined]="true"
+          (onClick)="loadPolicy()" />
+      </ng-container>
+    </k-settings-section>
+  } @else {
+    @if (policy(); as policy) {
+      <k-settings-section title="Password policy"
+        description="Rules a password must meet when it is set or reset. Existing passwords are checked at their next change.">
+        <div class="grid">
+          <div class="col-12 md:col-4">
+            <div class="k-field">
+              <label class="k-field-label" for="min-length">Minimum length</label>
+              <p-inputnumber inputId="min-length" [ngModel]="policy.passwordMinLength"
+                (ngModelChange)="set('passwordMinLength', $event ?? 8)" [min]="8" [max]="64" [showButtons]="true"
+                size="small" />
+              <span class="k-field-hint">Never fewer than 8.</span>
+            </div>
+          </div>
+          <div class="col-12 md:col-4">
+            <div class="k-field">
+              <label class="k-field-label" for="expiry">Password expiry</label>
+              <p-select inputId="expiry" [options]="expiryOptions" [ngModel]="policy.passwordExpiryDays"
+                (ngModelChange)="set('passwordExpiryDays', $event)" optionLabel="label" optionValue="value"
+                size="small" />
+              <span class="k-field-hint">An expired password must be reset before signing in.</span>
+            </div>
+          </div>
         </div>
-      </div>
-      <div class="col-12 md:col-4">
-        <div class="k-field">
-          <label class="k-field-label" for="expiry">Password expiry</label>
-          <p-select inputId="expiry" [options]="expiryOptions" [(ngModel)]="expiry" optionLabel="label"
-            optionValue="value" size="small" />
-        </div>
-      </div>
-    </div>
 
-    <div>
-      <div class="k-pref-row">
         <div>
-          <div class="k-pref-title">Require an uppercase letter</div>
-          <div class="k-pref-note">At least one A–Z character.</div>
+          <div class="k-pref-row">
+            <div>
+              <div class="k-pref-title">Require an uppercase letter</div>
+              <div class="k-pref-note">At least one A–Z character.</div>
+            </div>
+            <p-toggleswitch [ngModel]="policy.passwordRequireUppercase"
+              (ngModelChange)="set('passwordRequireUppercase', $event)" ariaLabel="Require an uppercase letter" />
+          </div>
+          <div class="k-pref-row">
+            <div>
+              <div class="k-pref-title">Require a number</div>
+              <div class="k-pref-note">At least one digit.</div>
+            </div>
+            <p-toggleswitch [ngModel]="policy.passwordRequireNumber" (ngModelChange)="set('passwordRequireNumber', $event)"
+              ariaLabel="Require a number" />
+          </div>
+          <div class="k-pref-row">
+            <div>
+              <div class="k-pref-title">Require a symbol</div>
+              <div class="k-pref-note">At least one character that is not a letter or a digit.</div>
+            </div>
+            <p-toggleswitch [ngModel]="policy.passwordRequireSymbol" (ngModelChange)="set('passwordRequireSymbol', $event)"
+              ariaLabel="Require a symbol" />
+          </div>
         </div>
-        <p-toggleswitch [(ngModel)]="requireUppercase" ariaLabel="Require an uppercase letter" />
-      </div>
-      <div class="k-pref-row">
-        <div>
-          <div class="k-pref-title">Require a number</div>
-          <div class="k-pref-note">At least one digit.</div>
+
+        <ng-container k-actions>
+          <p-button *kCan="'edit'" label="Save changes" icon="pi pi-check" size="small" [loading]="saving()"
+            (onClick)="save()" />
+        </ng-container>
+      </k-settings-section>
+
+      <k-settings-section title="Sign-in" description="How people authenticate and how long a session lasts.">
+        <div class="k-pref-row">
+          <div>
+            <div class="k-pref-title">Require two-factor authentication</div>
+            <div class="k-pref-note">A second step at sign-in, from an authenticator app. Anyone without it is asked
+              to set it up before they can go on. Set it up for yourself first, from your name at the top right.</div>
+          </div>
+          @if (policy.twoFactorAvailable) {
+            <p-toggleswitch [ngModel]="policy.twoFactorRequired" (ngModelChange)="set('twoFactorRequired', $event)"
+              ariaLabel="Require two-factor authentication" />
+          } @else {
+            <p-tag value="Coming soon" severity="secondary" />
+          }
         </div>
-        <p-toggleswitch [(ngModel)]="requireNumber" ariaLabel="Require a number" />
-      </div>
-      <div class="k-pref-row">
-        <div>
-          <div class="k-pref-title">Require a symbol</div>
-          <div class="k-pref-note">At least one non-alphanumeric character.</div>
+
+        <div class="k-pref-row">
+          <div>
+            <div class="k-pref-title">Sign out everywhere on password reset</div>
+            <div class="k-pref-note">Ends every session of an account when its password is reset.</div>
+          </div>
+          <p-toggleswitch [ngModel]="policy.signOutOnPasswordChange"
+            (ngModelChange)="set('signOutOnPasswordChange', $event)" ariaLabel="Sign out everywhere on password reset" />
         </div>
-        <p-toggleswitch [(ngModel)]="requireSymbol" ariaLabel="Require a symbol" />
+
+        <div class="grid">
+          <div class="col-12 md:col-4">
+            <div class="k-field">
+              <label class="k-field-label" for="timeout">Session timeout</label>
+              <p-select inputId="timeout" [options]="timeoutOptions" [ngModel]="policy.sessionTimeoutMinutes"
+                (ngModelChange)="set('sessionTimeoutMinutes', $event)" optionLabel="label" optionValue="value"
+                size="small" />
+              <span class="k-field-hint">A session left unused this long has to sign in again.</span>
+            </div>
+          </div>
+        </div>
+
+        <ng-container k-actions>
+          <p-button *kCan="'edit'" label="Save changes" icon="pi pi-check" size="small" [loading]="saving()"
+            (onClick)="save()" />
+        </ng-container>
+      </k-settings-section>
+    } @else {
+      <p-skeleton height="16rem" styleClass="mb-3" />
+      <p-skeleton height="12rem" styleClass="mb-3" />
+    }
+  }
+
+  <k-settings-section title="Active sessions" description="Where your account is signed in right now.">
+    @if (sessions(); as sessions) {
+      <div class="k-table-wrap k-report-table">
+        <p-table class="k-table" [value]="sessions" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 30%">Device</th>
+              <th style="width: 20%">IP address</th>
+              <th style="width: 16%">Signed in</th>
+              <th style="width: 16%">Last active</th>
+              <th style="width: 18%" class="text-right">Action</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td class="k-cell-strong">{{ row.device }}</td>
+              <td class="k-numeric">{{ row.ipAddress ?? '—' }}</td>
+              <td class="k-numeric">{{ row.startedAt | date: 'd MMM, HH:mm' }}</td>
+              <td class="k-numeric">{{ row.lastSeenAt | date: 'd MMM, HH:mm' }}</td>
+              <td class="text-right">
+                @if (row.current) {
+                  <span class="k-field-hint">This device</span>
+                } @else {
+                  <p-button label="Sign out" size="small" severity="danger" [text]="true"
+                    [loading]="revoking() === row.id" (onClick)="revoke(row)" />
+                }
+              </td>
+            </tr>
+          </ng-template>
+        </p-table>
       </div>
-    </div>
+    } @else {
+      <p-skeleton height="6rem" />
+    }
+  </k-settings-section>
+
+  <k-settings-section title="Audit log" description="The school's latest security events, newest first.">
+    @if (auditError(); as error) {
+      <p class="k-field-hint">{{ error }}</p>
+    } @else {
+      @if (audit(); as audit) {
+        <div class="k-table-wrap k-report-table">
+          <p-table class="k-table" [value]="audit" styleClass="p-datatable-sm">
+            <ng-template pTemplate="header">
+              <tr>
+                <th style="width: 22%">Who</th>
+                <th style="width: 40%">Event</th>
+                <th style="width: 20%">When</th>
+                <th style="width: 18%">IP address</th>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="body" let-row>
+              <tr>
+                <td class="k-cell-strong">{{ row.actorName }}</td>
+                <td>
+                  {{ actionLabel(row.action) }}
+                  @if (row.detail) {
+                    <span class="k-audit-detail">{{ row.detail }}</span>
+                  }
+                </td>
+                <td class="k-numeric">{{ row.occurredAt | date: 'd MMM y, HH:mm' }}</td>
+                <td class="k-numeric">{{ row.ipAddress ?? '—' }}</td>
+              </tr>
+            </ng-template>
+            <ng-template pTemplate="emptymessage">
+              <tr>
+                <td colspan="4" class="k-field-hint">Nothing recorded yet.</td>
+              </tr>
+            </ng-template>
+          </p-table>
+        </div>
+      } @else {
+        <p-skeleton height="10rem" />
+      }
+    }
 
     <ng-container k-actions>
-      <p-button label="Save changes" icon="pi pi-check" size="small" />
+      <p-button label="Refresh" icon="pi pi-refresh" size="small" severity="secondary" [text]="true"
+        (onClick)="loadAudit()" />
     </ng-container>
-  </k-settings-section>
-
-  <k-settings-section title="Sign-in" description="How people authenticate and how long a session lasts.">
-    <div class="k-pref-row">
-      <div>
-        <div class="k-pref-title">Require two-factor authentication</div>
-        <div class="k-pref-note">Staff accounts must confirm a second factor at sign-in.</div>
-      </div>
-      <p-toggleswitch [(ngModel)]="twoFactor" ariaLabel="Require two-factor authentication" />
-    </div>
-
-    <div class="k-pref-row">
-      <div>
-        <div class="k-pref-title">Sign out everywhere on password change</div>
-        <div class="k-pref-note">Ends every other session when a password is changed.</div>
-      </div>
-      <p-toggleswitch [(ngModel)]="signOutOnPasswordChange" ariaLabel="Sign out everywhere on password change" />
-    </div>
-
-    <div class="grid">
-      <div class="col-12 md:col-4">
-        <div class="k-field">
-          <label class="k-field-label" for="timeout">Session timeout</label>
-          <p-select inputId="timeout" [options]="timeoutOptions" [(ngModel)]="sessionTimeout" optionLabel="label"
-            optionValue="value" size="small" />
-          <span class="k-field-hint">Inactive sessions end after this long.</span>
-        </div>
-      </div>
-    </div>
-
-    <ng-container k-actions>
-      <p-button label="Save changes" icon="pi pi-check" size="small" />
-    </ng-container>
-  </k-settings-section>
-
-  <k-settings-section title="Active sessions" description="Devices currently signed in to your account.">
-    <div class="k-table-wrap k-report-table">
-      <p-table class="k-table" [value]="sessions" styleClass="p-datatable-sm">
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 34%">Device</th>
-            <th style="width: 26%">Location</th>
-            <th style="width: 22%">Last active</th>
-            <th style="width: 18%" class="text-right">Action</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            <td class="k-cell-strong">{{ row.device }}</td>
-            <td>{{ row.location }}</td>
-            <td>{{ row.lastActive }}</td>
-            <td class="text-right">
-              @if (row.current) {
-                <span class="k-field-hint">This device</span>
-              } @else {
-                <p-button label="Revoke" size="small" severity="danger" [text]="true" />
-              }
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
-  </k-settings-section>
-
-  <k-settings-section title="Audit log" description="Recent security events across the school.">
-    <div class="k-table-wrap k-report-table">
-      <p-table class="k-table" [value]="audit" styleClass="p-datatable-sm">
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 26%">Who</th>
-            <th style="width: 36%">Event</th>
-            <th style="width: 20%">When</th>
-            <th style="width: 18%">IP address</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            <td class="k-cell-strong">{{ row.actor }}</td>
-            <td>{{ row.action }}</td>
-            <td>{{ row.time }}</td>
-            <td class="k-numeric">{{ row.ip }}</td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
   </k-settings-section>
 </div>

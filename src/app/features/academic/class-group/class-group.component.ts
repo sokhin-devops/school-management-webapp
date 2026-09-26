@@ -11,6 +11,8 @@ import {
   ListToolbarComponent,
   RowActionsComponent,
   StatusTagComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { ClassGroupRecord, ClassGroupService } from '../../../core/services/class-group.service';
@@ -18,10 +20,14 @@ import { Status } from '../../../core/models';
 import { ClassGroupFormComponent } from './class-group-form/class-group-form.component';
 import { ProgramService } from '../../../core/services/program.service';
 import { TeacherService } from '../../../core/services/teacher.service';
+import { StudentService } from '../../../core/services/student.service';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
 import { AcademicYearService } from '../../../core/services/academic-year.service';
 import { LevelService } from '../../../core/services/level.service';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
+import { statusBadge } from '../../../share/data/format';
 
 type Fill = 'ok' | 'warning' | 'critical';
 
@@ -31,7 +37,8 @@ type Fill = 'ok' | 'warning' | 'critical';
  */
 @Component({
   selector: 'app-class-group',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     FormsModule,
     ButtonModule,
     SelectModule,
@@ -44,6 +51,7 @@ type Fill = 'ok' | 'warning' | 'critical';
     RowActionsComponent,
     StatusTagComponent,
     ClassGroupFormComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './class-group.component.html',
   styleUrl: './class-group.component.scss',
@@ -54,6 +62,7 @@ export class ClassGroupComponent {
   private readonly academicYearService = inject(AcademicYearService);
   private readonly programService = inject(ProgramService);
   private readonly teacherService = inject(TeacherService);
+  private readonly studentService = inject(StudentService);
 
   protected readonly levelFilter = new RecordFilter<ClassGroupRecord, string>(
     (group, value) => group.levelName === value,
@@ -72,8 +81,17 @@ export class ClassGroupComponent {
       this.teacherService.teachers().map((teacher) => [teacher.id, `${teacher.firstName} ${teacher.lastName}`]),
     );
 
+    // Counted from the students placed in each class; nothing else knows it.
+    const enrolled = new Map<string, number>();
+    for (const student of this.studentService.students()) {
+      if (student.classGroupId) {
+        enrolled.set(student.classGroupId, (enrolled.get(student.classGroupId) ?? 0) + 1);
+      }
+    }
+
     return this.classGroupService.classes().map((group) => ({
       ...group,
+      enrolled: enrolled.get(group.id) ?? 0,
       levelName: group.levelId ? (levels.get(group.levelId) ?? '') : '',
       programName: group.programId ? (programs.get(group.programId) ?? '') : '',
       academicYearName: years.get(group.academicYearId) ?? '',
@@ -124,23 +142,8 @@ export class ClassGroupComponent {
     const percent = this.percentFull(group);
     return percent >= 100 ? 'critical' : percent >= 85 ? 'warning' : 'ok';
   }
-  /** A class is placed on a real programme and given a real member of staff. */
-  protected readonly programOptions = computed(() =>
-    this.programService
-      .programs()
-      .map((program) => ({ label: program.name, value: program.name }))
-      .sort((a, b) => a.label.localeCompare(b.label)),
-  );
-
-  protected readonly teacherOptions = computed(() =>
-    this.teacherService
-      .teachers()
-      .map((teacher) => ({ label: `${teacher.firstName} ${teacher.lastName}`, value: `${teacher.firstName} ${teacher.lastName}` }))
-      .sort((a, b) => a.label.localeCompare(b.label)),
-  );
-
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -163,8 +166,46 @@ export class ClassGroupComponent {
   protected onSaved(group: ClassGroupRecord): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.classGroupService.save(group).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.classGroupService.save(group), {
+      success: 'Class saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<ClassGroupRecord | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: ClassGroupRecord): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: ClassGroupRecord): RecordDetail {
+    return {
+      title: r.name,
+      subtitle: r.code,
+      badge: statusBadge(r.status),
+      facts: [
+        { label: 'Level', value: r.levelName },
+        { label: 'Program', value: r.programName },
+        { label: 'Academic year', value: r.academicYearName },
+        { label: 'Homeroom teacher', value: r.teacherName },
+        { label: 'Enrolled', value: r.capacity ? `${r.enrolled} of ${r.capacity}` : r.enrolled },
+        { label: 'Capacity', value: r.capacity },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: ClassGroupRecord, name: string): void {
+    this.removal.confirm({
+      noun: 'class',
+      name,
+      remove: () => this.classGroupService.remove(record.id),
     });
   }
 }

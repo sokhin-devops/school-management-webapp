@@ -25,10 +25,10 @@
       </k-form-field>
     </div>
 
-    <k-form-field [label]="labels.children" inputId="parent-children" [control]="form.controls.children"
+    <k-form-field [label]="labels.studentIds" inputId="parent-children" [control]="form.controls.studentIds"
       hint="Pick from students already on the roster.">
-      <p-multiselect inputId="parent-children" formControlName="children" [options]="childOptions()" optionLabel="label"
-        optionValue="value" placeholder="Select children" display="chip" [filter]="true" filterBy="label" />
+      <p-multiselect inputId="parent-children" formControlName="studentIds" [options]="childOptions()" optionLabel="label"
+        optionValue="value" placeholder="None yet" display="chip" [filter]="true" filterBy="label" />
     </k-form-field>
 
     <div class="k-form-row">

@@ -12,14 +12,19 @@ import {
   ListToolbarComponent,
   RowActionsComponent,
   StatusTagComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { LevelRecord, LevelService } from '../../../core/services/level.service';
 import { Status } from '../../../core/models';
 import { LevelFormComponent } from './level-form/level-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
 import { ProgramService } from '../../../core/services/program.service';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
+import { statusBadge } from '../../../share/data/format';
 
 /**
  * 22-levels.md — configurable academic stages. The displayed terminology is the
@@ -28,7 +33,8 @@ import { ProgramService } from '../../../core/services/program.service';
  */
 @Component({
   selector: 'app-level',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     FormsModule,
     ButtonModule,
     SelectModule,
@@ -42,6 +48,7 @@ import { ProgramService } from '../../../core/services/program.service';
     RowActionsComponent,
     StatusTagComponent,
     LevelFormComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './level.component.html',
   styleUrl: './level.component.scss',
@@ -95,8 +102,8 @@ export class LevelComponent {
       .sort((a, b) => a.localeCompare(b))
       .map((programName) => ({ label: programName, value: programName })),
   );
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -119,8 +126,42 @@ export class LevelComponent {
   protected onSaved(level: LevelRecord): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.levelService.save(level).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.levelService.save(level), {
+      success: 'Level saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<LevelRecord | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: LevelRecord): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: LevelRecord): RecordDetail {
+    return {
+      title: r.name,
+      subtitle: r.displayLabel,
+      badge: statusBadge(r.status),
+      facts: [
+        { label: 'Program', value: r.programName },
+        { label: 'Order', value: r.order },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: LevelRecord, name: string): void {
+    this.removal.confirm({
+      noun: 'level',
+      name,
+      remove: () => this.levelService.remove(record.id),
     });
   }
 }

@@ -1,5 +1,7 @@
 import { Routes } from '@angular/router';
 import { authGuard } from './core/guards/auth.guard';
+import { permissionGuard } from './core/guards/permission.guard';
+import { twoFactorGuard } from './core/guards/two-factor.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'login' },
@@ -32,9 +34,19 @@ export const routes: Routes = [
       import('./features/onboarding/school-setup/school-setup.component').then((m) => m.SchoolSetupComponent),
   },
   {
+    // 67-security.md: where a school that requires two-factor sends anyone who has not set it up.
+    path: 'two-factor-setup',
+    canActivate: [authGuard],
+    loadComponent: () =>
+      import('./features/account/two-factor-page/two-factor-page.component').then((m) => m.TwoFactorPageComponent),
+  },
+  {
     path: '',
     loadComponent: () => import('./features/layouts/layout/layout.component').then((m) => m.LayoutComponent),
-    canActivate: [authGuard],
+    canActivate: [authGuard, twoFactorGuard],
+    // Applied to the children rather than to each route: a module added later
+    // is guarded by being here, not by remembering to guard it.
+    canActivateChild: [permissionGuard],
     children: [
       { path: '', pathMatch: 'full', redirectTo: 'dashboard' },
       {

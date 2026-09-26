@@ -36,3 +36,157 @@
 .k-tile .p-card-content {
   gap: 0.375rem;
 }
+
+// A quiet link in a card's head, where a "View all" button would be too loud.
+.k-card-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--p-primary-color);
+  text-decoration: none;
+  white-space: nowrap;
+
+  .pi {
+    font-size: 0.6875rem;
+  }
+
+  &:hover,
+  &:focus-visible {
+    text-decoration: underline;
+  }
+}
+
+// --- Feeds: a list of events, each with an icon or avatar ---------------------
+//
+// Shared rather than the dashboard's own: any card that lists what happened
+// reads the same way.
+
+.k-feed-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.75rem;
+  padding: 0.625rem 0;
+}
+
+.k-feed-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 2rem;
+  height: 2rem;
+  border-radius: 999px;
+  font-size: 0.8125rem;
+
+  &.is-info {
+    background: var(--k-info-wash);
+    color: var(--k-info);
+  }
+
+  &.is-success {
+    background: var(--k-good-wash);
+    color: var(--k-good);
+  }
+
+  &.is-warning {
+    background: var(--k-warning-wash);
+    color: var(--k-warning);
+  }
+}
+
+.k-feed-body {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+  min-width: 0;
+}
+
+.k-feed-message {
+  font-size: 0.8125rem;
+  color: var(--p-text-color);
+}
+
+.k-feed-empty {
+  padding: 1.5rem 0;
+  text-align: center;
+  font-size: 0.8125rem;
+}
+
+
+.k-feed {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.k-feed-row + .k-feed-row {
+  border-top: 1px solid var(--p-content-border-color);
+}
+
+.k-feed-time {
+  font-size: 0.6875rem;
+  color: var(--p-text-muted-color);
+}
+
+// --- Meters: how full something is, as a bar ------------------------------------
+
+.k-meters {
+  flex: 1;
+  justify-content: space-between;
+  gap: 0.875rem;
+}
+
+.k-meter-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 0.5rem;
+  margin-bottom: 0.375rem;
+  font-size: 0.8125rem;
+}
+
+.k-meter-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  color: var(--p-text-color);
+
+  .pi {
+    font-size: 0.75rem;
+  }
+
+  .pi-exclamation-triangle {
+    color: var(--k-warning);
+  }
+
+  .pi-exclamation-circle {
+    color: var(--k-critical);
+  }
+}
+
+// The unfilled track is a lighter step of the fill's own ramp, so the state
+// reads across the whole bar rather than only its filled part.
+.k-meter-track {
+  height: 6px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: var(--k-accent-wash);
+}
+
+.k-meter-fill {
+  display: block;
+  height: 100%;
+  border-radius: 999px;
+  background: var(--p-primary-color);
+
+  &.is-warning {
+    background: var(--k-warning);
+  }
+
+  &.is-critical {
+    background: var(--k-critical);
+  }
+}
+

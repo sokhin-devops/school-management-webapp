@@ -39,7 +39,8 @@ export class ParentFormComponent {
     firstName: ['', [Validators.required, Validators.maxLength(40)]],
     lastName: ['', [Validators.required, Validators.maxLength(40)]],
     relationship: ['', Validators.required],
-    children: [[] as string[], Validators.required],
+    // By id, and optional: a parent can be registered before their child is.
+    studentIds: [[] as string[]],
     status: [Status.Active, Validators.required],
     email: ['', [Validators.required, Validators.email]],
     phone: ['', Validators.required],
@@ -52,13 +53,12 @@ export class ParentFormComponent {
     { label: 'Inactive', value: Status.Inactive },
   ];
 
-  /** Children are picked from the roster, so a parent cannot be linked to a student who does not exist. */
+  /** Children are picked from the roster by id, so a parent cannot be linked to a student who does not exist. */
   protected readonly childOptions = computed(() =>
     this.studentService
       .students()
-      .map((student) => `${student.firstName} ${student.lastName}`)
-      .sort((a, b) => a.localeCompare(b))
-      .map((name) => ({ label: name, value: name })),
+      .map((student) => ({ label: `${student.firstName} ${student.lastName}`, value: student.id }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
   protected readonly isEdit = computed(() => this.parent() !== null);
@@ -67,7 +67,7 @@ export class ParentFormComponent {
     firstName: 'First name',
     lastName: 'Last name',
     relationship: 'Relationship',
-    children: 'Children',
+    studentIds: 'Children',
     status: 'Status',
     email: 'Email',
     phone: 'Phone',
@@ -89,7 +89,6 @@ export class ParentFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: ParentRecord | null): void {
@@ -97,7 +96,7 @@ export class ParentFormComponent {
       firstName: record?.firstName ?? '',
       lastName: record?.lastName ?? '',
       relationship: record?.relationship ?? '',
-      children: [...(record?.children ?? [])],
+      studentIds: [...(record?.parentDetails?.studentPersonIds ?? [])],
       status: record?.status ?? Status.Active,
       email: record?.email ?? '',
       phone: record?.phone ?? '',
@@ -123,10 +122,12 @@ export class ParentFormComponent {
       phone: value.phone.trim(),
       status: value.status,
       relationship: value.relationship,
-      children: value.children,
+      children: this.childOptions()
+        .filter((choice) => value.studentIds.includes(choice.value))
+        .map((choice) => choice.label),
       parentDetails: {
         ...existing?.parentDetails,
-        studentPersonIds: value.children.map((child) => child.toLowerCase().replace(/\s+/g, '-')),
+        studentPersonIds: value.studentIds,
       },
     };
   }

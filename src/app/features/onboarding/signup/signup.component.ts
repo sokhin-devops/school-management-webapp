@@ -1,5 +1,5 @@
 import { Component, inject, signal } from '@angular/core';
-import { Router, RouterLink } from '@angular/router';
+import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder,Validators } from '@angular/forms';
 import { HttpErrorResponse } from '@angular/common/http';
 import { MessageService } from 'primeng/api';
@@ -20,6 +20,7 @@ const PASSWORD_STRENGTH_PATTERN = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).+$/;
 export class SignupComponent {
   private readonly fb = inject(FormBuilder);
   private readonly router = inject(Router);
+  private readonly route = inject(ActivatedRoute);
   private readonly onboarding = inject(OnboardingService);
   private readonly messageService = inject(MessageService);
   private readonly authService = inject(AuthenticationService);
@@ -49,7 +50,10 @@ export class SignupComponent {
     this.authService.register({ name, email, password, confirmPassword }).subscribe({
       next: () => {
         this.onboarding.setAccount({ name, email });
-        this.router.navigateByUrl('/onboarding/plan');
+        // A plan chosen on the marketing site's pricing table rides along, so
+        // the next step opens on it.
+        const plan = this.route.snapshot.queryParamMap.get('plan');
+        this.router.navigate(['/onboarding/plan'], { queryParams: plan ? { plan } : {} });
       },
       error: (error: HttpErrorResponse) => {
         this.submitting.set(false);

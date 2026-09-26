@@ -5,7 +5,9 @@
       <i class="pi pi-building"></i>
     </span>
     <span class="k-brand-text">
-      <span class="k-brand-name">Norton University</span>
+      <!-- The school's own name: the short one where it has one, since this is
+           the narrowest place it appears. -->
+      <span class="k-brand-name" [title]="schoolName()">{{ brandName() }}</span>
       <span class="k-brand-meta">School management</span>
     </span>
   </div>
@@ -17,7 +19,7 @@
       @if (layoutUi.sidebarCollapsed()) {
       <!-- Icons only (05-sidebar-navigation.md). Labels move to tooltips, children to popovers. -->
       <nav class="k-sidebar-rail">
-        @for (item of navItems; track item.label) {
+        @for (item of navItems(); track item.label) {
         <div class="k-rail-slot">
           <button type="button" class="k-rail-item" [class.k-rail-item-active]="isItemActive(item)"
             [pTooltip]="item.label" tooltipPosition="right" [attr.aria-label]="item.label"
@@ -34,7 +36,7 @@
         }
       </nav>
       } @else {
-      <p-panelmenu [model]="navItems" [multiple]="true" styleClass="k-sidebar-menu" />
+      <p-panelmenu [model]="navItems()" [multiple]="true" styleClass="k-sidebar-menu" />
       }
     </div>
   </p-scrollpanel>

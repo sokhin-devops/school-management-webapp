@@ -38,9 +38,12 @@ export class UserFormComponent {
   protected readonly form = this.formBuilder.nonNullable.group({
     fullName: ['', [Validators.required, Validators.maxLength(60)]],
     email: ['', [Validators.required, Validators.email, (control: AbstractControl) => this.uniqueEmail(control)]],
-    roleName: ['', Validators.required],
+    // Ids, not names: the invite and the update both carry the role and the
+    // branches by id, and a slug of a name is not one.
+    roleId: ['', Validators.required],
     status: [Status.Active, Validators.required],
-    branchNames: [[] as string[], Validators.required],
+    // Empty means every branch, as the API reads it.
+    branchIds: [[] as string[]],
   });
 
   protected readonly statusOptions = [
@@ -56,9 +59,9 @@ export class UserFormComponent {
   protected readonly labels = {
     fullName: 'Full name',
     email: 'Email',
-    roleName: 'Role',
+    roleId: 'Role',
     status: 'Status',
-    branchNames: 'Branches',
+    branchIds: 'Branches',
   } as const;
 
   constructor() {
@@ -79,16 +82,15 @@ export class UserFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: UserRecord | null): void {
     this.form.reset({
       fullName: record?.fullName ?? '',
       email: record?.email ?? '',
-      roleName: record?.roleName ?? '',
+      roleId: record?.roleId ?? '',
       status: record?.status ?? Status.Active,
-      branchNames: [...(record?.branchNames ?? [])],
+      branchIds: [...(record?.branchIds ?? [])],
     });
   }
 
@@ -104,10 +106,12 @@ export class UserFormComponent {
       // made every create look like an update of a record that never existed.
       fullName: value.fullName.trim(),
       email,
-      roleId: value.roleName.toLowerCase().replace(/\s+/g, '-'),
-      roleName: value.roleName,
-      branchIds: value.branchNames.map((name) => name.toLowerCase().replace(/\s+/g, '-')),
-      branchNames: value.branchNames,
+      roleId: value.roleId,
+      roleName: this.roleChoices().find((choice) => choice.value === value.roleId)?.label ?? '',
+      branchIds: value.branchIds,
+      branchNames: this.branchChoices()
+        .filter((choice) => value.branchIds.includes(choice.value))
+        .map((choice) => choice.label),
       status: value.status,
     };
   }

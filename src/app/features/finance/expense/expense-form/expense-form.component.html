@@ -16,7 +16,7 @@
 
     <div class="k-form-row">
       <k-form-field [label]="labels.amount" inputId="expense-amount" [control]="form.controls.amount">
-        <p-inputnumber inputId="expense-amount" formControlName="amount" mode="currency" currency="USD" locale="en-US"
+        <p-inputnumber inputId="expense-amount" formControlName="amount" mode="currency" [currency]="currency()" locale="en-US"
           [min]="0" />
       </k-form-field>
 

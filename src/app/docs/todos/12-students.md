@@ -76,10 +76,10 @@ Column geometry was read out of the live page rather than eyeballed — `th` ver
 
 ## Next, in navigation order
 
-- [ ] **Teachers** (`13-teachers.md`) — `TeacherService` mock + `teacher-card` over `k-person-card`; meta lines become employee number and subjects.
-- [ ] **Parents** (`14-parents.md`) — same shape; meta lines become linked children.
-- [ ] Student detail and create/edit form (`student-details`, `student-from`) — needs a spec for the modal/detail flow first.
-- [ ] Academic lists (Programs, Levels, Classes, Subjects, Rooms) — the kit should carry over unchanged; anything it cannot express is a gap in the kit, not a reason to fork a page.
+- [x] **Teachers** (`13-teachers.md`) — `TeacherService` mock + `teacher-card` over `k-person-card`; meta lines become employee number and subjects.
+- [x] **Parents** (`14-parents.md`) — same shape; meta lines become linked children.
+- [x] Student detail and create/edit form — the detail is the shared record drawer, the form a `k-form-dialog`; the `student-details` stub was deleted.
+- [x] Academic lists (Programs, Levels, Classes, Subjects, Rooms) — the kit should carry over unchanged; anything it cannot express is a gap in the kit, not a reason to fork a page.
 
 ## Out of scope
 

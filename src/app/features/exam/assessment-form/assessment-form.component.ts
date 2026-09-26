@@ -84,7 +84,6 @@ export class AssessmentFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: AssessmentRecord | null): void {

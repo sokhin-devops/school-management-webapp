@@ -13,6 +13,8 @@ import {
   ListToolbarComponent,
   RowActionsComponent,
   StatusTagComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
@@ -22,11 +24,15 @@ import { Status } from '../../../core/models';
 import { TeacherCardComponent } from './teacher-card/teacher-card.component';
 import { TeacherFormComponent } from './teacher-form/teacher-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
+import { statusBadge } from '../../../share/data/format';
 
 @Component({
   selector: 'app-teacher',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     FormsModule,
     ButtonModule,
     SelectModule,
@@ -42,6 +48,7 @@ import { describeFailure } from '../../../core/api/api-failure';
     StatusTagComponent,
     TeacherCardComponent,
     TeacherFormComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './teacher.component.html',
   styleUrl: './teacher.component.scss',
@@ -121,8 +128,8 @@ export class TeacherComponent {
       .sort((a, b) => a.label.localeCompare(b.label)),
   );
 
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -145,8 +152,45 @@ export class TeacherComponent {
   protected onSaved(teacher: TeacherRecord): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.teacherService.save(teacher).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.teacherService.save(teacher), {
+      success: 'Teacher saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<TeacherRecord | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: TeacherRecord): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: TeacherRecord): RecordDetail {
+    return {
+      title: this.fullName(r),
+      subtitle: r.teacherDetails?.employeeNumber,
+      badge: statusBadge(r.status),
+      facts: [
+        { label: 'Department', value: r.department },
+        { label: 'Employee no.', value: r.teacherDetails?.employeeNumber },
+        { label: 'Phone', value: r.phone },
+        { label: 'Email', value: r.email, wide: true },
+        { label: 'Subjects', value: r.subjects.join(', '), wide: true },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: TeacherRecord, name: string): void {
+    this.removal.confirm({
+      noun: 'teacher',
+      name,
+      remove: () => this.teacherService.remove(record.id),
     });
   }
 }

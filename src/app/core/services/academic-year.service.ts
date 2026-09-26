@@ -1,15 +1,18 @@
-import { Injectable, computed } from '@angular/core';
+import { Injectable, computed, inject } from '@angular/core';
 import { Observable } from 'rxjs';
 import { AcademicYear, AcademicYearStatus } from '../models';
 import { ApiAcademicYear } from '../api/api.models';
 import { createTenantResource } from '../api/tenant-resource';
+import { BranchContextService } from './branch-context.service';
 
 /** The body POST and PUT /api/v1/academic-years accept. */
 interface AcademicYearWrite {
+  schoolId: string;
   name: string;
   startDate: string;
   endDate: string;
   current?: boolean;
+  terms: { name: string; startDate: string; endDate: string }[];
 }
 
 /**
@@ -18,6 +21,7 @@ interface AcademicYearWrite {
  */
 @Injectable({ providedIn: 'root' })
 export class AcademicYearService {
+  private readonly branchContext = inject(BranchContextService);
   private readonly resource = createTenantResource<ApiAcademicYear, AcademicYearWrite>(
     'api/v1/academic-years',
   );
@@ -32,7 +36,9 @@ export class AcademicYearService {
   }
 
   save(year: AcademicYear): Observable<ApiAcademicYear> {
-    const body = toWrite(year);
+    // The school is the year's own, or - for a new one - the school of the branch
+    // on screen. Without it every write was refused.
+    const body = toWrite(year, year.schoolId ?? this.branchContext.selectedBranch()?.schoolId ?? '');
     return year.id ? this.resource.update(year.id, body) : this.resource.create(body);
   }
 
@@ -48,8 +54,9 @@ function toAcademicYear(year: ApiAcademicYear): AcademicYear {
     name: year.name,
     startDate: year.startDate,
     endDate: year.endDate,
+    schoolId: year.schoolId,
     status: statusOf(year),
-    terms: [],
+    terms: (year.terms ?? []).map((term, index) => ({ id: `${year.id}-${index}`, ...term })),
   };
 }
 
@@ -66,13 +73,15 @@ function statusOf(year: ApiAcademicYear): AcademicYearStatus {
   return year.endDate < today ? AcademicYearStatus.Completed : AcademicYearStatus.Upcoming;
 }
 
-function toWrite(year: AcademicYear): AcademicYearWrite {
+function toWrite(year: AcademicYear, schoolId: string): AcademicYearWrite {
   return {
+    schoolId,
     name: year.name,
     startDate: year.startDate,
     endDate: year.endDate,
     // Only Active means current; Upcoming and Completed are both "not current"
     // and the dates already say which.
     current: year.status === AcademicYearStatus.Active,
+    terms: (year.terms ?? []).map(({ name, startDate, endDate }) => ({ name, startDate, endDate })),
   };
 }

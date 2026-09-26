@@ -1,4 +1,4 @@
-import { Component, ElementRef, OnInit, effect, inject, viewChild } from '@angular/core';
+import { Component, ElementRef, OnInit, computed, effect, inject, viewChild } from '@angular/core';
 import { toSignal } from '@angular/core/rxjs-interop';
 import { NavigationEnd, Router } from '@angular/router';
 import { filter, map } from 'rxjs';
@@ -7,6 +7,9 @@ import type { Popover } from 'primeng/popover';
 import { ScrollPanel } from 'primeng/scrollpanel';
 import { NAV_ITEMS, isRouteUnder } from '../../../core/navigation/nav-items';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
+import { PermissionService } from '../../../core/services/permission.service';
+import { AcademicSettingsService } from '../../../core/services/academic-settings.service';
+import { SchoolService } from '../../../core/services/school.service';
 import { KShareModule } from '../../../share/k-share.module';
 
 @Component({
@@ -18,8 +21,55 @@ import { KShareModule } from '../../../share/k-share.module';
 export class KSidebarComponent implements OnInit {
   protected readonly layoutUi = inject(LayoutUiService);
   private readonly router = inject(Router);
+  private readonly permissions = inject(PermissionService);
+  private readonly academic = inject(AcademicSettingsService);
+  private readonly school = inject(SchoolService);
 
-  protected readonly navItems = NAV_ITEMS;
+  protected readonly schoolName = computed(() => this.school.school()?.name ?? '');
+  protected readonly brandName = computed(() => {
+    const school = this.school.school();
+    return school?.shortName || school?.name || 'School';
+  });
+
+  /**
+   * The menu, less what this role cannot view and what the school has switched
+   * off, in the school's own words. A group whose children are all withheld
+   * goes too, rather than staying as a heading that opens onto nothing.
+   *
+   * Computed, so the same array is handed to the template until something it
+   * reads actually changes - a fresh one per check would restart the menu on
+   * every pass.
+   */
+  protected readonly navItems = computed(() => {
+    const permissive = this.permissions.unrestricted() || !this.permissions.loaded();
+
+    const visible = (link: unknown) =>
+      typeof link !== 'string' ||
+      ((permissive || this.permissions.canView(this.permissions.moduleForUrl(link))) &&
+        this.permissions.planIncludes(this.permissions.featureForUrl(link)) &&
+        this.academic.isRouteEnabled(link));
+
+    // rename() and isRouteEnabled() read the settings, so the menu follows them.
+    const relabel = (item: MenuItem): MenuItem => {
+      const label = this.academic.rename(item.label);
+      return label === item.label ? item : { ...item, label };
+    };
+
+    const items: MenuItem[] = [];
+    for (const item of NAV_ITEMS) {
+      if (!item.items) {
+        if (visible(item.routerLink)) items.push(relabel(item));
+        continue;
+      }
+
+      const children = item.items.filter((child) => visible(child.routerLink)).map(relabel);
+      if (!children.length) continue;
+      const unchanged = children.length === item.items.length && children.every((child, i) => child === item.items![i]);
+      items.push(unchanged ? item : { ...item, items: children });
+    }
+
+    return items;
+  });
 
   /**
    * The rail's open submenu popover. Tracked so selecting a child can close it —
@@ -62,7 +112,9 @@ export class KSidebarComponent implements OnInit {
       this.openRailPopover = null;
     };
 
-    for (const item of this.navItems) {
+    // Bound to the shared items rather than to the filtered view: filtering
+    // reuses these same objects, so wiring them once covers both.
+    for (const item of NAV_ITEMS) {
       if (item.items) {
         item.expanded = this.isItemActive(item);
         item.items.forEach((child) => (child.command = onNavigate));

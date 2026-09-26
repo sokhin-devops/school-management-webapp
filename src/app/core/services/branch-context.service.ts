@@ -1,7 +1,8 @@
 import { Injectable, computed, inject, signal } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import { Branch } from '../models';
 import { ApiBranch } from '../api/api.models';
-import { toStatus } from '../api/api-mappers';
+import { fromStatus, toStatus } from '../api/api-mappers';
 import { ApiClientService } from './api-client.service';
 import { describeFailure } from '../api/api-failure';
 import { AppLoadingService } from './app-loading.service';
@@ -89,6 +90,33 @@ export class BranchContextService {
     });
   }
 
+  /**
+   * Creates or updates a branch, then reloads the list — which is also the
+   * topbar's switcher, so a new branch is choosable the moment it exists.
+   */
+  save(branch: Branch): Observable<ApiBranch> {
+    const body = {
+      schoolId: branch.schoolId,
+      name: branch.name,
+      address: branch.address ?? '',
+      phone: branch.phone || null,
+      mainBranch: branch.mainBranch ?? false,
+      status: fromStatus(branch.status),
+    };
+    const request = branch.id
+      ? this.api.put<ApiBranch>(`api/v1/branches/${branch.id}`, body)
+      : this.api.post<ApiBranch>('api/v1/branches', body);
+    return request.pipe(tap(() => this.reload()));
+  }
+
+  /**
+   * The server promotes another branch if this was the main one, and refuses
+   * to delete the last; the reload shows whichever it did.
+   */
+  remove(id: string): Observable<void> {
+    return this.api.delete<void>(`api/v1/branches/${id}`).pipe(tap(() => this.reload()));
+  }
+
   selectBranch(branchId: string | null): void {
     this._selectedBranchId.set(branchId);
     remember(branchId);
@@ -102,6 +130,7 @@ function toBranch(branch: ApiBranch): Branch {
     name: branch.name,
     address: branch.address,
     phone: branch.phone ?? undefined,
+    mainBranch: branch.mainBranch,
     status: toStatus(branch.status),
   };
 }

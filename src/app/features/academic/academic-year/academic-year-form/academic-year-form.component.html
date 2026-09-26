@@ -1,14 +1,15 @@
 <k-form-dialog [visible]="visible()" (visibleChange)="visible.set($event)"
   [title]="isEdit() ? 'Edit academic year' : 'Add academic year'"
-  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add an academic year to the current branch.'"
-  [saveLabel]="isEdit() ? 'Save changes' : 'Add academic year'" width="38rem" (save)="onSave()">
+  [subtitle]="isEdit() ? 'Update this record and save.' : 'Add an academic year to the school.'"
+  [saveLabel]="isEdit() ? 'Save changes' : 'Add academic year'" width="40rem" (save)="onSave()">
   <form [formGroup]="form" class="flex flex-column gap-3" (ngSubmit)="onSave()">
     <div class="k-form-row">
       <k-form-field [label]="labels.name" inputId="academic-year-name" [control]="form.controls.name">
         <input pInputText id="academic-year-name" formControlName="name" autocomplete="off" placeholder="2027 - 2028" />
       </k-form-field>
 
-      <k-form-field [label]="labels.status" inputId="academic-year-status" [control]="form.controls.status">
+      <k-form-field [label]="labels.status" inputId="academic-year-status" [control]="form.controls.status"
+        hint="Active makes this the school's current year.">
         <p-select inputId="academic-year-status" formControlName="status" [options]="statusOptions" optionLabel="label"
           optionValue="value" />
       </k-form-field>
@@ -25,5 +26,38 @@
           appendTo="body" />
       </k-form-field>
     </div>
+
+    @if (academic.settings().useTerms) {
+      <fieldset class="k-terms">
+        <legend class="k-field-label">Terms</legend>
+
+        @if (terms.length) {
+          <div formArrayName="terms" class="k-terms-rows">
+            @for (term of terms.controls; track term; let i = $index) {
+              <div class="k-terms-row" [formGroupName]="i">
+                <input pInputText pSize="small" formControlName="name" [attr.aria-label]="'Term ' + (i + 1) + ' name'" />
+                <p-datepicker formControlName="startDate" dateFormat="dd M yy" appendTo="body" size="small"
+                  [attr.aria-label]="'Term ' + (i + 1) + ' start'" placeholder="Starts" />
+                <p-datepicker formControlName="endDate" dateFormat="dd M yy" appendTo="body" size="small"
+                  [attr.aria-label]="'Term ' + (i + 1) + ' end'" placeholder="Ends" />
+                <p-button icon="pi pi-times" size="small" severity="secondary" [text]="true" [rounded]="true"
+                  [ariaLabel]="'Remove term ' + (i + 1)" (onClick)="removeTerm(i)" />
+              </div>
+            }
+          </div>
+        } @else {
+          <p class="k-field-hint">No terms yet. They are optional — reports can still use the whole year.</p>
+        }
+
+        <div class="k-terms-actions">
+          <p-button label="Add term" icon="pi pi-plus" size="small" severity="secondary" [text]="true"
+            (onClick)="addTerm()" />
+          @if (fillLabel(); as label) {
+            <p-button [label]="label" icon="pi pi-th-large" size="small" severity="secondary" [text]="true"
+              (onClick)="fillFromStructure()" />
+          }
+        </div>
+      </fieldset>
+    }
   </form>
 </k-form-dialog>

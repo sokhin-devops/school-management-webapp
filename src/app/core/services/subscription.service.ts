@@ -1,153 +1,107 @@
-import { Injectable, computed, inject, signal } from '@angular/core';
-import { PaymentMethod, PaymentStatus, PlanType, Status } from '../models';
-import { OnboardingService } from './onboarding.service';
+import { Injectable, inject } from '@angular/core';
+import { Observable } from 'rxjs';
+import { ApiClientService } from './api-client.service';
 
-/** A plan on the pricing table (03-signup-and-onboarding.md) plus the limits it sells. */
-export interface SubscriptionPlan {
-  type: PlanType;
+export type BillingCycle = 'MONTHLY' | 'YEARLY';
+
+/** com.school_management_webapi.dto.response.PlanSummaryResponse */
+export interface PlanSummary {
+  id: string;
+  code: string;
   name: string;
-  monthlyPrice: number;
-  description: string;
-  studentLimit: number;
-  staffLimit: number;
-  branchLimit: number;
-  storageLimitGb: number;
+  priceMonthly: number;
+  priceYearly: number;
+  currency: string;
+  maxStudents: number | null;
+  maxTeachers: number | null;
+  maxBranches: number | null;
 }
 
-/** The school's live subscription (68-subscription.md). */
-export interface SubscriptionRecord {
-  plan: SubscriptionPlan;
-  status: Status;
-  startedOn: Date;
-  renewsOn: Date;
+/** com.school_management_webapi.dto.response.PlanResponse - what the plan picker lists. */
+export interface Plan extends PlanSummary {
+  description: string | null;
+  features: { code: string; name: string; enabled: boolean }[];
+}
+
+/** com.school_management_webapi.dto.response.SubscriptionResponse */
+export interface Subscription {
+  id: string;
+  plan: PlanSummary;
+  billingCycle: BillingCycle;
+  status: string;
+  startAt: string | null;
+  endAt: string | null;
+  trialEndAt: string | null;
+  canceledAt: string | null;
+}
+
+export interface UsageRow {
+  key: string;
+  label: string;
+  used: number;
+  /** Null is unlimited. */
+  limit: number | null;
+}
+
+export interface Usage {
+  planName: string | null;
+  rows: UsageRow[];
 }
 
 export interface BillingDetails {
-  email: string;
-  method: PaymentMethod;
-  /** Shown beside the method, e.g. "Visa ending 4242". */
-  cardLabel: string;
-  address: string;
+  billingEmail: string | null;
+  billingAddress: string | null;
 }
 
-export interface SubscriptionInvoice {
+export interface Invoice {
   id: string;
   number: string;
-  issuedOn: Date;
+  planName: string;
+  billingCycle: BillingCycle;
   amount: number;
-  status: PaymentStatus;
+  currency: string;
+  periodStart: string;
+  periodEnd: string | null;
+  issuedAt: string;
+  billToName: string | null;
+  billToEmail: string | null;
+  billToAddress: string | null;
 }
 
-/**
- * Prices and headline limits match the cards on the Choose Plan step, so a school
- * sees the same numbers after signing up as it did before.
- *
- * Enterprise is quoted per school rather than listed, so the demo account carries
- * a representative contract price.
- */
-const PLANS: readonly SubscriptionPlan[] = [
-  {
-    type: PlanType.Starter,
-    name: 'Starter',
-    monthlyPrice: 29,
-    description: 'For a single branch just getting started.',
-    studentLimit: 200,
-    staffLimit: 25,
-    branchLimit: 1,
-    storageLimitGb: 20,
-  },
-  {
-    type: PlanType.Professional,
-    name: 'Professional',
-    monthlyPrice: 79,
-    description: 'For growing schools with multiple branches.',
-    studentLimit: 1000,
-    staffLimit: 120,
-    branchLimit: 5,
-    storageLimitGb: 100,
-  },
-  {
-    type: PlanType.Enterprise,
-    name: 'Enterprise',
-    monthlyPrice: 249,
-    description: 'For large institutions and school networks.',
-    studentLimit: 10000,
-    staffLimit: 1000,
-    branchLimit: 50,
-    storageLimitGb: 1000,
-  },
-];
-
-function planFor(type: PlanType): SubscriptionPlan {
-  return PLANS.find((plan) => plan.type === type) ?? PLANS[1];
-}
-
-function seedSubscription(type: PlanType): SubscriptionRecord {
-  const today = new Date();
-
-  return {
-    plan: planFor(type),
-    status: Status.Active,
-    startedOn: new Date(today.getFullYear() - 1, today.getMonth(), 1),
-    renewsOn: new Date(today.getFullYear(), today.getMonth() + 1, 1),
-  };
-}
-
-function seedBilling(): BillingDetails {
-  return {
-    email: 'accounts@riverside.edu',
-    method: PaymentMethod.Card,
-    cardLabel: 'Visa ending 4242',
-    address: '128 Riverside Avenue\nPhnom Penh, Cambodia',
-  };
-}
-
-/**
- * One invoice per month back to the start of the subscription. The current month
- * is still open, and the history keeps the one failed charge that was re-run and
- * the one refund, so the status column has something to show.
- */
-function seedInvoices(price: number): SubscriptionInvoice[] {
-  const today = new Date();
-  const exceptions = new Map<number, PaymentStatus>([
-    [0, PaymentStatus.Pending],
-    [5, PaymentStatus.Failed],
-    [9, PaymentStatus.Refunded],
-  ]);
-
-  return Array.from({ length: 12 }, (_unused, monthsAgo) => {
-    const issuedOn = new Date(today.getFullYear(), today.getMonth() - monthsAgo, 1);
-    const sequence = 12 - monthsAgo;
-
-    return {
-      id: `inv-${sequence}`,
-      number: `INV-${issuedOn.getFullYear()}-${String(sequence).padStart(4, '0')}`,
-      issuedOn,
-      amount: price,
-      status: exceptions.get(monthsAgo) ?? PaymentStatus.Paid,
-    };
-  });
-}
-
+/** 68-subscription.md: the plan, what it is used for, where it is billed, and what was billed. */
 @Injectable({ providedIn: 'root' })
 export class SubscriptionService {
-  private readonly onboarding = inject(OnboardingService);
+  private readonly api = inject(ApiClientService);
 
-  private readonly _subscription = signal<SubscriptionRecord>(
-    seedSubscription(this.onboarding.plan ?? PlanType.Professional),
-  );
-  private readonly _billing = signal<BillingDetails>(seedBilling());
-  private readonly _invoices = signal<SubscriptionInvoice[]>(
-    seedInvoices(planFor(this.onboarding.plan ?? PlanType.Professional).monthlyPrice),
-  );
-  /** No file store behind the mock, so stored media is the one usage figure that is quoted. */
-  private readonly _storageUsedGb = signal(18.6);
+  current(): Observable<Subscription> {
+    return this.api.get<Subscription>('api/v1/subscriptions/current');
+  }
 
-  readonly subscription = this._subscription.asReadonly();
-  readonly billing = this._billing.asReadonly();
-  readonly invoices = this._invoices.asReadonly();
-  readonly storageUsedGb = this._storageUsedGb.asReadonly();
-  readonly plans = PLANS;
+  plans(): Observable<Plan[]> {
+    return this.api.get<Plan[]>('api/v1/plans');
+  }
 
-  readonly plan = computed(() => this._subscription().plan);
+  usage(): Observable<Usage> {
+    return this.api.get<Usage>('api/v1/subscriptions/current/usage');
+  }
+
+  changePlan(planId: string, billingCycle: BillingCycle): Observable<Subscription> {
+    return this.api.patch<Subscription>('api/v1/subscriptions/current', { planId, billingCycle });
+  }
+
+  cancel(reason: string | null): Observable<unknown> {
+    return this.api.post('api/v1/subscriptions/current/cancel', { reason });
+  }
+
+  billing(): Observable<BillingDetails> {
+    return this.api.get<BillingDetails>('api/v1/subscriptions/billing');
+  }
+
+  saveBilling(details: BillingDetails): Observable<BillingDetails> {
+    return this.api.put<BillingDetails>('api/v1/subscriptions/billing', details);
+  }
+
+  invoices(): Observable<Invoice[]> {
+    return this.api.get<Invoice[]>('api/v1/subscriptions/invoices');
+  }
 }

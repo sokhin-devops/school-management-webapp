@@ -1,0 +1,46 @@
+<p-drawer [visible]="visible()" (visibleChange)="visible.set($event)" position="right"
+  styleClass="k-record-drawer" [modal]="true" [dismissible]="true" [closeOnEscape]="true" [blockScroll]="true"
+  ariaCloseLabel="Close details">
+  <!-- The templates stay unconditional and guard their own contents: the drawer
+       finds them by content query, which a template inside @if can slip past. -->
+  <ng-template #header>
+    @if (detail(); as detail) {
+      <div class="k-record-drawer-head">
+        <h2 class="k-record-drawer-title">{{ detail.title }}</h2>
+        @if (detail.subtitle) {
+          <p class="k-record-drawer-sub">{{ detail.subtitle }}</p>
+        }
+        @if (detail.badge; as badge) {
+          <p-tag [value]="badge.label" [severity]="badge.severity" [rounded]="true" styleClass="k-status-tag" />
+        }
+      </div>
+    }
+  </ng-template>
+
+  @if (detail(); as detail) {
+    <dl class="k-record-drawer-facts">
+      @for (fact of detail.facts; track fact.label) {
+        <div class="k-record-drawer-fact" [class.k-record-drawer-fact-wide]="fact.wide">
+          <dt class="k-fact-label">{{ fact.label }}</dt>
+          <dd class="k-fact-value">{{ display(fact.value) }}</dd>
+        </div>
+      }
+    </dl>
+  }
+  <!-- Anything a page adds for its own kind of record, under the facts. -->
+  <ng-content />
+
+  <ng-template #footer>
+    @if (canEdit() || canRemove()) {
+      <div class="k-record-drawer-actions">
+        @if (canRemove()) {
+          <p-button label="Delete" icon="pi pi-trash" size="small" severity="danger" [text]="true"
+            (onClick)="onRemove()" />
+        }
+        @if (canEdit()) {
+          <p-button label="Edit" icon="pi pi-pencil" size="small" (onClick)="onEdit()" />
+        }
+      </div>
+    }
+  </ng-template>
+</p-drawer>

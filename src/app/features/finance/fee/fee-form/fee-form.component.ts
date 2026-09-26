@@ -7,7 +7,10 @@ import { TextareaModule } from 'primeng/textarea';
 import { FormDialogComponent, FormFieldComponent } from '../../../../share/components';
 import { FormValidationService } from '../../../../share/forms';
 import { BranchContextService } from '../../../../core/services/branch-context.service';
-import { Fee, Status } from '../../../../core/models';
+import { AcademicYearStatus, Fee, Status } from '../../../../core/models';
+import { AcademicYearService } from '../../../../core/services/academic-year.service';
+import { SchoolService } from '../../../../core/services/school.service';
+import { FEE_CATEGORIES, categoryChoices } from '../../../../share/data/categories';
 
 /** Create / edit a fee. */
 @Component({
@@ -28,6 +31,8 @@ export class FeeFormComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly validation = inject(FormValidationService);
   private readonly branchContext = inject(BranchContextService);
+  private readonly years = inject(AcademicYearService);
+  private readonly school = inject(SchoolService);
 
   readonly visible = model<boolean>(false);
   /** The record being edited, or null to create a new one. */
@@ -42,14 +47,26 @@ export class FeeFormComponent {
     amount: [0, [Validators.required, Validators.min(1)]],
     status: [Status.Active, Validators.required],
     description: ['', Validators.maxLength(200)],
+    academicYearId: [''],
   });
+
+  /** Amounts are entered in the school's currency (61-school-settings.md). */
+  protected readonly currency = computed(() => this.school.school()?.currency ?? 'USD');
+
+  /** Real years, by id; a fee can also run across years, so none is allowed. */
+  protected readonly yearChoices = computed(() =>
+    this.years.years().map((year) => ({
+      label: year.status === AcademicYearStatus.Active ? `${year.name} (current)` : year.name,
+      value: year.id,
+    })),
+  );
 
   protected readonly statusOptions = [
     { label: 'Active', value: Status.Active },
     { label: 'Inactive', value: Status.Inactive },
   ];
 
-  protected readonly categoryChoices = computed(() => [...this.categoryOptions()]);
+  protected readonly categoryChoices = computed(() => categoryChoices(FEE_CATEGORIES, this.categoryOptions()));
 
   protected readonly isEdit = computed(() => this.fee() !== null);
   /** One source for the field names, shared by the labels and the alert. */
@@ -59,6 +76,7 @@ export class FeeFormComponent {
     amount: 'Amount',
     status: 'Status',
     description: 'Description',
+    academicYearId: 'Academic year',
   } as const;
 
   constructor() {
@@ -79,11 +97,11 @@ export class FeeFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: Fee | null): void {
     this.form.reset({
+      academicYearId: record?.academicYearId ?? this.years.years().find((year) => year.status === AcademicYearStatus.Active)?.id ?? '',
       name: record?.name ?? '',
       category: record?.category ?? '',
       amount: record?.amount ?? 0,
@@ -102,7 +120,9 @@ export class FeeFormComponent {
       // Empty on create: the server assigns the id, and inventing one here
       // made every create look like an update of a record that never existed.
       branchId: existing?.branchId ?? this.branchContext.selectedBranch()?.id ?? '',
-      academicYearId: existing?.academicYearId ?? 'ay-2026',
+      // A real year, or none. The invented 'ay-2026' this used to send is not an
+      // id the server could ever accept.
+      academicYearId: value.academicYearId || undefined,
       name: value.name.trim(),
       category: value.category,
       amount: value.amount,

@@ -7,16 +7,16 @@
       <input pInputText id="role-name" formControlName="name" autocomplete="off" placeholder="Branch Admin" />
     </k-form-field>
 
-    <k-form-field [label]="labels.modules" inputId="role-modules" [control]="form.controls.modules"
-      hint="What this role can reach.">
-      <p-multiselect inputId="role-modules" formControlName="modules" [options]="moduleOptions" optionLabel="label"
-        optionValue="value" placeholder="Select modules" display="chip" [filter]="true" filterBy="label" />
+    <k-form-field [label]="labels.permissions" inputId="role-permissions" [control]="form.controls.permissions"
+      [hint]="grantedCount() ? grantedCount() + ' of 32 permissions granted.' : 'Tick a module for everything in it, or open it to choose.'">
+      <p-tree [value]="nodes" selectionMode="checkbox" [selection]="selection()" (selectionChange)="onSelectionChange($event)"
+        styleClass="k-permission-tree" [metaKeySelection]="false" ariaLabel="Permissions" />
     </k-form-field>
 
-    <k-form-field [label]="labels.branchNames" inputId="role-branchnames" [control]="form.controls.branchNames"
-      hint="Which branches the role applies to.">
-      <p-multiselect inputId="role-branchnames" formControlName="branchNames" [options]="branchChoices()" optionLabel="label"
-        optionValue="value" placeholder="Select branches" display="chip" [filter]="true" filterBy="label" />
+    <k-form-field [label]="labels.branchIds" inputId="role-branches" [control]="form.controls.branchIds"
+      hint="Leave empty for every branch.">
+      <p-multiselect inputId="role-branches" formControlName="branchIds" [options]="branchChoices()" optionLabel="label"
+        optionValue="value" placeholder="All branches" display="chip" [filter]="true" filterBy="label" />
     </k-form-field>
   </form>
 </k-form-dialog>

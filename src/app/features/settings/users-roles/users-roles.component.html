@@ -69,7 +69,7 @@
                     </div>
                   </td>
                   <td><k-status-tag [status]="user.status" /></td>
-                  <td class="text-right"><k-row-actions [label]="user.fullName" (edit)="openEditUser(user)" /></td>
+                  <td class="text-right"><k-row-actions [label]="user.fullName" (view)="openViewUser(user)" (edit)="openEditUser(user)" (remove)="confirmRemoveUser(user)" /></td>
                 </tr>
               </ng-template>
             </p-table>
@@ -97,7 +97,13 @@
           [search]="roles.search()" (searchChange)="roles.onSearch($event)">
           <ng-container k-actions>
             <span class="k-list-count">{{ roles.countLabel() }}</span>
-            <p-button label="Create Role" icon="pi pi-plus" size="small" (onClick)="openCreateRole()" />
+            @if (customRoles()) {
+              <p-button label="Create Role" icon="pi pi-plus" size="small" (onClick)="openCreateRole()" />
+            } @else {
+              <a class="k-card-link" routerLink="/settings/subscription" [queryParams]="{ feature: 'CUSTOM_ROLES' }">
+                <i class="pi pi-lock"></i> Custom roles come with a higher plan
+              </a>
+            }
           </ng-container>
         </k-list-toolbar>
 
@@ -136,7 +142,7 @@
                   <td class="text-right">
                     <!-- Default roles cannot be edited or deleted, so only View is offered. -->
                     <k-row-actions [label]="role.name" [actions]="actionsFor(role)"
-                      (edit)="openEditRole(role)" />
+                      (view)="openViewRole(role)" (edit)="openEditRole(role)" (remove)="confirmRemoveRole(role)" />
                   </td>
                 </tr>
               </ng-template>
@@ -159,3 +165,29 @@
 
 <app-role-form [(visible)]="roleFormVisible" [role]="editingRole()" [branchOptions]="branchOptions()"
   (saved)="onRoleSaved($event)" />
+
+<k-record-drawer [(visible)]="userViewVisible" [detail]="userDetail()"
+  (edit)="openEditUser(viewingUser()!)" (remove)="confirmRemoveUser(viewingUser()!)">
+  @if (viewingUser()?.twoFactorEnabled && canResetTwoFactor()) {
+    <div class="k-drawer-extra">
+      @if (resetConfirming()) {
+        <p class="k-2fa-text">{{ viewingUser()!.fullName }} will sign in with their password only, and set two-factor
+          up again - straight away, if your school requires it.</p>
+        <div class="flex gap-2">
+          <p-button label="Reset two-factor" icon="pi pi-shield" size="small" severity="danger"
+            [loading]="resetting()" (onClick)="resetTwoFactor(viewingUser()!)" />
+          <p-button label="Cancel" size="small" severity="secondary" [text]="true" (onClick)="resetConfirming.set(false)" />
+        </div>
+      } @else {
+        <p class="k-2fa-text">Lost their phone and their recovery codes?</p>
+        <p-button label="Reset two-factor" icon="pi pi-shield" size="small" severity="secondary" [outlined]="true"
+          (onClick)="resetConfirming.set(true)" />
+      }
+    </div>
+  }
+</k-record-drawer>
+
+<!-- A default role opens read-only: 64-users-and-roles.md fixes it. -->
+<k-record-drawer [(visible)]="roleViewVisible" [detail]="roleDetail()"
+  [editable]="!viewingRole()?.isDefault" [removable]="!viewingRole()?.isDefault"
+  (edit)="openEditRole(viewingRole()!)" (remove)="confirmRemoveRole(viewingRole()!)" />

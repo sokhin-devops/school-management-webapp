@@ -21,7 +21,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Add Student" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+      <p-button *kCan="'create'" label="Add Student" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -35,7 +35,7 @@
           <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
             (onClick)="records.clear()" />
         } @else {
-          <p-button label="Add Student" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+          <p-button *kCan="'create'" label="Add Student" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
         }
       </k-empty-state>
     </ng-template>
@@ -75,7 +75,7 @@
               <td>{{ student.phone }}</td>
               <td><k-status-tag [status]="student.status" /></td>
               <td class="text-right">
-                <k-row-actions [label]="fullName(student)" (edit)="openEdit(student)" />
+                <k-row-actions [label]="fullName(student)" (view)="openView(student)" (edit)="openEdit(student)" (remove)="confirmRemove(student, fullName(student))" />
               </td>
             </tr>
           </ng-template>
@@ -89,7 +89,7 @@
         <div class="grid">
           @for (student of items; track student.id) {
             <div class="col-12 sm:col-6 lg:col-4 xl:col-3">
-              <app-student-card [student]="student" (edit)="openEdit($event)" />
+              <app-student-card [student]="student" (view)="openView($event)" (edit)="openEdit($event)" (remove)="confirmRemove($event, fullName($event))" />
             </div>
           }
         </div>
@@ -102,5 +102,9 @@
     currentPageReportTemplate="Showing {first} to {last} of {totalRecords}" (onPageChange)="records.onPageChange($event)" />
 </k-list-shell>
 
-<app-student-form [(visible)]="formVisible" [student]="editing()" [classOptions]="classOptions()"
+<app-student-form [(visible)]="formVisible" [student]="editing()"
   (saved)="onSaved($event)" />
+
+<!-- Read-only side of a row: what the eye icon opens. -->
+<k-record-drawer [(visible)]="viewVisible" [detail]="viewDetail()"
+  (edit)="openEdit(viewing()!)" (remove)="confirmRemove(viewing()!, viewDetail()!.title)" />

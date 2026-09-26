@@ -101,12 +101,12 @@ function toWrite(student: StudentRecord, schoolId: string, branchId: string | nu
     studentCode: student.studentDetails?.admissionNumber ?? '',
     firstName: student.firstName,
     lastName: student.lastName,
-    // The form does not ask for either yet, so a sendable value goes rather than
-    // a null the API would refuse outright.
     gender: student.gender ?? 'OTHER',
     dateOfBirth: student.dateOfBirth ?? '2000-01-01',
     email: student.email ?? null,
     phone: student.phone ?? null,
+    // The form asks for all three now. The fallbacks remain for records created
+    // before it did, which would otherwise fail to save on their next edit.
     admissionDate: student.admissionDate ?? new Date().toISOString().slice(0, 10),
     status: student.status === Status.Inactive ? 'INACTIVE' : 'ACTIVE',
   };

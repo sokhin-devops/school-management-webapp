@@ -22,16 +22,17 @@
 
       <k-form-field [label]="labels.department" inputId="teacher-department" [control]="form.controls.department">
         <p-select inputId="teacher-department" formControlName="department" [options]="departmentChoices()"
-          optionLabel="label" optionValue="value" placeholder="Select a department" [filter]="true" filterBy="label" />
+          optionLabel="label" optionValue="value" placeholder="Choose or type a department" [editable]="true" />
       </k-form-field>
     </div>
 
-    <k-form-field [label]="labels.subjects" inputId="teacher-subjects" [control]="form.controls.subjects"
-      hint="Choose every subject this teacher takes.">
-      <p-multiselect inputId="teacher-subjects" formControlName="subjects" [options]="subjectChoices()"
-        optionLabel="label" optionValue="value" placeholder="Select subjects" display="chip" [filter]="true"
-        filterBy="label" />
-    </k-form-field>
+    @if (academic.settings().useSubjects) {
+      <k-form-field [label]="labels.subjectIds" inputId="teacher-subjects" [control]="form.controls.subjectIds"
+        hint="Optional.">
+        <p-multiselect inputId="teacher-subjects" formControlName="subjectIds" [options]="subjectChoices()"
+          optionLabel="label" optionValue="value" placeholder="None yet" display="chip" [filter]="true" filterBy="label" />
+      </k-form-field>
+    }
 
     <div class="k-form-row">
       <k-form-field [label]="labels.email" inputId="teacher-email" [control]="form.controls.email">

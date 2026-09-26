@@ -34,7 +34,8 @@ export class BranchFormComponent {
   protected readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(60)]],
     status: [Status.Active, Validators.required],
-    address: [''],
+    // Required, as the API has it: a branch is a place.
+    address: ['', [Validators.required, Validators.maxLength(1000)]],
     phone: [''],
   });
 
@@ -71,7 +72,6 @@ export class BranchFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: Branch | null): void {

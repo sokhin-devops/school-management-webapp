@@ -1,6 +1,7 @@
 <p-dialog [visible]="visible()" (visibleChange)="visible.set($event)" [modal]="true" [draggable]="false"
-  [resizable]="false" [closeOnEscape]="true" [dismissableMask]="false" [style]="{ width: width() }"
-  [breakpoints]="{ '640px': '95vw' }" styleClass="k-form-dialog" (onHide)="cancel.emit()">
+  [resizable]="false" [closeOnEscape]="!saving()" [closable]="!saving()" [dismissableMask]="false"
+  [style]="{ width: width() }" [breakpoints]="{ '640px': '95vw' }" styleClass="k-form-dialog"
+  (onHide)="cancel.emit()">
   <ng-template #header>
     <div class="k-form-dialog-head">
       <h2 class="k-form-dialog-title">{{ title() }}</h2>
@@ -11,11 +12,19 @@
   </ng-template>
 
   <div class="k-form-dialog-body">
+    @if (error(); as error) {
+      <p-message class="k-form-dialog-error" severity="error" size="small" icon="pi pi-times-circle"
+        [text]="error" />
+    }
     <ng-content />
   </div>
 
   <ng-template #footer>
-    <p-button label="Cancel" size="small" severity="secondary" [text]="true" (onClick)="visible.set(false)" />
-    <p-button [label]="saveLabel()" icon="pi pi-check" size="small" (onClick)="save.emit()" />
+    <!-- Closing mid-save would hide whether the save landed, so both ways out
+         wait for the answer. -->
+    <p-button label="Cancel" size="small" severity="secondary" [text]="true" [disabled]="saving()"
+      (onClick)="visible.set(false)" />
+    <p-button [label]="saveLabel()" icon="pi pi-check" size="small" [loading]="saving()"
+      (onClick)="onSave()" />
   </ng-template>
 </p-dialog>

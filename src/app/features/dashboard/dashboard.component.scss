@@ -84,7 +84,7 @@
 .k-feed-empty,
 .k-legend-share,
 .k-meter-value,
-.k-summary-note,
+
 .k-summary dt {
   color: var(--p-text-muted-color);
 }
@@ -142,38 +142,6 @@
 .k-donut-caption,
 .k-feed-time {
   font-size: 0.6875rem;
-}
-
-.k-delta {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.1875rem;
-  padding: 0.0625rem 0.375rem;
-  border-radius: 999px;
-  font-size: 0.6875rem;
-  font-weight: 600;
-  white-space: nowrap;
-
-  .pi {
-    font-size: 0.625rem;
-  }
-}
-
-// The arrow says which way it moved, the colour says whether that is good news —
-// so direction never rides on colour alone.
-.k-delta-good {
-  background: var(--k-good-wash);
-  color: var(--k-good);
-}
-
-.k-delta-bad {
-  background: var(--k-bad-wash);
-  color: var(--k-bad);
-}
-
-.k-spark {
-  margin-top: auto;
-  padding-top: 0.25rem;
 }
 
 // --- Charts ----------------------------------------------------------------
@@ -296,124 +264,6 @@
   }
 }
 
-.k-summary-note {
-  font-size: 0.75rem;
-  font-weight: 400;
-}
-
-// --- Capacity meters -------------------------------------------------------
-
-.k-meters {
-  flex: 1;
-  justify-content: space-between;
-  gap: 0.875rem;
-}
-
-.k-meter-head {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 0.5rem;
-  margin-bottom: 0.375rem;
-  font-size: 0.8125rem;
-}
-
-.k-meter-name {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.375rem;
-  color: var(--p-text-color);
-
-  .pi {
-    font-size: 0.75rem;
-  }
-
-  .pi-exclamation-triangle {
-    color: var(--k-warning);
-  }
-
-  .pi-exclamation-circle {
-    color: var(--k-critical);
-  }
-}
-
-// The unfilled track is a lighter step of the fill's own ramp, so the state
-// reads across the whole bar rather than only its filled part.
-.k-meter-track {
-  height: 6px;
-  border-radius: 999px;
-  overflow: hidden;
-  background: var(--k-accent-wash);
-}
-
-.k-meter-fill {
-  display: block;
-  height: 100%;
-  border-radius: 999px;
-  background: var(--p-primary-color);
-
-  &.is-warning {
-    background: var(--k-warning);
-  }
-
-  &.is-critical {
-    background: var(--k-critical);
-  }
-}
-
-// --- Feeds -----------------------------------------------------------------
-
-.k-feed-row {
-  display: flex;
-  align-items: flex-start;
-  gap: 0.75rem;
-  padding: 0.625rem 0;
-}
-
-.k-feed-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  width: 2rem;
-  height: 2rem;
-  border-radius: 999px;
-  font-size: 0.8125rem;
-
-  &.is-info {
-    background: var(--k-info-wash);
-    color: var(--k-info);
-  }
-
-  &.is-success {
-    background: var(--k-good-wash);
-    color: var(--k-good);
-  }
-
-  &.is-warning {
-    background: var(--k-warning-wash);
-    color: var(--k-warning);
-  }
-}
-
-.k-feed-body {
-  display: flex;
-  flex-direction: column;
-  gap: 0.125rem;
-  min-width: 0;
-}
-
-.k-feed-message {
-  font-size: 0.8125rem;
-  color: var(--p-text-color);
-}
-
-.k-feed-empty {
-  padding: 1.5rem 0;
-  text-align: center;
-  font-size: 0.8125rem;
-}
-
 @media (max-width: 575.98px) {
   .k-card-lead {
     font-size: 1.375rem;
@@ -424,8 +274,7 @@
   }
 
   // Two tiles to a row on a phone. At that width the label gets to wrap rather
-  // than be truncated, and the delta's period caption drops — the chip's arrow
-  // and figure still say which way it moved and by how much.
+  // than be truncated.
   .k-tile-label {
     white-space: normal;
     line-height: 1.25;
@@ -435,7 +284,4 @@
     font-size: 1.25rem;
   }
 
-  .k-delta-caption {
-    display: none;
-  }
 }

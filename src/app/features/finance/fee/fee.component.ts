@@ -11,19 +11,24 @@ import {
   ListToolbarComponent,
   RowActionsComponent,
   StatusTagComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
-import { money } from '../../../share/data/format';
+import { money, statusBadge } from '../../../share/data/format';
 import { FeeService } from '../../../core/services/fee.service';
 import { Fee, Status } from '../../../core/models';
 import { FeeFormComponent } from './fee-form/fee-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
 
 /** 41-fees.md — configurable charges: tuition, registration, transportation, materials. */
 @Component({
   selector: 'app-fee',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     FormsModule,
     ButtonModule,
     SelectModule,
@@ -36,6 +41,7 @@ import { describeFailure } from '../../../core/api/api-failure';
     RowActionsComponent,
     StatusTagComponent,
     FeeFormComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './fee.component.html',
   styleUrl: './fee.component.scss',
@@ -73,8 +79,8 @@ export class FeeComponent {
   );
 
   protected readonly money = money;
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -97,8 +103,43 @@ export class FeeComponent {
   protected onSaved(fee: Fee): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.feeService.save(fee).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.feeService.save(fee), {
+      success: 'Fee saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<Fee | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: Fee): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: Fee): RecordDetail {
+    return {
+      title: r.name,
+      subtitle: r.category,
+      badge: statusBadge(r.status),
+      facts: [
+        { label: 'Amount', value: money(r.amount) },
+        { label: 'Category', value: r.category },
+        { label: 'Description', value: r.description, wide: true },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: Fee, name: string): void {
+    this.removal.confirm({
+      noun: 'fee',
+      name,
+      remove: () => this.feeService.remove(record.id),
     });
   }
 }

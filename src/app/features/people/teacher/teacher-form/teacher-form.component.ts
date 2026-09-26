@@ -5,6 +5,9 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import { FormDialogComponent, FormFieldComponent } from '../../../../share/components';
 import { FormValidationService } from '../../../../share/forms';
+import { TEACHER_DEPARTMENTS, categoryChoices } from '../../../../share/data/categories';
+import { SubjectService } from '../../../../core/services/subject.service';
+import { AcademicSettingsService } from '../../../../core/services/academic-settings.service';
 import { BranchContextService } from '../../../../core/services/branch-context.service';
 import { TeacherRecord, TeacherService } from '../../../../core/services/teacher.service';
 import { PersonType, Status } from '../../../../core/models';
@@ -28,11 +31,12 @@ export class TeacherFormComponent {
   private readonly validation = inject(FormValidationService);
   private readonly teacherService = inject(TeacherService);
   private readonly branchContext = inject(BranchContextService);
+  private readonly subjects = inject(SubjectService);
+  protected readonly academic = inject(AcademicSettingsService);
 
   readonly visible = model<boolean>(false);
   readonly teacher = input<TeacherRecord | null>(null);
   readonly departmentOptions = input<readonly { label: string; value: string }[]>([]);
-  readonly subjectOptions = input<readonly { label: string; value: string }[]>([]);
 
   readonly saved = output<TeacherRecord>();
 
@@ -41,7 +45,8 @@ export class TeacherFormComponent {
     lastName: ['', [Validators.required, Validators.maxLength(40)]],
     employeeNumber: ['', [Validators.required, (control: AbstractControl) => this.uniqueEmployeeNumber(control)]],
     department: ['', Validators.required],
-    subjects: [[] as string[], Validators.required],
+    // By id, and optional: a teacher can join before they are given subjects.
+    subjectIds: [[] as string[]],
     status: [Status.Active, Validators.required],
     email: ['', [Validators.required, Validators.email]],
     phone: [''],
@@ -52,8 +57,15 @@ export class TeacherFormComponent {
     { label: 'Inactive', value: Status.Inactive },
   ];
 
-  protected readonly departmentChoices = computed(() => [...this.departmentOptions()]);
-  protected readonly subjectChoices = computed(() => [...this.subjectOptions()]);
+  /** Starting departments plus the school's own; the field also takes a typed one. */
+  protected readonly departmentChoices = computed(() => categoryChoices(TEACHER_DEPARTMENTS, this.departmentOptions()));
+  /** Real subjects, by id - the page used to offer names, which were then sent as ids. */
+  protected readonly subjectChoices = computed(() =>
+    this.subjects
+      .subjects()
+      .map((subject) => ({ label: subject.name, value: subject.id }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
 
   protected readonly isEdit = computed(() => this.teacher() !== null);
   /** One source for the field names, shared by the labels and the alert. */
@@ -62,7 +74,7 @@ export class TeacherFormComponent {
     lastName: 'Last name',
     employeeNumber: 'Employee no.',
     department: 'Department',
-    subjects: 'Subjects',
+    subjectIds: 'Subjects',
     status: 'Status',
     email: 'Email',
     phone: 'Phone',
@@ -84,7 +96,6 @@ export class TeacherFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: TeacherRecord | null): void {
@@ -93,7 +104,7 @@ export class TeacherFormComponent {
       lastName: record?.lastName ?? '',
       employeeNumber: record?.teacherDetails?.employeeNumber ?? '',
       department: record?.department ?? '',
-      subjects: [...(record?.subjects ?? [])],
+      subjectIds: [...(record?.teacherDetails?.subjectIds ?? [])],
       status: record?.status ?? Status.Active,
       email: record?.email ?? '',
       phone: record?.phone ?? '',
@@ -118,11 +129,13 @@ export class TeacherFormComponent {
       phone: value.phone.trim(),
       status: value.status,
       department: value.department,
-      subjects: value.subjects,
+      subjects: this.subjectChoices()
+        .filter((choice) => value.subjectIds.includes(choice.value))
+        .map((choice) => choice.label),
       teacherDetails: {
         ...existing?.teacherDetails,
         employeeNumber,
-        subjectIds: value.subjects.map((subject) => subject.toLowerCase().replace(/\s+/g, '-')),
+        subjectIds: this.academic.settings().useSubjects ? value.subjectIds : (existing?.teacherDetails?.subjectIds ?? []),
       },
     };
   }

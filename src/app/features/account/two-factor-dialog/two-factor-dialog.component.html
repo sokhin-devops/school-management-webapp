@@ -1,0 +1,84 @@
+<p-dialog [visible]="visible()" (visibleChange)="visible.set($event)" [modal]="true" [draggable]="false"
+  [resizable]="false" [dismissableMask]="false" [style]="{ width: '34rem' }" [breakpoints]="{ '640px': '95vw' }"
+  styleClass="k-form-dialog" header="Two-factor sign-in">
+  <div class="k-form-dialog-body">
+    @if (loading()) {
+      <p-skeleton height="1rem" class="mb-2" />
+      <p-skeleton height="1rem" width="70%" />
+    } @else {
+      @if (twoFactor.status(); as status) {
+        @switch (mode()) {
+          @case ('overview') {
+            <div class="flex align-items-center gap-2 mb-2">
+              <p-tag [value]="status.enabled ? 'On' : 'Off'" [severity]="status.enabled ? 'success' : 'secondary'" />
+              @if (status.required) {
+                <span class="k-2fa-hint">Your school requires it.</span>
+              }
+            </div>
+            @if (status.enabled) {
+              <p class="k-2fa-text">
+                On since {{ since(status.enabledAt) }}. Sign-in asks for a code from your authenticator app.
+                {{ status.recoveryCodesLeft }} of 8 recovery codes left.
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <p-button label="New recovery codes" icon="pi pi-refresh" size="small" severity="secondary"
+                  [outlined]="true" (onClick)="show('regenerate')" />
+                @if (!status.required) {
+                  <p-button label="Turn off" icon="pi pi-power-off" size="small" severity="danger" [text]="true"
+                    (onClick)="show('disable')" />
+                }
+              </div>
+            } @else {
+              <p class="k-2fa-text">
+                Adds a second step to signing in: a six-digit code from an app on your phone, so a stolen password
+                is not enough to get into your school.
+              </p>
+              <p-button label="Set up two-factor" icon="pi pi-shield" size="small" (onClick)="show('setup')" />
+            }
+          }
+          @case ('setup') {
+            <app-two-factor-setup (done)="onEnabled()" />
+          }
+          @case ('regenerate') {
+            <form class="flex flex-column gap-2" (ngSubmit)="regenerate()">
+              <p class="k-2fa-text mt-0">The codes you have now stop working. Confirm with a code from your app.</p>
+              <label for="two-factor-regenerate-code" class="font-medium">Code from the app</label>
+              <input pInputText id="two-factor-regenerate-code" name="code" [(ngModel)]="code" inputmode="numeric"
+                autocomplete="one-time-code" maxlength="7" class="k-2fa-code-input" />
+              @if (error(); as failure) {
+                <small class="text-red-500">{{ failure }}</small>
+              }
+              <div class="flex gap-2 justify-content-end mt-2">
+                <p-button label="Cancel" size="small" severity="secondary" [text]="true" (onClick)="show('overview')" />
+                <p-button type="submit" label="Issue new codes" size="small" [loading]="busy()" />
+              </div>
+            </form>
+          }
+          @case ('codes') {
+            <app-recovery-codes [codes]="codes()" (saved)="show('overview')" />
+          }
+          @case ('disable') {
+            <form class="flex flex-column gap-2" (ngSubmit)="disable()">
+              <p class="k-2fa-text mt-0">Sign-in will ask for your password only.</p>
+              <label for="two-factor-disable-password" class="font-medium">Password</label>
+              <p-password inputId="two-factor-disable-password" name="password" [(ngModel)]="password"
+                [feedback]="false" [toggleMask]="true" styleClass="w-full" inputStyleClass="w-full" />
+              <label for="two-factor-disable-code" class="font-medium">Code from the app, or a recovery code</label>
+              <input pInputText id="two-factor-disable-code" name="code" [(ngModel)]="code" autocomplete="one-time-code"
+                class="k-2fa-code-input" />
+              @if (error(); as failure) {
+                <small class="text-red-500">{{ failure }}</small>
+              }
+              <div class="flex gap-2 justify-content-end mt-2">
+                <p-button label="Cancel" size="small" severity="secondary" [text]="true" (onClick)="show('overview')" />
+                <p-button type="submit" label="Turn off" size="small" severity="danger" [loading]="busy()" />
+              </div>
+            </form>
+          }
+        }
+      } @else if (error()) {
+        <p-message severity="error" size="small" icon="pi pi-times-circle" [text]="error()!" />
+      }
+    }
+  </div>
+</p-dialog>

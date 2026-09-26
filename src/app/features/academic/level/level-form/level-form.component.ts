@@ -7,6 +7,8 @@ import { FormDialogComponent, FormFieldComponent } from '../../../../share/compo
 import { FormValidationService } from '../../../../share/forms';
 import { BranchContextService } from '../../../../core/services/branch-context.service';
 import { LevelRecord } from '../../../../core/services/level.service';
+import { ProgramService } from '../../../../core/services/program.service';
+import { AcademicSettingsService } from '../../../../core/services/academic-settings.service';
 import { Status } from '../../../../core/models';
 
 /** Create / edit a level. */
@@ -27,18 +29,20 @@ export class LevelFormComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly validation = inject(FormValidationService);
   private readonly branchContext = inject(BranchContextService);
+  private readonly programs = inject(ProgramService);
+  protected readonly academic = inject(AcademicSettingsService);
 
   readonly visible = model<boolean>(false);
   /** The record being edited, or null to create a new one. */
   readonly level = input<LevelRecord | null>(null);
-  readonly programOptions = input<readonly { label: string; value: string }[]>([]);
 
   readonly saved = output<LevelRecord>();
 
   protected readonly form = this.formBuilder.nonNullable.group({
     name: ['', [Validators.required, Validators.maxLength(40)]],
     displayLabel: ['Grade', Validators.required],
-    programName: ['', Validators.required],
+    // Optional: a primary school's grades belong to no program.
+    programId: [''],
     order: [1, [Validators.required, Validators.min(1), Validators.max(50)]],
     status: [Status.Active, Validators.required],
   });
@@ -53,14 +57,20 @@ export class LevelFormComponent {
     value,
   }));
 
-  protected readonly programChoices = computed(() => [...this.programOptions()]);
+  /** Real programs, by id - the page used to offer only the names other levels already had. */
+  protected readonly programChoices = computed(() =>
+    this.programs
+      .programs()
+      .map((program) => ({ label: program.name, value: program.id }))
+      .sort((a, b) => a.label.localeCompare(b.label)),
+  );
 
   protected readonly isEdit = computed(() => this.level() !== null);
   /** One source for the field names, shared by the labels and the alert. */
   protected readonly labels = {
     name: 'Name',
     displayLabel: 'Display label',
-    programName: 'Programme',
+    programId: 'Program',
     order: 'Order',
     status: 'Status',
   } as const;
@@ -83,14 +93,13 @@ export class LevelFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: LevelRecord | null): void {
     this.form.reset({
       name: record?.name ?? '',
       displayLabel: record?.displayLabel ?? 'Grade',
-      programName: record?.programName ?? '',
+      programId: record?.programId ?? '',
       order: record?.order ?? 1,
       status: record?.status ?? Status.Active,
     });
@@ -102,8 +111,6 @@ export class LevelFormComponent {
 
     return {
       ...existing,
-      // A level carries no code of its own, so a new one is keyed by the clock
-      // rather than by a field someone has to invent.
       id: existing?.id ?? '',
       // Empty on create: the server assigns the id, and inventing one here
       // made every create look like an update of a record that never existed.
@@ -111,7 +118,10 @@ export class LevelFormComponent {
       name: value.name.trim(),
       displayLabel: value.displayLabel,
       order: value.order,
-      programName: value.programName,
+      // Cleared when the school does not use programs, rather than kept where
+      // nobody can see or change it.
+      programId: (this.academic.settings().usePrograms && value.programId) || undefined,
+      programName: this.programChoices().find((choice) => choice.value === value.programId)?.label ?? '',
       status: value.status,
     };
   }

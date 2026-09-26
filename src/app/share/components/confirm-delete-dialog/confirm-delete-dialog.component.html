@@ -1,0 +1,19 @@
+<p-confirmDialog [key]="dialogKey" styleClass="k-confirm-delete-dialog" [style]="{ width: '26rem' }"
+  [breakpoints]="{ '640px': '92vw' }" [closable]="true" [draggable]="false">
+  <!-- The same head the form dialogs use, so a delete reads as part of the
+       same family as the form it may have been opened beside. The text comes
+       from the service: PrimeNG hands this template no context. -->
+  <ng-template #header>
+    <div class="k-form-dialog-head">
+      <h2 class="k-form-dialog-title">
+        <i class="pi pi-trash"></i>
+        {{ removal.pending()?.header }}
+      </h2>
+      <p class="k-form-dialog-sub">This cannot be undone from here.</p>
+    </div>
+  </ng-template>
+
+  <ng-template #message>
+    <p class="k-confirm-delete-message">{{ removal.pending()?.message }}</p>
+  </ng-template>
+</p-confirmDialog>

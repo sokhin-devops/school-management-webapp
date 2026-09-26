@@ -1,6 +1,8 @@
-import { Component, input, output } from '@angular/core';
+import { Component, computed, inject, input, output } from '@angular/core';
 import { ButtonModule } from 'primeng/button';
 import { TooltipModule } from 'primeng/tooltip';
+import { PermissionAction } from '../../../core/models';
+import { PermissionService } from '../../../core/services/permission.service';
 
 export type RowAction = 'view' | 'edit' | 'delete';
 
@@ -17,6 +19,8 @@ const ALL_ACTIONS: readonly RowAction[] = ['view', 'edit', 'delete'];
   styleUrl: './row-actions.component.scss',
 })
 export class RowActionsComponent {
+  private readonly permissions = inject(PermissionService);
+
   /** Lets a page drop an action it cannot offer, without a variant component. */
   readonly actions = input<readonly RowAction[]>(ALL_ACTIONS);
 
@@ -32,8 +36,23 @@ export class RowActionsComponent {
   readonly edit = output<void>();
   readonly remove = output<void>();
 
+  /**
+   * Which of the three this role may actually use, taken from the page the row
+   * is on. Deciding it here rather than at each of the sixteen call sites means
+   * a page cannot forget to ask.
+   */
+  private readonly permitted = computed(() => {
+    const module = this.permissions.currentModule();
+    const byAction: Record<RowAction, PermissionAction> = {
+      view: PermissionAction.View,
+      edit: PermissionAction.Edit,
+      delete: PermissionAction.Delete,
+    };
+    return this.actions().filter((action) => this.permissions.can(module, byAction[action]));
+  });
+
   protected has(action: RowAction): boolean {
-    return this.actions().includes(action);
+    return this.permitted().includes(action);
   }
 
   protected describe(verb: string): string {

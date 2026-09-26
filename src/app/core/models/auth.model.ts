@@ -34,15 +34,23 @@ export interface AuthenticatedUser {
   lastLoginAt: string | null;
   createdAt: string;
   tenantId: string | null;
+  /** Whether this account asks for an authenticator code at sign-in. */
+  twoFactorEnabled?: boolean;
 }
 
-/** Shape of com.school_management_webapi.dto.response.AuthResponse. */
+/**
+ * Shape of com.school_management_webapi.dto.response.AuthResponse.
+ *
+ * For an account with two-factor on, the password earns only twoFactorToken:
+ * the tokens and the user arrive once a code has been given with it.
+ */
 export interface AuthResponse {
   accessToken: string;
   refreshToken: string;
   tokenType: string;
   expiresIn: number;
   user: AuthenticatedUser;
+  twoFactorToken?: string | null;
 }
 
 /** Shape of com.school_management_webapi.dto.response.ForgotPasswordResponse. */

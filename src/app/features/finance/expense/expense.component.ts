@@ -12,21 +12,26 @@ import {
   ListShellComponent,
   ListToolbarComponent,
   RowActionsComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
-import { humanize, money } from '../../../share/data/format';
+import { humanize, money, readableDate } from '../../../share/data/format';
 import { ExpenseService } from '../../../core/services/expense.service';
 import { Expense, ExpenseStatus } from '../../../core/models';
 import { ExpenseFormComponent } from './expense-form/expense-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
 
 type Severity = 'success' | 'info' | 'warn' | 'danger';
 
 /** 43-expenses.md — school/branch expenses with categories, amounts, dates and status. */
 @Component({
   selector: 'app-expense',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     DatePipe,
     FormsModule,
     ButtonModule,
@@ -40,6 +45,7 @@ type Severity = 'success' | 'info' | 'warn' | 'danger';
     EmptyStateComponent,
     RowActionsComponent,
     ExpenseFormComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './expense.component.html',
   styleUrl: './expense.component.scss',
@@ -105,8 +111,8 @@ export class ExpenseComponent {
         return 'danger';
     }
   }
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -125,8 +131,44 @@ export class ExpenseComponent {
   protected onSaved(expense: Expense): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.expenseService.save(expense).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.expenseService.save(expense), {
+      success: 'Expense saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<Expense | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: Expense): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: Expense): RecordDetail {
+    return {
+      title: r.description || r.category,
+      subtitle: r.description ? r.category : undefined,
+      badge: { label: humanize(r.status), severity: this.severity(r.status) },
+      facts: [
+        { label: 'Amount', value: money(r.amount) },
+        { label: 'Date', value: readableDate(r.date) },
+        { label: 'Category', value: r.category },
+        { label: 'Description', value: r.description, wide: true },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: Expense, name: string): void {
+    this.removal.confirm({
+      noun: 'expense',
+      name,
+      remove: () => this.expenseService.remove(record.id),
     });
   }
 }

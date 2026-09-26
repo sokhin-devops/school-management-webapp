@@ -20,7 +20,7 @@
 
     <ng-container k-actions>
       <span class="k-list-count">{{ records.countLabel() }}</span>
-      <p-button label="Record Payment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+      <p-button *kCan="'create'" label="Record Payment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
     </ng-container>
   </k-list-toolbar>
 
@@ -31,13 +31,14 @@
         scrollHeight="flex" styleClass="p-datatable-sm">
         <ng-template pTemplate="header">
           <tr>
-            <th style="width: 16%" pSortableColumn="reference">Reference <p-sortIcon field="reference" /></th>
-            <th style="width: 18%" pSortableColumn="studentName">Student <p-sortIcon field="studentName" /></th>
-            <th style="width: 20%">Fee</th>
+            <th style="width: 14%" pSortableColumn="reference">Reference <p-sortIcon field="reference" /></th>
+            <th style="width: 16%" pSortableColumn="studentName">Student <p-sortIcon field="studentName" /></th>
+            <th style="width: 14%">Fee</th>
             <th style="width: 11%" pSortableColumn="amount">Amount <p-sortIcon field="amount" /></th>
             <th style="width: 12%" pSortableColumn="date">Date <p-sortIcon field="date" /></th>
             <th style="width: 11%">Method</th>
             <th style="width: 12%" pSortableColumn="status">Status <p-sortIcon field="status" /></th>
+            <th style="width: 10%" class="text-right">Actions</th>
           </tr>
         </ng-template>
 
@@ -52,6 +53,10 @@
             <td>
               <p-tag [value]="humanize(payment.status)" [severity]="severity(payment.status)" [rounded]="true" />
             </td>
+            <td class="text-right">
+              <k-row-actions [label]="payment.reference" (view)="openView(payment)" (edit)="openEdit(payment)"
+                (remove)="confirmRemove(payment, payment.reference)" />
+            </td>
           </tr>
         </ng-template>
       </p-table>
@@ -65,7 +70,7 @@
         <p-button label="Clear filters" icon="pi pi-filter-slash" size="small" severity="secondary" [outlined]="true"
           (onClick)="records.clear()" />
       } @else {
-        <p-button label="Record Payment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
+        <p-button *kCan="'create'" label="Record Payment" icon="pi pi-plus" size="small" (onClick)="openCreate()" />
       }
     </k-empty-state>
   }
@@ -78,3 +83,7 @@
 
 <app-payment-form [(visible)]="formVisible" [payment]="editing()" [studentOptions]="studentOptions()" [feeOptions]="feeOptions()"
   (saved)="onSaved($event)" />
+
+<!-- Read-only side of a row: what the eye icon opens. -->
+<k-record-drawer [(visible)]="viewVisible" [detail]="viewDetail()"
+  (edit)="openEdit(viewing()!)" (remove)="confirmRemove(viewing()!, viewDetail()!.title)" />

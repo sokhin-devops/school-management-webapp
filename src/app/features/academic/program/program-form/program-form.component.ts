@@ -75,7 +75,6 @@ export class ProgramFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: Program | null): void {

@@ -13,6 +13,8 @@ import {
   ListToolbarComponent,
   RowActionsComponent,
   StatusTagComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
@@ -21,12 +23,16 @@ import { Status } from '../../../core/models';
 import { StudentCardComponent } from './student-card/student-card.component';
 import { StudentFormComponent } from './student-form/student-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
 import { ClassGroupService } from '../../../core/services/class-group.service';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
+import { humanize, readableDate, statusBadge } from '../../../share/data/format';
 
 @Component({
   selector: 'app-student',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     FormsModule,
     ButtonModule,
     SelectModule,
@@ -42,6 +48,7 @@ import { ClassGroupService } from '../../../core/services/class-group.service';
     StatusTagComponent,
     StudentCardComponent,
     StudentFormComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './student.component.html',
   styleUrl: './student.component.scss',
@@ -103,8 +110,8 @@ export class StudentComponent {
       .map((className) => ({ label: className, value: className })),
   );
 
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -127,8 +134,9 @@ export class StudentComponent {
   protected onSaved(student: StudentRecord): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.studentService.save(student).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.studentService.save(student), {
+      success: 'Student saved',
+      done: () => this.formVisible.set(false),
     });
   }
 
@@ -138,5 +146,43 @@ export class StudentComponent {
 
   protected initials(student: StudentRecord): string {
     return `${student.firstName.charAt(0)}${student.lastName.charAt(0)}`.toUpperCase();
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<StudentRecord | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: StudentRecord): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: StudentRecord): RecordDetail {
+    return {
+      title: this.fullName(r),
+      subtitle: r.studentDetails?.admissionNumber,
+      badge: statusBadge(r.status),
+      facts: [
+        { label: 'Class', value: r.className },
+        { label: 'Admission no.', value: r.studentDetails?.admissionNumber },
+        { label: 'Gender', value: r.gender ? humanize(r.gender.toLowerCase()) : null },
+        { label: 'Date of birth', value: readableDate(r.dateOfBirth) },
+        { label: 'Admitted', value: readableDate(r.admissionDate) },
+        { label: 'Phone', value: r.phone },
+        { label: 'Email', value: r.email, wide: true },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: StudentRecord, name: string): void {
+    this.removal.confirm({
+      noun: 'student',
+      name,
+      remove: () => this.studentService.remove(record.id),
+    });
   }
 }

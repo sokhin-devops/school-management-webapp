@@ -40,13 +40,13 @@ Attendance is the one page that is none of these: a roster workspace with date /
 
 ## Known gaps
 
-- [ ] **Delete flows.** Create and edit are wired; the trash action on every row still does nothing, and a destructive action wants its own confirmation copy.
-- [ ] **Detail pages** — `student-details` is still an empty stub; the view action on every row has nowhere to go.
-- [ ] **The permission checkbox-tree editor** described in 64-users-and-roles.md. The Roles tab lists roles and their permission counts; editing them belongs to the create/edit pass.
-- [ ] **All data is mock.** Every service is a signal over a seeded array; nothing talks to `school-management-webapi`.
-- [ ] **Academic Settings does not yet drive anything.** 63-academic-settings.md asks that disabling a concept hide it; the toggles are currently local state only, so switching Programs off does not remove the Programs page from the nav.
-- [ ] **Pre-existing build failure:** the initial bundle is 1.26 MB against a 1 MB budget. This predates this work — it failed identically with the dashboard stubbed out — but it does mean `ng build` exits non-zero. Worth raising the budget or code-splitting `KShareModule` separately.
-- [ ] `dashboard.component.scss` is 5.33 kB against the 4 kB warning (error is 8 kB). Extracting the stat tile into its own component would fix it.
+- [x] **Delete flows.** Every row's trash action asks through the one confirm dialog in the layout (`RecordRemovalService`), names the record and what goes with it, and removes it on the server. See 02-completion.md A.
+- [x] **Detail pages** — the view action opens `k-record-drawer` on every list; the empty `student-details` stub was deleted.
+- [x] **The permission checkbox-tree editor** described in 64-users-and-roles.md: the role form is a `p-tree` of module → action checkboxes.
+- [x] **All data is mock.** Every service now reads and writes `school-management-webapi` (see 01-api-integration.md).
+- [x] **Academic Settings drives the app.** Saved on the server; a concept switched off leaves the sidebar and is refused by the route guard, and the student/teacher labels rename the menu and breadcrumbs.
+- [x] **Pre-existing build failure.** The app shell imported the loader through the share barrel, which dragged every shared component into the initial chunk. Imported directly, the initial bundle is 1.29 MB under a 1.4 MB warning / 1.6 MB error budget, and `ng build` is clean.
+- [x] `dashboard.component.scss` is under its 4 kB warning: the feed and meter styles moved to the shared `card.scss`.
 
 ## Record forms (create / edit)
 
@@ -110,11 +110,10 @@ cancelled edit leaves no trace.
 - Enrolment counts, average scores and "graded" are consequences of other work,
   so the Class and Assessment forms leave them alone rather than inviting a
   number to be typed in.
-- Terms are managed on the Academic Year's own page; editing a year here leaves
-  its terms untouched.
-- The permission editor is still a module picker: a custom role gets all four
-  actions on every module it is given. The checkbox tree in 64-users-and-roles.md
-  is a separate piece of work.
+- Terms are part of the Academic Year form ("Fill in N semesters" from the
+  school's term structure, or added by hand).
+- The permission editor is the checkbox tree in 64-users-and-roles.md: each
+  module's four actions are chosen separately.
 
 ## Quick Add and the layout shell
 

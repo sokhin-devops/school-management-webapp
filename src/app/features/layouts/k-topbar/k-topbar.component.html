@@ -34,24 +34,98 @@
       </ng-template>
     </p-select>
 
-    <p-button text [rounded]="true"  icon="pi pi-bell" pTooltip="Notifications" tooltipPosition="bottom"
-      ariaLabel="Notifications">
-    </p-button>
+    <!-- 06-topbar.md: Help, then Notifications. -->
+    <p-button text [rounded]="true" icon="pi pi-question-circle" pTooltip="Help" tooltipPosition="bottom"
+      ariaLabel="Help" (onClick)="helpPopover.toggle($event)" />
+    <p-popover #helpPopover styleClass="k-topbar-panel">
+      <div class="k-help">
+        <section>
+          <h3 class="k-panel-title">Getting started</h3>
+          <ol class="k-help-steps">
+            @for (step of gettingStarted; track step.route) {
+              <li>
+                <a [routerLink]="step.route" (click)="helpPopover.hide()">{{ step.label }}</a>
+              </li>
+            }
+          </ol>
+        </section>
+        <section>
+          <h3 class="k-panel-title">Keyboard shortcuts</h3>
+          <dl class="k-help-keys">
+            <dt><kbd>Ctrl</kbd> <kbd>K</kbd></dt>
+            <dd>Open Quick add</dd>
+            <dt><kbd>Alt</kbd> + letter</dt>
+            <dd>Add a record straight away — the letters are shown in Quick add</dd>
+          </dl>
+        </section>
+        <section>
+          <h3 class="k-panel-title">For developers</h3>
+          <a class="k-help-link" [href]="apiReference" target="_blank" rel="noopener">
+            API reference <i class="pi pi-external-link"></i>
+          </a>
+        </section>
+      </div>
+    </p-popover>
 
-    <button type="button" class="k-avatar-button" [attr.aria-label]="'Account menu for ' + userName"
+    <p-overlaybadge [value]="notifications.badge() ?? ''" severity="danger" [badgeDisabled]="!notifications.badge()">
+      <p-button text [rounded]="true" icon="pi pi-bell" pTooltip="Notifications" tooltipPosition="bottom"
+        [ariaLabel]="notifications.unread() ? 'Notifications, ' + notifications.unread() + ' unread' : 'Notifications'"
+        (onClick)="bellPopover.toggle($event)" />
+    </p-overlaybadge>
+    <p-popover #bellPopover styleClass="k-topbar-panel">
+      <div class="k-bell">
+        <div class="k-bell-head">
+          <h3 class="k-panel-title">Notifications</h3>
+          <p-button label="Mark all as read" size="small" [text]="true" [disabled]="!notifications.unread()"
+            (onClick)="notifications.markAllRead()" />
+        </div>
+
+        @if (notifications.items().length) {
+          <ul class="k-bell-list">
+            @for (item of notifications.items(); track item.id) {
+              <li>
+                <button type="button" class="k-bell-item" [class.is-unread]="!item.read"
+                  (click)="open(item); bellPopover.hide()">
+                  <span class="k-bell-dot" aria-hidden="true"></span>
+                  <span class="k-bell-text">
+                    <span class="k-bell-title">{{ item.title }}</span>
+                    @if (item.message) {
+                      <span class="k-bell-message">{{ item.message }}</span>
+                    }
+                    <span class="k-bell-time">{{ timeAgo(item.createdAt) }}</span>
+                  </span>
+                </button>
+              </li>
+            }
+          </ul>
+        } @else {
+          <p class="k-bell-empty"><i class="pi pi-check-circle"></i> You are all caught up.</p>
+        }
+
+        <a class="k-bell-foot" routerLink="/settings/notifications" (click)="bellPopover.hide()">
+          <i class="pi pi-cog"></i> Notification settings
+        </a>
+      </div>
+    </p-popover>
+
+    <button type="button" class="k-avatar-button" [attr.aria-label]="'Account menu for ' + userName()"
       (click)="userPopover.toggle($event)">
-      <p-avatar [label]="userInitials" shape="circle" styleClass="k-topbar-avatar" />
+      <p-avatar [label]="userInitials()" shape="circle" styleClass="k-topbar-avatar" />
     </button>
     <p-popover #userPopover>
       <div class="k-user-popover flex flex-column gap-3">
         <div class="flex align-items-center gap-2">
-          <p-avatar [label]="userInitials" shape="circle" styleClass="k-topbar-avatar" />
+          <p-avatar [label]="userInitials()" shape="circle" styleClass="k-topbar-avatar" />
           <div>
-            <div class="font-medium">{{ userName }}</div>
-            <div class="text-sm text-color-secondary">{{ userEmail }}</div>
+            <div class="font-medium">{{ userName() }}</div>
+            <div class="text-sm text-color-secondary">{{ userEmail() }}</div>
           </div>
         </div>
         <p-divider styleClass="my-0" />
+        <button pButton [text]="true" class="justify-content-start w-full"
+          (click)="twoFactorVisible.set(true); userPopover.hide()">
+          <i class="pi pi-shield mr-2"></i> Two-factor sign-in
+        </button>
         <button pButton [text]="true" class="justify-content-start w-full" (click)="logout(); userPopover.hide()">
           <i class="pi pi-sign-out mr-2"></i> Logout
         </button>
@@ -59,3 +133,5 @@
     </p-popover>
   </div>
 </header>
+
+<app-two-factor-dialog [(visible)]="twoFactorVisible" />

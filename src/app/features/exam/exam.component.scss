@@ -8,3 +8,10 @@
   font-size: 0.6875rem;
   color: var(--p-text-muted-color);
 }
+
+// The marks button sits in front of the usual view / edit / delete trio.
+.k-exam-actions {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-end;
+}

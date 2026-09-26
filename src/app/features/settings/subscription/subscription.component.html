@@ -1,36 +1,64 @@
 <div class="k-page-scroll">
+  @if (featureNote(); as note) {
+    <p-message severity="info" icon="pi pi-lock" [text]="note" styleClass="mb-3" />
+  }
+
   <k-settings-section title="Current plan" description="What this school is subscribed to and when it renews.">
-    <dl class="k-facts">
-      @for (fact of planFacts; track fact.label) {
-        <div>
-          <dt class="k-fact-label">{{ fact.label }}</dt>
-          <dd class="k-fact-value">{{ fact.value }}</dd>
-        </div>
+    @if (subscriptionError(); as error) {
+      <p class="k-field-hint">{{ error }}</p>
+    } @else {
+      @if (subscription()) {
+        <dl class="k-facts">
+          @for (fact of planFacts(); track fact.label) {
+            <div>
+              <dt class="k-fact-label">{{ fact.label }}</dt>
+              <dd class="k-fact-value">{{ fact.value }}</dd>
+            </div>
+          }
+        </dl>
+      } @else {
+        <p-skeleton height="3rem" />
       }
-    </dl>
+    }
 
     <ng-container k-actions>
-      <p-button label="Cancel plan" size="small" severity="secondary" [text]="true" />
-      <p-button label="Change plan" icon="pi pi-arrow-up-right" size="small" />
+      @if (live()) {
+        <p-button *kCan="'edit'" label="Cancel plan" size="small" severity="secondary" [text]="true"
+          (onClick)="openCancel()" />
+      }
+      <p-button *kCan="'edit'" label="Change plan" icon="pi pi-arrow-up-right" size="small" [disabled]="!subscription()"
+        (onClick)="openChange()" />
     </ng-container>
   </k-settings-section>
 
   <k-settings-section title="Usage"
     [description]="atCapacity() ? 'One or more limits have been reached — changing plan will lift them.' : 'What this school is using against the plan limits.'">
-    <ul class="k-usage">
-      @for (row of usage; track row.label) {
-        <li class="k-usage-row">
-          <div class="k-usage-head">
-            <span class="k-usage-label">{{ row.label }}</span>
-            <span class="k-usage-value">{{ row.used }}{{ row.unit }} of {{ row.limit }}{{ row.unit }}</span>
-          </div>
-          <span class="k-usage-track" role="meter" [attr.aria-valuenow]="share(row)" aria-valuemin="0"
-            aria-valuemax="100" [attr.aria-label]="row.label + ' used against plan limit'">
-            <span class="k-usage-bar" [class]="level(row)" [style.width.%]="share(row) > 100 ? 100 : share(row)"></span>
-          </span>
-        </li>
-      }
-    </ul>
+    @if (usage(); as usage) {
+      <ul class="k-usage">
+        @for (row of usage.rows; track row.key) {
+          <li class="k-usage-row">
+            <div class="k-usage-head">
+              <span class="k-usage-label">{{ row.label }}</span>
+              <span class="k-usage-value">
+                @if (row.limit !== null) {
+                  {{ row.used }} of {{ row.limit }}
+                } @else {
+                  {{ row.used }} · unlimited
+                }
+              </span>
+            </div>
+            @if (row.limit !== null) {
+              <span class="k-usage-track" role="meter" [attr.aria-valuenow]="share(row)" aria-valuemin="0"
+                aria-valuemax="100" [attr.aria-label]="row.label + ' used against plan limit'">
+                <span class="k-usage-bar" [class]="level(row)" [style.width.%]="share(row) > 100 ? 100 : share(row)"></span>
+              </span>
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p-skeleton height="6rem" />
+    }
   </k-settings-section>
 
   <k-settings-section title="Billing details" description="Where invoices go and how they are paid.">
@@ -39,55 +67,133 @@
         <div class="k-field">
           <label class="k-field-label" for="billing-email">Billing email</label>
           <input pInputText pSize="small" id="billing-email" type="email" [(ngModel)]="billingEmail" />
+          <span class="k-field-hint">Printed on every new invoice. Until set, the owner's email is used.</span>
         </div>
       </div>
       <div class="col-12 md:col-6">
         <div class="k-field">
-          <label class="k-field-label" for="billing-method">Payment method</label>
-          <input pInputText pSize="small" id="billing-method" [(ngModel)]="paymentMethod" [readOnly]="true" />
-          <span class="k-field-hint">Card details are held by the payment provider, never by the school.</span>
+          <span class="k-field-label">Payment method</span>
+          <span class="k-fact-value">Pay by invoice</span>
+          <span class="k-field-hint">No card is held: invoices are settled by bank transfer.</span>
         </div>
       </div>
       <div class="col-12">
         <div class="k-field">
           <label class="k-field-label" for="billing-address">Billing address</label>
-          <input pInputText pSize="small" id="billing-address" [(ngModel)]="billingAddress" />
+          <textarea pTextarea id="billing-address" rows="2" [(ngModel)]="billingAddress"></textarea>
         </div>
       </div>
     </div>
 
     <ng-container k-actions>
-      <p-button label="Save changes" icon="pi pi-check" size="small" />
+      <p-button *kCan="'edit'" label="Save changes" icon="pi pi-check" size="small" [loading]="savingBilling()"
+        (onClick)="saveBilling()" />
     </ng-container>
   </k-settings-section>
 
-  <k-settings-section title="Invoices" description="Past billing for this school.">
-    <div class="k-table-wrap k-report-table">
-      <p-table class="k-table" [value]="invoices" styleClass="p-datatable-sm">
-        <ng-template pTemplate="header">
-          <tr>
-            <th style="width: 26%">Invoice</th>
-            <th style="width: 28%">Date</th>
-            <th style="width: 18%">Amount</th>
-            <th style="width: 14%">Status</th>
-            <th style="width: 14%" class="text-right">Download</th>
-          </tr>
-        </ng-template>
-        <ng-template pTemplate="body" let-row>
-          <tr>
-            <td class="k-cell-strong k-numeric">{{ row.number }}</td>
-            <td>{{ row.date }}</td>
-            <td class="k-amount">{{ money(row.amount) }}</td>
-            <td>
-              <p-tag [value]="row.status" [severity]="row.status === 'Paid' ? 'success' : 'warn'" [rounded]="true" />
-            </td>
-            <td class="text-right">
-              <p-button icon="pi pi-download" [text]="true" [rounded]="true" size="small" severity="secondary"
-                [ariaLabel]="'Download invoice ' + row.number" />
-            </td>
-          </tr>
-        </ng-template>
-      </p-table>
-    </div>
+  <k-settings-section title="Invoices" description="What the school has been billed, newest first.">
+    @if (invoices(); as invoices) {
+      <div class="k-table-wrap k-report-table">
+        <p-table class="k-table" [value]="invoices" styleClass="p-datatable-sm">
+          <ng-template pTemplate="header">
+            <tr>
+              <th style="width: 22%">Invoice</th>
+              <th style="width: 22%">Plan</th>
+              <th style="width: 24%">Issued</th>
+              <th style="width: 18%">Amount</th>
+              <th style="width: 14%" class="text-right">Print</th>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="body" let-row>
+            <tr>
+              <td class="k-cell-strong k-numeric">{{ row.number }}</td>
+              <td>{{ row.planName }} · {{ row.billingCycle === 'YEARLY' ? 'yearly' : 'monthly' }}</td>
+              <td class="k-numeric">{{ row.issuedAt | date: 'd MMM y' }}</td>
+              <td class="k-amount">{{ money(row) }}</td>
+              <td class="text-right">
+                <p-button icon="pi pi-print" [text]="true" [rounded]="true" size="small" severity="secondary"
+                  [ariaLabel]="'Print invoice ' + row.number" pTooltip="Print or save as PDF" (onClick)="printInvoice(row)" />
+              </td>
+            </tr>
+          </ng-template>
+          <ng-template pTemplate="emptymessage">
+            <tr>
+              <td colspan="5" class="k-field-hint">No invoices yet.</td>
+            </tr>
+          </ng-template>
+        </p-table>
+      </div>
+    } @else {
+      <p-skeleton height="8rem" />
+    }
   </k-settings-section>
 </div>
+
+<!-- Change plan -->
+<p-dialog [visible]="changeVisible()" (visibleChange)="changeVisible.set($event)" [modal]="true" [draggable]="false"
+  [resizable]="false" [style]="{ width: '40rem' }" [breakpoints]="{ '640px': '95vw' }" styleClass="k-form-dialog">
+  <ng-template #header>
+    <div class="k-form-dialog-head">
+      <h2 class="k-form-dialog-title">Change plan</h2>
+      <p class="k-form-dialog-sub">The new plan starts today and is invoiced straight away.</p>
+    </div>
+  </ng-template>
+
+  <div class="k-form-dialog-body">
+    <p-selectbutton [options]="cycleOptions" [ngModel]="chosenCycle()" (ngModelChange)="chosenCycle.set($event)"
+      optionLabel="label" optionValue="value" [allowEmpty]="false" size="small" ariaLabel="Billing cycle" />
+
+    @if (plans().length) {
+      <div class="k-plan-choices" role="radiogroup" aria-label="Plans">
+        @for (plan of plans(); track plan.id) {
+          <button type="button" class="k-plan-choice" role="radio" [attr.aria-checked]="plan.id === chosenPlanId()"
+            [class.is-chosen]="plan.id === chosenPlanId()" (click)="chosenPlanId.set(plan.id)">
+            <span class="k-plan-name">
+              {{ plan.name }}
+              @if (plan.id === subscription()?.plan?.id) {
+                <p-tag value="Current" severity="secondary" [rounded]="true" />
+              }
+            </span>
+            <span class="k-plan-price">{{ price(plan, chosenCycle()) }}</span>
+            <span class="k-plan-limits">{{ limit(plan.maxStudents, 'students') }} · {{ limit(plan.maxTeachers, 'teachers') }} ·
+              {{ limit(plan.maxBranches, 'branches') }}</span>
+          </button>
+        }
+      </div>
+    } @else {
+      <p-skeleton height="10rem" />
+    }
+  </div>
+
+  <ng-template #footer>
+    <p-button label="Cancel" size="small" severity="secondary" [text]="true" [disabled]="changing()"
+      (onClick)="changeVisible.set(false)" />
+    <p-button [label]="chosenPlan() ? 'Switch to ' + chosenPlan()!.name : 'Switch'" icon="pi pi-check" size="small"
+      [loading]="changing()" [disabled]="!chosenPlan() || changeIsNoop()" (onClick)="confirmChange()" />
+  </ng-template>
+</p-dialog>
+
+<!-- Cancel plan -->
+<p-dialog [visible]="cancelVisible()" (visibleChange)="cancelVisible.set($event)" [modal]="true" [draggable]="false"
+  [resizable]="false" [style]="{ width: '28rem' }" [breakpoints]="{ '640px': '92vw' }" styleClass="k-form-dialog">
+  <ng-template #header>
+    <div class="k-form-dialog-head">
+      <h2 class="k-form-dialog-title">Cancel your plan?</h2>
+      <p class="k-form-dialog-sub">The school keeps its data; the plan stops renewing.</p>
+    </div>
+  </ng-template>
+
+  <div class="k-form-dialog-body">
+    <div class="k-field">
+      <label class="k-field-label" for="cancel-reason">Why are you cancelling? (optional)</label>
+      <textarea pTextarea id="cancel-reason" rows="3" [ngModel]="cancelReason()"
+        (ngModelChange)="cancelReason.set($event)"></textarea>
+    </div>
+  </div>
+
+  <ng-template #footer>
+    <p-button label="Keep my plan" size="small" severity="secondary" [text]="true" [disabled]="canceling()"
+      (onClick)="cancelVisible.set(false)" />
+    <p-button label="Cancel plan" size="small" severity="danger" [loading]="canceling()" (onClick)="confirmCancel()" />
+  </ng-template>
+</p-dialog>

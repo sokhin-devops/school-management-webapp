@@ -1,7 +1,8 @@
-import { Injectable, computed } from '@angular/core';
-import { Observable } from 'rxjs';
+import { Injectable, computed, inject } from '@angular/core';
+import { Observable, tap } from 'rxjs';
 import { ApiAssessment, ApiAssessmentType } from '../api/api.models';
 import { createBranchResource } from '../api/branch-resource';
+import { ApiClientService } from './api-client.service';
 
 /**
  * 31-exams-and-grades.md. No Assessment model exists in core/models, so the
@@ -38,8 +39,25 @@ interface AssessmentWrite {
   maxScore: number;
 }
 
+/** One student's line on a mark sheet; a null score is a student not marked. */
+export interface MarkEntry {
+  studentId: string;
+  score: number | null;
+  remark: string | null;
+}
+
+/** com.school_management_webapi.dto.response.AssessmentScoreSheetResponse */
+export interface MarkSheet {
+  assessmentId: string;
+  maxScore: number;
+  averageScore: number | null;
+  graded: boolean;
+  scores: (MarkEntry & { id: string })[];
+}
+
 @Injectable({ providedIn: 'root' })
 export class AssessmentService {
+  private readonly api = inject(ApiClientService);
   private readonly resource = createBranchResource<ApiAssessment, AssessmentWrite>('api/v1/assessments');
 
   readonly assessments = computed(() => this.resource.items().map(toAssessment));
@@ -58,6 +76,20 @@ export class AssessmentService {
 
   remove(id: string): Observable<void> {
     return this.resource.remove(id);
+  }
+
+  markSheet(assessmentId: string): Observable<MarkSheet> {
+    return this.api.get<MarkSheet>(`api/v1/assessments/${assessmentId}/scores`);
+  }
+
+  /**
+   * Replaces the whole sheet, as the API does. The list is reloaded after, since
+   * the average and the graded flag it shows are worked out from the marks.
+   */
+  saveMarks(assessmentId: string, scores: MarkEntry[]): Observable<MarkSheet> {
+    return this.api
+      .put<MarkSheet>(`api/v1/assessments/${assessmentId}/scores`, { scores })
+      .pipe(tap(() => this.resource.reload()));
   }
 }
 

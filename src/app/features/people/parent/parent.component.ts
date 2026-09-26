@@ -13,6 +13,8 @@ import {
   ListToolbarComponent,
   RowActionsComponent,
   StatusTagComponent,
+  RecordDrawerComponent,
+  type RecordDetail,
 } from '../../../share/components';
 import { RecordFilter, createRecordList } from '../../../share/data/record-list';
 import { LayoutUiService } from '../../../core/services/layout-ui.service';
@@ -21,12 +23,16 @@ import { Status } from '../../../core/models';
 import { ParentCardComponent } from './parent-card/parent-card.component';
 import { ParentFormComponent } from './parent-form/parent-form.component';
 import { openOnQuickAdd } from '../../../core/services/quick-add.service';
-import { describeFailure } from '../../../core/api/api-failure';
 import { StudentService } from '../../../core/services/student.service';
+import { CanDirective } from '../../../share/directives/can.directive';
+import { SaveState } from '../../../share/data/save-state';
+import { RecordRemovalService } from '../../../share/data/record-removal.service';
+import { statusBadge } from '../../../share/data/format';
 
 @Component({
   selector: 'app-parent',
-  imports: [
+  providers: [SaveState],
+  imports: [CanDirective, 
     FormsModule,
     ButtonModule,
     SelectModule,
@@ -42,6 +48,7 @@ import { StudentService } from '../../../core/services/student.service';
     StatusTagComponent,
     ParentCardComponent,
     ParentFormComponent,
+    RecordDrawerComponent,
   ],
   templateUrl: './parent.component.html',
   styleUrl: './parent.component.scss',
@@ -112,8 +119,8 @@ export class ParentComponent {
   protected initials(parent: ParentRecord): string {
     return `${parent.firstName.charAt(0)}${parent.lastName.charAt(0)}`.toUpperCase();
   }
-  /** A save the server refused. Cleared the next time the form opens. */
-  protected readonly saveError = signal<string | null>(null);
+  protected readonly saveState = inject(SaveState);
+  private readonly removal = inject(RecordRemovalService);
 
   protected readonly formVisible = signal(false);
   /** The record the dialog is editing; null opens it as a create form. */
@@ -136,8 +143,44 @@ export class ParentComponent {
   protected onSaved(parent: ParentRecord): void {
     // The list reloads from the server once the record is stored, so what is on
     // screen is what was actually saved rather than what was sent.
-    this.parentService.save(parent).subscribe({
-      error: (failure: unknown) => this.saveError.set(describeFailure(failure)),
+    this.saveState.run(this.parentService.save(parent), {
+      success: 'Parent saved',
+      done: () => this.formVisible.set(false),
+    });
+  }
+
+  /** The record the drawer is showing; kept after it closes so the slide-out is not blank. */
+  protected readonly viewing = signal<ParentRecord | null>(null);
+  protected readonly viewVisible = signal(false);
+  protected readonly viewDetail = computed(() => {
+    const record = this.viewing();
+    return record ? this.describe(record) : null;
+  });
+
+  protected openView(record: ParentRecord): void {
+    this.viewing.set(record);
+    this.viewVisible.set(true);
+  }
+
+  private describe(r: ParentRecord): RecordDetail {
+    return {
+      title: this.fullName(r),
+      subtitle: r.relationship,
+      badge: statusBadge(r.status),
+      facts: [
+        { label: 'Email', value: r.email, wide: true },
+        { label: 'Phone', value: r.phone },
+        { label: 'Relationship', value: r.relationship },
+        { label: 'Children', value: r.children.join(', '), wide: true },
+      ],
+    };
+  }
+
+  protected confirmRemove(record: ParentRecord, name: string): void {
+    this.removal.confirm({
+      noun: 'parent',
+      name,
+      remove: () => this.parentService.remove(record.id),
     });
   }
 }

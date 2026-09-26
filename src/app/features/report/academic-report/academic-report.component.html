@@ -41,9 +41,9 @@
           <tr>
             <td class="k-cell-strong">{{ row.subject }}</td>
             <td class="k-numeric">{{ row.assessments }}</td>
-            <td class="k-amount">{{ percent(row.average) }}</td>
-            <td class="k-numeric">{{ row.highest }}</td>
-            <td class="k-numeric">{{ row.lowest }}</td>
+            <td class="k-amount">{{ result(row.average) }}</td>
+            <td class="k-numeric">{{ result(row.highest) }}</td>
+            <td class="k-numeric">{{ result(row.lowest) }}</td>
             <td class="k-numeric">{{ percent(row.passRate) }}</td>
           </tr>
         </ng-template>

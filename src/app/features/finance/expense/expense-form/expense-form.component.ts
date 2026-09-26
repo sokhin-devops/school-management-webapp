@@ -6,6 +6,8 @@ import { InputTextModule } from 'primeng/inputtext';
 import { SelectModule } from 'primeng/select';
 import { FormDialogComponent, FormFieldComponent } from '../../../../share/components';
 import { FormValidationService } from '../../../../share/forms';
+import { EXPENSE_CATEGORIES, categoryChoices } from '../../../../share/data/categories';
+import { SchoolService } from '../../../../core/services/school.service';
 import { BranchContextService } from '../../../../core/services/branch-context.service';
 import { Expense, ExpenseStatus } from '../../../../core/models';
 import { humanize, isoDate } from '../../../../share/data/format';
@@ -29,6 +31,7 @@ export class ExpenseFormComponent {
   private readonly formBuilder = inject(FormBuilder);
   private readonly validation = inject(FormValidationService);
   private readonly branchContext = inject(BranchContextService);
+  private readonly school = inject(SchoolService);
 
   readonly visible = model<boolean>(false);
   /** The record being edited, or null to create a new one. */
@@ -50,7 +53,10 @@ export class ExpenseFormComponent {
     value,
   }));
 
-  protected readonly categoryChoices = computed(() => [...this.categoryOptions()]);
+  protected readonly categoryChoices = computed(() => categoryChoices(EXPENSE_CATEGORIES, this.categoryOptions()));
+
+  /** Amounts are entered in the school's currency (61-school-settings.md). */
+  protected readonly currency = computed(() => this.school.school()?.currency ?? 'USD');
 
   protected readonly isEdit = computed(() => this.expense() !== null);
   /** One source for the field names, shared by the labels and the alert. */
@@ -80,7 +86,6 @@ export class ExpenseFormComponent {
     }
 
     this.saved.emit(this.toRecord());
-    this.visible.set(false);
   }
 
   private reset(record: Expense | null): void {

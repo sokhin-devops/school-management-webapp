@@ -14,23 +14,8 @@
           <div class="k-tile-value">{{ tile.value }}</div>
 
           <div class="k-tile-foot">
-            @if (tile.delta; as delta) {
-              <span class="k-delta" [class.k-delta-good]="tile.deltaGood" [class.k-delta-bad]="!tile.deltaGood">
-                <i class="pi" [ngClass]="tile.rising ? 'pi-arrow-up-right' : 'pi-arrow-down-right'"></i>
-                {{ tile.rising ? '+' : '' }}{{ delta.percent }}%
-              </span>
-              <span class="k-tile-note k-delta-caption">{{ delta.caption }}</span>
-            } @else {
-              <span class="k-tile-note">{{ tile.note }}</span>
-            }
+            <span class="k-tile-note">{{ tile.note }}</span>
           </div>
-
-          @if (tile.spark; as spark) {
-            <div class="k-spark">
-              <p-chart type="line" [data]="spark.data" [options]="spark.options" height="34px"
-                [ariaLabel]="tile.label + ' trend over the last 12 periods'" />
-            </div>
-          }
         </p-card>
       </div>
     }
@@ -61,8 +46,8 @@
       <p-card styleClass="k-card">
         <div class="k-card-head">
           <div>
-            <h2 class="k-card-title">Students by program</h2>
-            <p class="k-card-sub">Enrolled this term</p>
+            <h2 class="k-card-title">{{ mix().title }}</h2>
+            <p class="k-card-sub">In this branch</p>
           </div>
         </div>
 
@@ -70,7 +55,7 @@
           <p-chart type="doughnut" [data]="programData()" [options]="programOptions()" height="190px"
             ariaLabel="Share of enrolled students by program" />
           <div class="k-donut-centre">
-            <span class="k-donut-total">{{ totalStudents }}</span>
+            <span class="k-donut-total">{{ totalStudents() }}</span>
             <span class="k-donut-caption">students</span>
           </div>
         </div>
@@ -91,12 +76,13 @@
 
   <!-- Finance + class capacity --------------------------------------------- -->
   <section class="grid k-row">
+    @if (hasFinance()) {
     <div class="col-12 xl:col-8 flex">
       <p-card styleClass="k-card">
         <div class="k-card-head">
           <div>
-            <h2 class="k-card-title">Fee collection</h2>
-            <p class="k-card-sub">Billed against collected, last 6 months</p>
+            <h2 class="k-card-title">Money in and out</h2>
+            <p class="k-card-sub">Collected against spent, last 6 months</p>
           </div>
         </div>
 
@@ -121,18 +107,25 @@
         </dl>
       </p-card>
     </div>
+    }
 
-    <div class="col-12 xl:col-4 flex">
+    <div class="col-12 flex" [ngClass]="{ 'xl:col-4': hasFinance() }">
       <p-card styleClass="k-card">
         <div class="k-card-head">
           <div>
             <h2 class="k-card-title">Class capacity</h2>
-            <p class="k-card-sub">{{ classesAtCapacity }} of {{ classCapacity.length }} classes are full</p>
+            <p class="k-card-sub">
+              @if (classCount()) {
+                {{ classesAtCapacity() }} of {{ classCount() }} classes are full
+              } @else {
+                No classes yet
+              }
+            </p>
           </div>
         </div>
 
         <ul class="k-meters">
-          @for (entry of classCapacity; track entry.name) {
+          @for (entry of classCapacity(); track entry.name) {
             <li class="k-meter">
               <div class="k-meter-head">
                 <span class="k-meter-name">
@@ -149,6 +142,8 @@
                 <span class="k-meter-fill" [ngClass]="'is-' + entry.severity" [style.width.%]="entry.percent"></span>
               </div>
             </li>
+          } @empty {
+            <li class="k-feed-empty">Classes with a capacity appear here as students are placed.</li>
           }
         </ul>
       </p-card>
@@ -164,11 +159,11 @@
             <h2 class="k-card-title">Notifications</h2>
             <p class="k-card-sub">Needing your attention</p>
           </div>
-          <p-button label="View all" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" />
+          <a class="k-card-link" routerLink="/settings/notifications">Settings <i class="pi pi-arrow-right"></i></a>
         </div>
 
         <ul class="k-feed">
-          @for (item of notifications; track item.message) {
+          @for (item of notifications(); track item.message + item.time) {
             <li class="k-feed-row">
               <span class="k-feed-icon" [ngClass]="'is-' + item.tone">
                 <i class="pi" [ngClass]="item.icon"></i>
@@ -192,11 +187,13 @@
             <h2 class="k-card-title">Recent activity</h2>
             <p class="k-card-sub">Changes across the school</p>
           </div>
-          <p-button label="View all" icon="pi pi-arrow-right" iconPos="right" [text]="true" size="small" />
+          @if (canSeeActivity()) {
+            <a class="k-card-link" routerLink="/settings/security">Audit log <i class="pi pi-arrow-right"></i></a>
+          }
         </div>
 
         <ul class="k-feed">
-          @for (item of recentActivity; track item.actor + item.action) {
+          @for (item of recentActivity(); track item.actor + item.action + item.time) {
             <li class="k-feed-row">
               <p-avatar [label]="item.initials" shape="circle" size="normal" styleClass="k-feed-avatar" />
               <span class="k-feed-body">
@@ -205,7 +202,7 @@
               </span>
             </li>
           } @empty {
-            <li class="k-feed-empty">No activity yet.</li>
+            <li class="k-feed-empty">{{ canSeeActivity() ? 'No activity yet.' : 'The activity log is shown to roles that can see Settings.' }}</li>
           }
         </ul>
       </p-card>

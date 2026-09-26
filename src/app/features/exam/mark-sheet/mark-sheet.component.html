@@ -1,0 +1,47 @@
+<k-form-dialog [(visible)]="visible" [title]="title()" [subtitle]="subtitle()" saveLabel="Save marks" width="48rem"
+  (save)="save()">
+  @if (loading()) {
+    <div class="flex flex-column gap-2">
+      @for (placeholder of [1, 2, 3, 4]; track placeholder) {
+        <p-skeleton height="2.25rem" />
+      }
+    </div>
+  } @else if (loadError()) {
+    <p-message severity="error" size="small" icon="pi pi-times-circle" [text]="loadError()!" />
+  } @else if (rows().length) {
+    <p class="k-mark-sheet-summary">{{ preview() }}</p>
+    <p-table class="k-table" [value]="rows()" styleClass="p-datatable-sm" dataKey="student.id">
+      <ng-template pTemplate="header">
+        <tr>
+          <th style="width: 40%">Student</th>
+          <th style="width: 25%">Score</th>
+          <th style="width: 35%">Remark</th>
+        </tr>
+      </ng-template>
+      <ng-template pTemplate="body" let-row let-index="rowIndex">
+        <tr>
+          <td>
+            <div class="k-person-cell-identity">
+              <span class="k-person-cell-name">{{ fullName(row.student) }}</span>
+              <span class="k-person-cell-sub">{{ row.student.studentDetails?.admissionNumber }}</span>
+            </div>
+          </td>
+          <td>
+            <p-inputnumber [ngModel]="row.score" (ngModelChange)="setScore(row.student.id, $event)" [min]="0"
+              [max]="assessment()?.maxScore ?? 1000" [maxFractionDigits]="2" size="small" placeholder="Not marked"
+              [inputId]="'mark-score-' + index" [ariaLabel]="'Score for ' + fullName(row.student)"
+              inputStyleClass="w-full" styleClass="w-full" />
+          </td>
+          <td>
+            <input pInputText pSize="small" class="w-full" [ngModel]="row.remark"
+              (ngModelChange)="setRemark(row.student.id, $event)" placeholder="Optional" maxlength="255"
+              [attr.aria-label]="'Remark for ' + fullName(row.student)" />
+          </td>
+        </tr>
+      </ng-template>
+    </p-table>
+  } @else {
+    <k-empty-state icon="pi-users" title="No students in this class"
+      message="Place students in the class, under People › Students, to mark them." />
+  }
+</k-form-dialog>
